@@ -39,12 +39,15 @@
     },
     {
       "id": "usr-admin-1",
-      "email": "admin.khcn@ctu.edu.vn",
-      "full_name": "PGS.TS. Quản trị Hệ thống",
-      "student_or_staff_id": "CB00001",
-      "department": "Phòng Khoa học, Công nghệ và Đổi mới sáng tạo",
+      "username": "admin",
+      "password": "123Ctu?!",
+      "email": "admin@ctu.edu.vn",
+      "full_name": "Quản trị viên Cao nhất (Super Admin)",
+      "student_or_staff_id": "ADMIN-ROOT",
+      "department": "Ban Quản trị Hệ thống — Đại học Cần Thơ",
       "role": "admin",
-      "contribution_points": 999,
+      "is_super_admin": true,
+      "contribution_points": 9999,
       "uploads_count": 8,
       "downloads_count": 15,
       "is_verified_edu": true,
@@ -62,11 +65,19 @@
   },
   "audit_logs": [
     {
+      "id": "log-1793944873969-90",
+      "timestamp": "2026-11-06T06:01:13.969Z",
+      "actor": "Quản trị viên (Admin)",
+      "action": "Khôi phục Dữ liệu Gốc",
+      "detail": "Đã đặt lại toàn bộ CSDL về trạng thái mẫu chuẩn ban đầu.",
+      "type": "system"
+    },
+    {
       "id": "log-1",
       "timestamp": "2026-11-06T08:00:00Z",
-      "actor": "PGS.TS. Quản trị Hệ thống (Admin)",
-      "action": "Khởi tạo Cấu hình Hệ thống",
-      "detail": "Thiết lập chính sách Credits (+50 đăng ký, +30 đóng góp, -5 tải dữ liệu) và đồng bộ 20 đơn vị trực thuộc ĐH Cần Thơ.",
+      "actor": "admin — Quản trị viên Cao nhất (Super Admin)",
+      "action": "Khởi tạo Tài khoản Quản trị Tối cao (Root Admin)",
+      "detail": "Xác lập tài khoản [admin] là Quản trị viên Cao nhất của Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ (Bảo vệ tuyệt đối).",
       "type": "system"
     },
     {

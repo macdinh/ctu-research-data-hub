@@ -80,8 +80,11 @@
               <span class="font-semibold text-amber-600"><span id="current-user-points">65</span> Credits</span>
             </div>
           </div>
-          <select id="user-select" onchange="handleUserSwitch(this.value)" class="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Chuyển đổi tài khoản thử nghiệm">
+          <select id="user-select" onchange="handleUserSwitch(this.value)" class="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Chuyển đổi tài khoản">
           </select>
+          <button onclick="openAdminLoginModal()" id="header-admin-login-btn" class="text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition flex items-center gap-1" title="Đăng nhập Tài khoản Quản trị Cao nhất (admin)">
+            <span>👑 Admin</span>
+          </button>
           <button onclick="openRegisterModal()" class="text-xs font-medium text-blue-600 hover:text-blue-800 px-1.5 py-1 rounded hover:bg-blue-50 transition" title="Đăng ký tài khoản mới">
             + Đăng ký
           </button>
@@ -270,12 +273,12 @@
       <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-md">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="space-y-1.5">
-            <div class="inline-flex items-center gap-2 text-xs font-semibold bg-rose-500/20 text-rose-200 border border-rose-400/30 px-3 py-0.5 rounded-full">
-              <span>🛡️ Bảng Điều Khiển Quản Trị Hệ Thống (System Administration Portal)</span>
+            <div class="inline-flex items-center gap-2 text-xs font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/30 px-3 py-0.5 rounded-full">
+              <span>👑 Quản Trị Viên Cao Nhất Hệ Thống (Root Super Admin: admin)</span>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold">Quản lý Tài khoản, Phân quyền, Kho Dữ liệu &amp; Chính sách Credits</h2>
+            <h2 class="text-xl sm:text-2xl font-bold">Bảng Điều Khiển Quản Trị Hệ Thống Tối Cao</h2>
             <p class="text-xs sm:text-sm text-slate-300">
-              Dành cho Ban Quản trị Cổng Dữ liệu Khoa học ĐH Cần Thơ (Phòng KH, CN &amp; Đổi mới sáng tạo / Quản trị viên Khoa &amp; Trường).
+              Tài khoản Quản trị Cao nhất: <code class="text-amber-300 font-bold">admin</code> (Mã định danh: <code class="text-emerald-300">ADMIN-ROOT</code> • Quyền hạn tối cao &amp; Bảo vệ tuyệt đối).
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
@@ -755,9 +758,60 @@
     </div>
   </div>
 
+  <!-- MODAL 4: SUPER ADMIN LOGIN (XÁC THỰC TÀI KHOẢN QUẢN TRỊ CAO NHẤT) -->
+  <div id="admin-login-modal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">👑</span>
+          <div>
+            <h3 class="text-base font-bold">Đăng nhập Quản trị Hệ thống Tối cao</h3>
+            <p class="text-[11px] text-slate-300">Tài khoản Quản trị Cao nhất (Super Admin / Root)</p>
+          </div>
+        </div>
+        <button onclick="closeAdminLoginModal()" class="text-slate-300 hover:text-white text-2xl leading-none px-2">&times;</button>
+      </div>
+      <form onsubmit="handleAdminLoginSubmit(event)" class="p-6 space-y-4 text-xs sm:text-sm">
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+          <div class="font-bold flex items-center gap-1.5">
+            <span>🛡️ Bảo mật Quản trị viên Cao nhất (Root Admin)</span>
+          </div>
+          <div>Vui lòng xác thực tài khoản Quản trị cao nhất của hệ thống để truy cập toàn quyền điều khiển.</div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Tên đăng nhập Quản trị *</label>
+          <input id="admin-login-username" required type="text" value="admin" placeholder="admin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Mật khẩu Quản trị *</label>
+          <div class="relative">
+            <input id="admin-login-password" required type="password" placeholder="Nhập mật khẩu quản trị..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 pr-20" />
+            <button type="button" onclick="toggleAdminPasswordVisibility()" id="admin-pwd-toggle" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-500 hover:text-slate-800 px-2 py-1 rounded">
+              Hiện
+            </button>
+          </div>
+        </div>
+
+        <div id="admin-login-error" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
+
+        <div class="pt-2 flex items-center justify-between gap-2">
+          <button type="button" onclick="closeAdminLoginModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+            Hủy
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
+            <span>🔐 Xác thực &amp; Mở Quản trị Hệ thống</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let appState = { users: [], datasets: [], settings: {}, audit_logs: [] };
     let currentUser = null;
+    let isSuperAdminAuthenticated = false;
     let activeTypeFilter = 'all';
     let selectedDataset = null;
     let currentCitationFormat = 'apa';
@@ -810,7 +864,8 @@
       renderAdminDashboard();
     }
 
-    function getRoleLabel(role) {
+    function getRoleLabel(role, isSuper = false) {
+      if (isSuper) return '👑 Super Admin';
       if (role === 'admin') return 'Admin';
       if (role === 'lecturer') return 'Giảng viên';
       return 'SV';
@@ -818,24 +873,44 @@
 
     function syncHeaderUI() {
       const select = document.getElementById('user-select');
-      select.innerHTML = appState.users.map(u =>
-        `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>${u.full_name} (${getRoleLabel(u.role)} - ${u.contribution_points} Cr)</option>`
-      ).join('');
+      select.innerHTML = appState.users.map(u => {
+        const isRoot = u.is_super_admin || u.username === 'admin' || u.id === 'usr-admin-1';
+        const label = isRoot
+          ? `👑 ${u.username || 'admin'} — ${u.full_name} (${u.contribution_points} Cr)`
+          : `${u.full_name} (${getRoleLabel(u.role)} - ${u.contribution_points} Cr)`;
+        return `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>${label}</option>`;
+      }).join('');
 
       document.getElementById('current-user-name').textContent = currentUser.full_name;
-      document.getElementById('current-user-id').textContent = currentUser.student_or_staff_id;
+      document.getElementById('current-user-id').textContent = currentUser.username ? `${currentUser.username} (${currentUser.student_or_staff_id})` : currentUser.student_or_staff_id;
       document.getElementById('current-user-points').textContent = currentUser.contribution_points;
 
       const roleBadge = document.getElementById('current-user-role-badge');
-      if (currentUser.role === 'admin') {
+      const adminBtn = document.getElementById('header-admin-login-btn');
+      if (currentUser.is_super_admin || currentUser.username === 'admin') {
+        roleBadge.textContent = '👑 Quản trị Cao nhất';
+        roleBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+        if (adminBtn) {
+          adminBtn.innerHTML = '<span>👑 Root Admin (Đã xác thực)</span>';
+          adminBtn.className = 'text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg transition flex items-center gap-1';
+        }
+      } else if (currentUser.role === 'admin') {
         roleBadge.textContent = 'Quản trị viên';
         roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold';
       } else if (currentUser.role === 'lecturer') {
         roleBadge.textContent = 'Giảng viên';
         roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
+        if (adminBtn) {
+          adminBtn.innerHTML = '<span>👑 Đăng nhập Admin</span>';
+          adminBtn.className = 'text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition flex items-center gap-1';
+        }
       } else {
         roleBadge.textContent = 'Sinh viên';
         roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
+        if (adminBtn) {
+          adminBtn.innerHTML = '<span>👑 Đăng nhập Admin</span>';
+          adminBtn.className = 'text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition flex items-center gap-1';
+        }
       }
 
       const published = appState.datasets.filter(d => d.status === 'published');
@@ -849,16 +924,81 @@
 
     function handleUserSwitch(userId) {
       const found = appState.users.find(u => u.id === userId);
-      if (found) {
-        currentUser = found;
-        syncHeaderUI();
-        renderReviewQueue();
-        renderAdminDashboard();
-        showToast(`Đã chuyển sang tài khoản <strong>${currentUser.full_name}</strong> (${currentUser.contribution_points} Credits)`);
+      if (!found) return;
+      const isRoot = found.is_super_admin || found.username === 'admin' || found.id === 'usr-admin-1';
+      if (isRoot && !isSuperAdminAuthenticated) {
+        // Giữ nguyên dropdown ở user hiện tại và yêu cầu nhập mật khẩu Quản trị cao nhất
+        document.getElementById('user-select').value = currentUser.id;
+        openAdminLoginModal();
+        return;
+      }
+      currentUser = found;
+      syncHeaderUI();
+      renderReviewQueue();
+      renderAdminDashboard();
+      showToast(`Đã chuyển sang tài khoản <strong>${currentUser.full_name}</strong> (${currentUser.contribution_points} Credits)`);
+    }
+
+    function openAdminLoginModal() {
+      const errBox = document.getElementById('admin-login-error');
+      if (errBox) errBox.classList.add('hidden');
+      document.getElementById('admin-login-username').value = 'admin';
+      document.getElementById('admin-login-password').value = '';
+      document.getElementById('admin-login-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('admin-login-password').focus(), 80);
+    }
+
+    function closeAdminLoginModal() {
+      document.getElementById('admin-login-modal').classList.add('hidden');
+    }
+
+    function toggleAdminPasswordVisibility() {
+      const pwdInput = document.getElementById('admin-login-password');
+      const btn = document.getElementById('admin-pwd-toggle');
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        btn.textContent = 'Ẩn';
+      } else {
+        pwdInput.type = 'password';
+        btn.textContent = 'Hiện';
       }
     }
 
+    async function handleAdminLoginSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('admin-login-username').value.trim();
+      const password = document.getElementById('admin-login-password').value;
+      const errBox = document.getElementById('admin-login-error');
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        errBox.textContent = data.error || 'Sai tên đăng nhập hoặc mật khẩu Quản trị viên!';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      isSuperAdminAuthenticated = true;
+      appState = data.db;
+      currentUser = data.user;
+      closeAdminLoginModal();
+      syncHeaderUI();
+      renderReviewQueue();
+      renderAdminDashboard();
+      switchMainTab('admin');
+      showToast('👑 Đã xác thực thành công tài khoản <strong>Quản trị viên Cao nhất (admin)</strong>!');
+    }
+
     function switchMainTab(tab) {
+      if (tab === 'admin' && !isSuperAdminAuthenticated && !(currentUser?.is_super_admin || currentUser?.username === 'admin')) {
+        openAdminLoginModal();
+        return;
+      }
       ['explore', 'review', 'admin', 'architecture'].forEach(t => {
         document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
         const btn = document.getElementById(`tab-btn-${t}`);
@@ -1463,24 +1603,35 @@
 
       // 2. Render Users Table
       const usersTbody = document.getElementById('admin-users-tbody');
-      usersTbody.innerHTML = users.map(u => `
-        <tr class="hover:bg-slate-50 ${u.is_locked ? 'opacity-60 bg-red-50/30' : ''}">
+      usersTbody.innerHTML = users.map(u => {
+        const isRoot = u.is_super_admin === true || u.username === 'admin' || u.id === 'usr-admin-1';
+        return `
+        <tr class="hover:bg-slate-50 ${isRoot ? 'bg-amber-50/40' : ''} ${u.is_locked ? 'opacity-60 bg-red-50/30' : ''}">
           <td class="py-3 px-3.5">
-            <div class="font-bold text-slate-900 flex items-center gap-1.5">
+            <div class="font-bold text-slate-900 flex flex-wrap items-center gap-1.5">
               <span>${u.full_name}</span>
+              ${isRoot ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold">👑 Quản trị Cao nhất (Root)</span>' : ''}
               ${u.is_verified_edu ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">CTU Edu</span>' : ''}
               ${u.is_locked ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">Đã khóa</span>' : ''}
             </div>
-            <div class="text-[11px] text-slate-500 font-mono">${u.email}</div>
+            <div class="text-[11px] text-slate-500 font-mono">
+              ${u.username ? `<strong class="text-indigo-700">Tên đăng nhập: ${u.username}</strong> • ` : ''}${u.email}
+            </div>
           </td>
           <td class="py-3 px-3 font-mono font-semibold text-slate-700">${u.student_or_staff_id}</td>
           <td class="py-3 px-3 text-slate-700">${u.department}</td>
           <td class="py-3 px-3">
-            <select onchange="handleAdminUserAction('${u.id}', 'role', { role: this.value })" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800">
-              <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên</option>
-              <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Giảng viên / Reviewer</option>
-              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Quản trị viên (Admin)</option>
-            </select>
+            ${isRoot ? `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold">
+                👑 Quản trị Tối cao (Super Admin)
+              </span>
+            ` : `
+              <select onchange="handleAdminUserAction('${u.id}', 'role', { role: this.value })" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800">
+                <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên</option>
+                <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Giảng viên / Reviewer</option>
+                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Quản trị viên (Admin)</option>
+              </select>
+            `}
           </td>
           <td class="py-3 px-3 text-center font-mono text-slate-600">
             ⬆️ ${u.uploads_count || 0} / ⬇️ ${u.downloads_count || 0}
@@ -1490,12 +1641,18 @@
           </td>
           <td class="py-3 px-3.5 text-right whitespace-nowrap space-x-1">
             <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: 20 })" class="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-[11px]" title="Thưởng +20 Credits">+20 Cr</button>
-            <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: -10 })" class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold text-[11px]" title="Trừ 10 Credits">-10 Cr</button>
-            <button onclick="handleAdminUserAction('${u.id}', 'toggle_lock')" class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">${u.is_locked ? 'Mở khóa' : 'Khóa'}</button>
-            <button onclick="handleAdminUserAction('${u.id}', 'delete')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px]">Xóa</button>
+            ${isRoot ? `
+              <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-900 text-amber-300 font-semibold text-[11px]" title="Tài khoản Quản trị cao nhất không thể bị khóa hoặc xóa">
+                🛡️ Bảo vệ Tuyệt đối
+              </span>
+            ` : `
+              <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: -10 })" class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold text-[11px]" title="Trừ 10 Credits">-10 Cr</button>
+              <button onclick="handleAdminUserAction('${u.id}', 'toggle_lock')" class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">${u.is_locked ? 'Mở khóa' : 'Khóa'}</button>
+              <button onclick="handleAdminUserAction('${u.id}', 'delete')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px]">Xóa</button>
+            `}
           </td>
         </tr>
-      `).join('');
+      `}).join('');
 
       // 3. Render Master Datasets Table
       const dsTbody = document.getElementById('admin-datasets-tbody');
@@ -1611,6 +1768,11 @@
         body: JSON.stringify({ target_user_id: targetUserId, action, ...extra })
       });
       const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        showToast(data.error || 'Không thể thực hiện thao tác trên tài khoản Quản trị cao nhất!', 'error');
+        renderAdminDashboard();
+        return;
+      }
       appState = data.db;
       currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
       syncHeaderUI();

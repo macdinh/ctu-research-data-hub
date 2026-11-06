@@ -29,3 +29,9 @@ INSERT INTO public.categories (name, slug, description, icon_name, dataset_count
     ('Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)', 'vien-dragon-mekong', 'Biến đổi khí hậu, xâm nhập mặn, sạt lở bờ sông, sinh kế bền vững vùng ĐBSCL', 'CloudRain', 14),
     ('Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long', 'vien-ncpt-dbscl', 'Kinh tế - xã hội vùng ĐBSCL, hệ thống canh tác, chính sách phát triển vùng', 'Compass', 11)
 ON CONFLICT (slug) DO NOTHING;
+
+-- ============================================================================
+-- TÀI KHOẢN QUẢN TRỊ VIÊN CAO NHẤT (SUPER ADMIN / ROOT ADMIN)
+-- Tên đăng nhập: admin | Mật khẩu khởi tạo: 123Ctu?!
+-- Email: admin@ctu.edu.vn | Mã định danh: ADMIN-ROOT | is_super_admin = TRUE
+-- ============================================================================

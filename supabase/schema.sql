@@ -38,11 +38,13 @@ END $$;
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    username TEXT UNIQUE,            -- Tên đăng nhập (VD: 'admin' cho Quản trị cao nhất)
     email TEXT UNIQUE NOT NULL,
     full_name TEXT NOT NULL,
-    student_or_staff_id TEXT UNIQUE, -- Mã số SV (VD: B2110001) hoặc Mã CB
+    student_or_staff_id TEXT UNIQUE, -- Mã số SV (VD: B2110001) hoặc Mã CB (ADMIN-ROOT)
     department TEXT NOT NULL,        -- Khoa/Viện (CNTT&TT, Nông nghiệp, Thủy sản, Kinh tế...)
     role user_role NOT NULL DEFAULT 'student',
+    is_super_admin BOOLEAN NOT NULL DEFAULT FALSE,   -- True đối với tài khoản Quản trị cao nhất (admin)
     contribution_points INTEGER NOT NULL DEFAULT 50, -- Tặng 50 điểm khởi đầu khi đăng ký
     uploads_count INTEGER NOT NULL DEFAULT 0,
     downloads_count INTEGER NOT NULL DEFAULT 0,

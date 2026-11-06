@@ -53,12 +53,15 @@ const initialDb = {
     },
     {
       id: 'usr-admin-1',
-      email: 'admin.khcn@ctu.edu.vn',
-      full_name: 'PGS.TS. Quản trị Hệ thống',
-      student_or_staff_id: 'CB00001',
-      department: 'Phòng Khoa học, Công nghệ và Đổi mới sáng tạo',
+      username: 'admin',
+      password: '123Ctu?!',
+      email: 'admin@ctu.edu.vn',
+      full_name: 'Quản trị viên Cao nhất (Super Admin)',
+      student_or_staff_id: 'ADMIN-ROOT',
+      department: 'Ban Quản trị Hệ thống — Đại học Cần Thơ',
       role: 'admin',
-      contribution_points: 999,
+      is_super_admin: true,
+      contribution_points: 9999,
       uploads_count: 8,
       downloads_count: 15,
       is_verified_edu: true,
@@ -78,9 +81,9 @@ const initialDb = {
     {
       id: 'log-1',
       timestamp: '2026-11-06T08:00:00Z',
-      actor: 'PGS.TS. Quản trị Hệ thống (Admin)',
-      action: 'Khởi tạo Cấu hình Hệ thống',
-      detail: 'Thiết lập chính sách Credits (+50 đăng ký, +30 đóng góp, -5 tải dữ liệu) và đồng bộ 20 đơn vị trực thuộc ĐH Cần Thơ.',
+      actor: 'admin — Quản trị viên Cao nhất (Super Admin)',
+      action: 'Khởi tạo Tài khoản Quản trị Tối cao (Root Admin)',
+      detail: 'Xác lập tài khoản [admin] là Quản trị viên Cao nhất của Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ (Bảo vệ tuyệt đối).',
       type: 'system'
     },
     {
@@ -405,13 +408,27 @@ function addAuditLog(db, actor, action, detail, type = 'system') {
 }
 
 function normalizeParsedDb(parsed) {
-  parsed.users = (parsed.users || []).map(u => ({
-    is_locked: false,
-    ...u,
-    department: normalizeCtuUnitName(u.department)
-  }));
-  if (!parsed.users.some(u => u.role === 'admin')) {
-    parsed.users.push(initialDb.users.find(u => u.role === 'admin'));
+  const rootTemplate = initialDb.users.find(u => u.id === 'usr-admin-1');
+  parsed.users = (parsed.users || []).map(u => {
+    if (u.id === 'usr-admin-1' || u.username === 'admin') {
+      return {
+        ...u,
+        ...rootTemplate,
+        contribution_points: Math.max(9999, u.contribution_points || 9999),
+        is_locked: false,
+        is_super_admin: true,
+        role: 'admin'
+      };
+    }
+    return {
+      is_locked: false,
+      is_super_admin: false,
+      ...u,
+      department: normalizeCtuUnitName(u.department)
+    };
+  });
+  if (!parsed.users.some(u => u.id === 'usr-admin-1' || u.username === 'admin')) {
+    parsed.users.push({ ...rootTemplate });
   }
   parsed.datasets = (parsed.datasets || []).map(ds => ({
     storage_provider: ds.id === 'ds-ai-003' ? 'google_drive' : 'cloudflare_r2',
@@ -510,6 +527,43 @@ export function requestHandler(req, res) {
     const db = loadDb();
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(db));
+    return;
+  }
+
+  // API: Đăng nhập xác thực Tài khoản Quản trị Cao nhất (admin / 123Ctu?!)
+  if (url.pathname === '/api/login' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const payload = JSON.parse(body || '{}');
+      const usernameInput = (payload.username || '').trim();
+      const passwordInput = payload.password || '';
+      const db = loadDb();
+
+      const matched = db.users.find(u =>
+        ((u.username && u.username.toLowerCase() === usernameInput.toLowerCase()) ||
+         (u.email && u.email.toLowerCase() === usernameInput.toLowerCase())) &&
+        (u.password === passwordInput || (u.username === 'admin' && passwordInput === '123Ctu?!'))
+      );
+
+      if (!matched) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Sai tên đăng nhập hoặc mật khẩu Quản trị viên!' }));
+        return;
+      }
+
+      addAuditLog(
+        db,
+        `${matched.full_name} (${matched.username || matched.student_or_staff_id})`,
+        'Đăng nhập Quản trị Tối cao',
+        'Xác thực thành công tài khoản Quản trị viên Cao nhất (Super Admin) của hệ thống.',
+        'admin'
+      );
+      saveDb(db);
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: true, user: matched, db }));
+    });
     return;
   }
 
@@ -719,28 +773,39 @@ export function requestHandler(req, res) {
       const target = db.users.find(u => u.id === target_user_id);
 
       if (target) {
+        const isRootAdmin = target.is_super_admin === true || target.username === 'admin' || target.id === 'usr-admin-1';
+        if (isRootAdmin && (action === 'delete' || action === 'toggle_lock' || (action === 'role' && role !== 'admin'))) {
+          res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            ok: false,
+            error: 'Tài khoản Quản trị Cao nhất (admin) được bảo vệ tuyệt đối — không thể xóa, khóa hoặc hạ quyền!',
+            db
+          }));
+          return;
+        }
+
         if (action === 'delete') {
           db.users = db.users.filter(u => u.id !== target_user_id);
-          addAuditLog(db, 'Quản trị viên (Admin)', 'Xóa Tài khoản', `Đã xóa tài khoản ${target.full_name} (${target.email})`, 'admin');
+          addAuditLog(db, 'admin (Super Admin)', 'Xóa Tài khoản', `Đã xóa tài khoản ${target.full_name} (${target.email})`, 'admin');
         } else if (action === 'role' && role) {
           const oldRole = target.role;
           target.role = role;
-          addAuditLog(db, 'Quản trị viên (Admin)', 'Phân quyền Tài khoản', `Đổi vai trò của ${target.full_name} từ [${oldRole}] sang [${role}]`, 'admin');
+          addAuditLog(db, 'admin (Super Admin)', 'Phân quyền Tài khoản', `Đổi vai trò của ${target.full_name} từ [${oldRole}] sang [${role}]`, 'admin');
         } else if (action === 'points' && typeof delta_points === 'number') {
           target.contribution_points = Math.max(0, target.contribution_points + delta_points);
-          addAuditLog(db, 'Quản trị viên (Admin)', 'Điều chỉnh Điểm Credits', `${delta_points >= 0 ? '+' : ''}${delta_points} Credits cho ${target.full_name} (Số dư mới: ${target.contribution_points} Cr)`, 'admin');
+          addAuditLog(db, 'admin (Super Admin)', 'Điều chỉnh Điểm Credits', `${delta_points >= 0 ? '+' : ''}${delta_points} Credits cho ${target.full_name} (Số dư mới: ${target.contribution_points} Cr)`, 'admin');
         } else if (action === 'toggle_lock') {
           target.is_locked = !target.is_locked;
-          addAuditLog(db, 'Quản trị viên (Admin)', target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id})`, 'admin');
+          addAuditLog(db, 'admin (Super Admin)', target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id})`, 'admin');
         } else if (action === 'department' && department) {
           target.department = department;
-          addAuditLog(db, 'Quản trị viên (Admin)', 'Cập nhật Đơn vị', `Chuyển ${target.full_name} sang ${department}`, 'admin');
+          addAuditLog(db, 'admin (Super Admin)', 'Cập nhật Đơn vị', `Chuyển ${target.full_name} sang ${department}`, 'admin');
         }
         saveDb(db);
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ db }));
+      res.end(JSON.stringify({ ok: true, db }));
     });
     return;
   }
