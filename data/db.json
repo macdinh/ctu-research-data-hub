@@ -2,6 +2,8 @@
   "users": [
     {
       "id": "usr-student-1",
+      "username": "B2110942",
+      "password": "123",
       "email": "khoab2110942@student.ctu.edu.vn",
       "full_name": "Nguyễn Minh Khoa",
       "student_or_staff_id": "B2110942",
@@ -10,10 +12,13 @@
       "contribution_points": 65,
       "uploads_count": 2,
       "downloads_count": 4,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "is_locked": false
     },
     {
       "id": "usr-student-2",
+      "username": "B2204115",
+      "password": "123",
       "email": "ngocb2204115@student.ctu.edu.vn",
       "full_name": "Lê Thảo Ngọc",
       "student_or_staff_id": "B2204115",
@@ -22,10 +27,13 @@
       "contribution_points": 95,
       "uploads_count": 3,
       "downloads_count": 2,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "is_locked": false
     },
     {
       "id": "usr-lecturer-1",
+      "username": "CB00241",
+      "password": "123",
       "email": "tvhai@ctu.edu.vn",
       "full_name": "TS. Trần Văn Hải",
       "student_or_staff_id": "CB00241",
@@ -65,8 +73,8 @@
   },
   "audit_logs": [
     {
-      "id": "log-1793944873969-90",
-      "timestamp": "2026-11-06T06:01:13.969Z",
+      "id": "log-1793946385055-59",
+      "timestamp": "2026-11-06T06:26:25.055Z",
       "actor": "Quản trị viên (Admin)",
       "action": "Khôi phục Dữ liệu Gốc",
       "detail": "Đã đặt lại toàn bộ CSDL về trạng thái mẫu chuẩn ban đầu.",

@@ -67,27 +67,38 @@
 
       <!-- Account & Actions -->
       <div class="flex items-center gap-2.5">
-        <!-- User Switcher / Current Account -->
-        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
-          <div class="text-right hidden md:block">
-            <div class="flex items-center justify-end gap-1.5">
-              <span id="current-user-name" class="text-xs font-semibold text-slate-800">Nguyễn Minh Khoa</span>
-              <span id="current-user-role-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">SV</span>
-            </div>
-            <div class="text-[11px] text-slate-500 flex items-center justify-end gap-2">
-              <span id="current-user-id">B2110942</span>
-              <span>•</span>
-              <span class="font-semibold text-amber-600"><span id="current-user-points">65</span> Credits</span>
-            </div>
-          </div>
-          <select id="user-select" onchange="handleUserSwitch(this.value)" class="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Chuyển đổi tài khoản">
-          </select>
-          <button onclick="openAdminLoginModal()" id="header-admin-login-btn" class="text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition flex items-center gap-1" title="Đăng nhập Tài khoản Quản trị Cao nhất (admin)">
-            <span>👑 Admin</span>
+        <!-- Khi CHƯA đăng nhập (Guest View) -->
+        <div id="header-guest-box" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+          <span class="text-xs text-slate-500 hidden sm:inline px-1">Chưa đăng nhập</span>
+          <button onclick="openLoginModal()" class="text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
+            <span>🔐 Đăng nhập</span>
           </button>
-          <button onclick="openRegisterModal()" class="text-xs font-medium text-blue-600 hover:text-blue-800 px-1.5 py-1 rounded hover:bg-blue-50 transition" title="Đăng ký tài khoản mới">
+          <button onclick="openRegisterModal()" class="text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1.5 rounded-lg transition">
             + Đăng ký
           </button>
+        </div>
+
+        <!-- Khi ĐÃ đăng nhập (Authenticated Member / Admin View) -->
+        <div id="header-user-box" class="hidden flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+          <div class="text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <span id="current-user-name" class="text-xs font-bold text-slate-800"></span>
+              <span id="current-user-role-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold"></span>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center justify-end gap-2">
+              <span id="current-user-id" class="font-mono"></span>
+              <span>•</span>
+              <span class="font-semibold text-amber-600"><span id="current-user-points">0</span> Credits</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 border-l border-slate-200 pl-2">
+            <button onclick="openLoginModal()" class="text-[11px] font-semibold text-slate-700 hover:text-blue-700 bg-white hover:bg-blue-50 border border-slate-200 px-2 py-1 rounded-lg transition" title="Đăng nhập tài khoản khác">
+              Đổi TK
+            </button>
+            <button onclick="handleLogout()" class="text-[11px] font-semibold text-rose-700 hover:bg-rose-100 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg transition" title="Đăng xuất khỏi hệ thống">
+              Đăng xuất
+            </button>
+          </div>
         </div>
 
         <button onclick="openUploadModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5">
@@ -218,7 +229,7 @@
             </p>
           </div>
           <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 px-3.5 py-2 rounded-xl">
-            Mẹo: Bạn có thể chuyển sang tài khoản <strong>TS. Trần Văn Hải (Giảng viên)</strong> ở góc trên bên phải để duyệt bài.
+            Gợi ý: Đăng nhập tài khoản Giảng viên (Tên ĐN: <strong>CB00241</strong> / Mật khẩu: <strong>123</strong>) hoặc <strong>admin</strong> để phê duyệt bài.
           </div>
         </div>
 
@@ -707,102 +718,138 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Mã số SV / CB *</label>
-            <input id="reg-id" required type="text" placeholder="B2201234" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            <label class="block font-semibold text-slate-700 mb-1">Mã số SV / CB (Tên ĐN) *</label>
+            <input id="reg-id" required type="text" placeholder="B2201234" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Vai trò</label>
+            <label class="block font-semibold text-slate-700 mb-1">Mật khẩu đăng nhập *</label>
+            <input id="reg-password" required type="password" value="123" placeholder="Nhập mật khẩu..." class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Vai trò đăng ký</label>
             <select id="reg-role" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
-              <option value="student">Sinh viên</option>
+              <option value="student">Sinh viên Nghiên cứu</option>
               <option value="lecturer">Giảng viên / Reviewer</option>
-              <option value="admin">Quản trị viên (Admin)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc (CTU) *</label>
+            <select id="reg-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
+                <option value="Trường Bách khoa">Trường Bách khoa</option>
+                <option value="Trường Công nghệ Thông tin và Truyền thông" selected>Trường Công nghệ Thông tin và Truyền thông</option>
+                <option value="Trường Kinh tế">Trường Kinh tế</option>
+                <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
+                <option value="Trường Thủy sản">Trường Thủy sản</option>
+                <option value="Trường Sư phạm">Trường Sư phạm</option>
+                <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
+              </optgroup>
+              <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
+                <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
+                <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
+                <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
+                <option value="Khoa Luật">Khoa Luật</option>
+                <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
+                <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
+                <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
+                <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
+                <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
+                <option value="Khoa Sau đại học">Khoa Sau đại học</option>
+              </optgroup>
+              <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
+                <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
+                <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
+                <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
+              </optgroup>
             </select>
           </div>
         </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc (Trường / Khoa / Viện) *</label>
-          <select id="reg-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
-            <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
-              <option value="Trường Bách khoa">Trường Bách khoa</option>
-              <option value="Trường Công nghệ Thông tin và Truyền thông" selected>Trường Công nghệ Thông tin và Truyền thông</option>
-              <option value="Trường Kinh tế">Trường Kinh tế</option>
-              <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
-              <option value="Trường Thủy sản">Trường Thủy sản</option>
-              <option value="Trường Sư phạm">Trường Sư phạm</option>
-              <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
-            </optgroup>
-            <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
-              <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
-              <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
-              <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
-              <option value="Khoa Luật">Khoa Luật</option>
-              <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
-              <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
-              <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
-              <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
-              <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
-              <option value="Khoa Sau đại học">Khoa Sau đại học</option>
-            </optgroup>
-            <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
-              <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
-              <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
-              <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="pt-3 flex justify-end gap-2">
-          <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">Đóng</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Tạo tài khoản (+50 Credits)</button>
+        <div id="reg-error-box" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
+        <div class="pt-3 flex items-center justify-between gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeRegisterModal(); openLoginModal();" class="text-xs font-semibold text-blue-600 hover:underline">
+            Đã có tài khoản? Đăng nhập
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">Đóng</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Tạo tài khoản (+50 Credits)</button>
+          </div>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 4: SUPER ADMIN LOGIN (XÁC THỰC TÀI KHOẢN QUẢN TRỊ CAO NHẤT) -->
-  <div id="admin-login-modal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <!-- MODAL 4: UNIFIED SYSTEM LOGIN MODAL (SINH VIÊN / GIẢNG VIÊN / SUPER ADMIN) -->
+  <div id="admin-login-modal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+      <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-          <span class="text-xl">👑</span>
+          <span class="text-xl">🔐</span>
           <div>
-            <h3 class="text-base font-bold">Đăng nhập Quản trị Hệ thống Tối cao</h3>
-            <p class="text-[11px] text-slate-300">Tài khoản Quản trị Cao nhất (Super Admin / Root)</p>
+            <h3 class="text-base font-bold">Đăng nhập Hệ thống CTU Data Hub</h3>
+            <p class="text-[11px] text-slate-300">Xác thực Tài khoản Thành viên &amp; Quản trị viên Hệ thống</p>
           </div>
         </div>
         <button onclick="closeAdminLoginModal()" class="text-slate-300 hover:text-white text-2xl leading-none px-2">&times;</button>
       </div>
+
       <form onsubmit="handleAdminLoginSubmit(event)" class="p-6 space-y-4 text-xs sm:text-sm">
-        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
-          <div class="font-bold flex items-center gap-1.5">
-            <span>🛡️ Bảo mật Quản trị viên Cao nhất (Root Admin)</span>
-          </div>
-          <div>Vui lòng xác thực tài khoản Quản trị cao nhất của hệ thống để truy cập toàn quyền điều khiển.</div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Tên đăng nhập (Mã số SV/CB, Username hoặc Email) *</label>
+          <input id="admin-login-username" required type="text" placeholder="VD: B2110942, CB00241, email hoặc admin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
         </div>
 
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">Tên đăng nhập Quản trị *</label>
-          <input id="admin-login-username" required type="text" value="admin" placeholder="admin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600" />
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Mật khẩu Quản trị *</label>
+          <label class="block font-semibold text-slate-700 mb-1">Mật khẩu *</label>
           <div class="relative">
-            <input id="admin-login-password" required type="password" placeholder="Nhập mật khẩu quản trị..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 pr-20" />
+            <input id="admin-login-password" required type="password" placeholder="Nhập mật khẩu của bạn..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 pr-20" />
             <button type="button" onclick="toggleAdminPasswordVisibility()" id="admin-pwd-toggle" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-500 hover:text-slate-800 px-2 py-1 rounded">
               Hiện
             </button>
           </div>
         </div>
 
+        <!-- Bảng Gợi ý Tài khoản Demo (Mật khẩu mặc định: 123) -->
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700">💡 Tài khoản Demo Thử nghiệm (Mật khẩu: <code class="text-blue-700 font-bold">123</code>)</span>
+            <span class="text-[10px] text-slate-400">Bấm để điền nhanh</span>
+          </div>
+          <div class="grid grid-cols-1 gap-1.5">
+            <button type="button" onclick="fillDemoLogin('B2110942', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
+              <span>👨‍🎓 <strong>Nguyễn Minh Khoa</strong> (SV Trường CNTT&amp;TT)</span>
+              <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2110942</strong> | MK: <strong>123</strong></span>
+            </button>
+            <button type="button" onclick="fillDemoLogin('B2204115', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
+              <span>👩‍🎓 <strong>Lê Thảo Ngọc</strong> (SV Trường Nông nghiệp)</span>
+              <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2204115</strong> | MK: <strong>123</strong></span>
+            </button>
+            <button type="button" onclick="fillDemoLogin('CB00241', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 flex items-center justify-between transition">
+              <span>👨‍🏫 <strong>TS. Trần Văn Hải</strong> (Giảng viên duyệt bài)</span>
+              <span class="font-mono text-[11px] text-indigo-700">TK: <strong>CB00241</strong> | MK: <strong>123</strong></span>
+            </button>
+            <button type="button" onclick="fillDemoLogin('admin', '')" class="text-left px-2.5 py-1.5 rounded-lg bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200 flex items-center justify-between transition">
+              <span>👑 <strong>Quản trị Cao nhất (Super Admin)</strong></span>
+              <span class="font-mono text-[11px] text-amber-900">TK: <strong>admin</strong> | <em>Nhập mật khẩu Root</em></span>
+            </button>
+          </div>
+        </div>
+
         <div id="admin-login-error" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
 
-        <div class="pt-2 flex items-center justify-between gap-2">
-          <button type="button" onclick="closeAdminLoginModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-            Hủy
+        <div class="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeAdminLoginModal(); openRegisterModal();" class="text-xs font-semibold text-blue-600 hover:underline">
+            + Đăng ký tài khoản mới
           </button>
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
-            <span>🔐 Xác thực &amp; Mở Quản trị Hệ thống</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeAdminLoginModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              Hủy
+            </button>
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
+              <span>🔐 Đăng nhập</span>
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -857,7 +904,14 @@
     async function initApp() {
       const res = await fetch('/api/state');
       appState = await res.json();
-      currentUser = appState.users[0];
+      const savedId = localStorage.getItem('ctu_hub_session_user_id');
+      if (savedId) {
+        const found = appState.users.find(u => u.id === savedId && !u.is_locked);
+        if (found) {
+          currentUser = found;
+          isSuperAdminAuthenticated = Boolean(found.is_super_admin || found.username === 'admin' || found.role === 'admin');
+        }
+      }
       syncHeaderUI();
       renderDatasets();
       renderReviewQueue();
@@ -872,44 +926,33 @@
     }
 
     function syncHeaderUI() {
-      const select = document.getElementById('user-select');
-      select.innerHTML = appState.users.map(u => {
-        const isRoot = u.is_super_admin || u.username === 'admin' || u.id === 'usr-admin-1';
-        const label = isRoot
-          ? `👑 ${u.username || 'admin'} — ${u.full_name} (${u.contribution_points} Cr)`
-          : `${u.full_name} (${getRoleLabel(u.role)} - ${u.contribution_points} Cr)`;
-        return `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>${label}</option>`;
-      }).join('');
+      const guestBox = document.getElementById('header-guest-box');
+      const userBox = document.getElementById('header-user-box');
 
-      document.getElementById('current-user-name').textContent = currentUser.full_name;
-      document.getElementById('current-user-id').textContent = currentUser.username ? `${currentUser.username} (${currentUser.student_or_staff_id})` : currentUser.student_or_staff_id;
-      document.getElementById('current-user-points').textContent = currentUser.contribution_points;
-
-      const roleBadge = document.getElementById('current-user-role-badge');
-      const adminBtn = document.getElementById('header-admin-login-btn');
-      if (currentUser.is_super_admin || currentUser.username === 'admin') {
-        roleBadge.textContent = '👑 Quản trị Cao nhất';
-        roleBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold';
-        if (adminBtn) {
-          adminBtn.innerHTML = '<span>👑 Root Admin (Đã xác thực)</span>';
-          adminBtn.className = 'text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg transition flex items-center gap-1';
-        }
-      } else if (currentUser.role === 'admin') {
-        roleBadge.textContent = 'Quản trị viên';
-        roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold';
-      } else if (currentUser.role === 'lecturer') {
-        roleBadge.textContent = 'Giảng viên';
-        roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
-        if (adminBtn) {
-          adminBtn.innerHTML = '<span>👑 Đăng nhập Admin</span>';
-          adminBtn.className = 'text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition flex items-center gap-1';
-        }
+      if (!currentUser) {
+        if (guestBox) guestBox.classList.remove('hidden');
+        if (userBox) userBox.classList.add('hidden');
       } else {
-        roleBadge.textContent = 'Sinh viên';
-        roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
-        if (adminBtn) {
-          adminBtn.innerHTML = '<span>👑 Đăng nhập Admin</span>';
-          adminBtn.className = 'text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg transition flex items-center gap-1';
+        if (guestBox) guestBox.classList.add('hidden');
+        if (userBox) userBox.classList.remove('hidden');
+
+        document.getElementById('current-user-name').textContent = currentUser.full_name;
+        document.getElementById('current-user-id').textContent = currentUser.username || currentUser.student_or_staff_id;
+        document.getElementById('current-user-points').textContent = currentUser.contribution_points;
+
+        const roleBadge = document.getElementById('current-user-role-badge');
+        if (currentUser.is_super_admin || currentUser.username === 'admin') {
+          roleBadge.textContent = '👑 Quản trị Cao nhất';
+          roleBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+        } else if (currentUser.role === 'admin') {
+          roleBadge.textContent = 'Quản trị viên';
+          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold';
+        } else if (currentUser.role === 'lecturer') {
+          roleBadge.textContent = 'Giảng viên';
+          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
+        } else {
+          roleBadge.textContent = 'Sinh viên';
+          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
         }
       }
 
@@ -922,34 +965,41 @@
       document.getElementById('pending-badge').textContent = pending.length;
     }
 
-    function handleUserSwitch(userId) {
-      const found = appState.users.find(u => u.id === userId);
-      if (!found) return;
-      const isRoot = found.is_super_admin || found.username === 'admin' || found.id === 'usr-admin-1';
-      if (isRoot && !isSuperAdminAuthenticated) {
-        // Giữ nguyên dropdown ở user hiện tại và yêu cầu nhập mật khẩu Quản trị cao nhất
-        document.getElementById('user-select').value = currentUser.id;
-        openAdminLoginModal();
-        return;
-      }
-      currentUser = found;
-      syncHeaderUI();
-      renderReviewQueue();
-      renderAdminDashboard();
-      showToast(`Đã chuyển sang tài khoản <strong>${currentUser.full_name}</strong> (${currentUser.contribution_points} Credits)`);
+    function openLoginModal(prefillUsername = '') {
+      const errBox = document.getElementById('admin-login-error');
+      if (errBox) errBox.classList.add('hidden');
+      const uInput = document.getElementById('admin-login-username');
+      const pInput = document.getElementById('admin-login-password');
+      uInput.value = prefillUsername || '';
+      pInput.value = '';
+      document.getElementById('admin-login-modal').classList.remove('hidden');
+      setTimeout(() => (prefillUsername ? pInput : uInput).focus(), 80);
     }
 
     function openAdminLoginModal() {
-      const errBox = document.getElementById('admin-login-error');
-      if (errBox) errBox.classList.add('hidden');
-      document.getElementById('admin-login-username').value = 'admin';
-      document.getElementById('admin-login-password').value = '';
-      document.getElementById('admin-login-modal').classList.remove('hidden');
-      setTimeout(() => document.getElementById('admin-login-password').focus(), 80);
+      openLoginModal('admin');
     }
 
     function closeAdminLoginModal() {
       document.getElementById('admin-login-modal').classList.add('hidden');
+    }
+
+    function fillDemoLogin(username, pwd) {
+      const errBox = document.getElementById('admin-login-error');
+      if (errBox) errBox.classList.add('hidden');
+      document.getElementById('admin-login-username').value = username;
+      document.getElementById('admin-login-password').value = pwd;
+      document.getElementById('admin-login-password').focus();
+    }
+
+    function handleLogout() {
+      const oldName = currentUser?.full_name || 'Tài khoản';
+      currentUser = null;
+      isSuperAdminAuthenticated = false;
+      localStorage.removeItem('ctu_hub_session_user_id');
+      syncHeaderUI();
+      switchMainTab('explore');
+      showToast(`👋 Đã đăng xuất khỏi tài khoản <strong>${oldName}</strong>.`);
     }
 
     function toggleAdminPasswordVisibility() {
@@ -978,26 +1028,40 @@
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
-        errBox.textContent = data.error || 'Sai tên đăng nhập hoặc mật khẩu Quản trị viên!';
+        errBox.textContent = data.error || 'Sai tên đăng nhập hoặc mật khẩu!';
         errBox.classList.remove('hidden');
         return;
       }
 
-      isSuperAdminAuthenticated = true;
       appState = data.db;
       currentUser = data.user;
+      const isRoot = Boolean(currentUser.is_super_admin || currentUser.username === 'admin' || currentUser.role === 'admin');
+      isSuperAdminAuthenticated = isRoot;
+      localStorage.setItem('ctu_hub_session_user_id', currentUser.id);
+
       closeAdminLoginModal();
       syncHeaderUI();
       renderReviewQueue();
       renderAdminDashboard();
-      switchMainTab('admin');
-      showToast('👑 Đã xác thực thành công tài khoản <strong>Quản trị viên Cao nhất (admin)</strong>!');
+
+      if (isRoot) {
+        switchMainTab('admin');
+        showToast('👑 Đã đăng nhập thành công tài khoản <strong>Quản trị viên Cao nhất (admin)</strong>!');
+      } else if (currentUser.role === 'lecturer') {
+        showToast(`👨‍🏫 Xin chào <strong>${currentUser.full_name}</strong> (Giảng viên — ${currentUser.contribution_points} Credits)!`);
+      } else {
+        showToast(`🎓 Xin chào <strong>${currentUser.full_name}</strong> (${currentUser.student_or_staff_id} — ${currentUser.contribution_points} Credits)!`);
+      }
     }
 
     function switchMainTab(tab) {
-      if (tab === 'admin' && !isSuperAdminAuthenticated && !(currentUser?.is_super_admin || currentUser?.username === 'admin')) {
-        openAdminLoginModal();
-        return;
+      if (tab === 'admin') {
+        const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.is_super_admin || currentUser.username === 'admin');
+        if (!isAdmin) {
+          showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Quản trị viên (admin)</strong> để truy cập Quản trị Hệ thống!', 'error');
+          openLoginModal('admin');
+          return;
+        }
       }
       ['explore', 'review', 'admin', 'architecture'].forEach(t => {
         document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
@@ -1340,6 +1404,11 @@
 
     async function handleDownloadDataset() {
       if (!selectedDataset) return;
+      if (!currentUser) {
+        showToast('🔐 Vui lòng đăng nhập tài khoản để tải xuống bộ dữ liệu!', 'error');
+        openLoginModal();
+        return;
+      }
       const res = await fetch('/api/datasets/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1352,7 +1421,7 @@
       const data = await res.json();
       if (data.db) {
         appState = data.db;
-        currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+        currentUser = appState.users.find(u => u.id === currentUser.id) || currentUser;
         selectedDataset = appState.datasets.find(d => d.id === selectedDataset.id);
         syncHeaderUI();
         renderDatasets();
@@ -1423,6 +1492,11 @@
     }
 
     function openUploadModal() {
+      if (!currentUser) {
+        showToast('🔐 Vui lòng đăng nhập tài khoản trước khi đóng góp bộ dữ liệu!', 'error');
+        openLoginModal();
+        return;
+      }
       parsedUploadFile = null;
       document.getElementById('up-file-parse-info').classList.add('hidden');
       const extUrlEl = document.getElementById('up-external-url');
@@ -1544,6 +1618,11 @@
     }
 
     async function handleReviewAction(datasetId, action) {
+      if (!currentUser || (currentUser.role !== 'lecturer' && currentUser.role !== 'admin')) {
+        showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Giảng viên (CB00241 / mật khẩu: 123)</strong> hoặc <strong>Admin</strong> để phê duyệt bộ dữ liệu!', 'error');
+        openLoginModal('CB00241');
+        return;
+      }
       const res = await fetch('/api/datasets/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1551,7 +1630,7 @@
       });
       const data = await res.json();
       appState = data.db;
-      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      currentUser = appState.users.find(u => u.id === currentUser.id) || currentUser;
       syncHeaderUI();
       renderDatasets();
       renderReviewQueue();
@@ -1615,7 +1694,7 @@
               ${u.is_locked ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">Đã khóa</span>' : ''}
             </div>
             <div class="text-[11px] text-slate-500 font-mono">
-              ${u.username ? `<strong class="text-indigo-700">Tên đăng nhập: ${u.username}</strong> • ` : ''}${u.email}
+              <strong class="text-indigo-700">TK: ${u.username || u.student_or_staff_id}</strong> • MK: <strong class="text-slate-700">${isRoot ? '•••••••• (Root)' : (u.password || '123')}</strong> • ${u.email}
             </div>
           </td>
           <td class="py-3 px-3 font-mono font-semibold text-slate-700">${u.student_or_staff_id}</td>
@@ -1835,7 +1914,9 @@
       const res = await fetch('/api/admin/reset', { method: 'POST' });
       const data = await res.json();
       appState = data.db;
-      currentUser = appState.users[0];
+      if (currentUser) {
+        currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users.find(u => u.username === 'admin');
+      }
       syncHeaderUI();
       renderDatasets();
       renderReviewQueue();
@@ -1844,6 +1925,8 @@
     }
 
     function openRegisterModal() {
+      const errBox = document.getElementById('reg-error-box');
+      if (errBox) errBox.classList.add('hidden');
       document.getElementById('register-modal').classList.remove('hidden');
     }
 
@@ -1853,10 +1936,14 @@
 
     async function handleRegisterSubmit(e) {
       e.preventDefault();
+      const errBox = document.getElementById('reg-error-box');
+      if (errBox) errBox.classList.add('hidden');
+
       const payload = {
         full_name: document.getElementById('reg-name').value.trim(),
         email: document.getElementById('reg-email').value.trim(),
         student_or_staff_id: document.getElementById('reg-id').value.trim(),
+        password: document.getElementById('reg-password').value || '123',
         role: document.getElementById('reg-role').value,
         department: document.getElementById('reg-dept').value.trim()
       };
@@ -1866,12 +1953,21 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        if (errBox) {
+          errBox.textContent = data.error || 'Không thể đăng ký tài khoản!';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
       appState = data.db;
       currentUser = data.user;
+      isSuperAdminAuthenticated = false;
+      localStorage.setItem('ctu_hub_session_user_id', currentUser.id);
       closeRegisterModal();
       syncHeaderUI();
       renderAdminDashboard();
-      showToast(`🎉 Chào mừng <strong>${currentUser.full_name}</strong>! Tài khoản của bạn đã được khởi tạo.`);
+      showToast(`🎉 Chào mừng <strong>${currentUser.full_name}</strong>! Tài khoản (${currentUser.username}) đã được tạo và tự động đăng nhập.`);
     }
 
     initApp();

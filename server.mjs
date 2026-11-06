@@ -16,6 +16,8 @@ const initialDb = {
   users: [
     {
       id: 'usr-student-1',
+      username: 'B2110942',
+      password: '123',
       email: 'khoab2110942@student.ctu.edu.vn',
       full_name: 'Nguyễn Minh Khoa',
       student_or_staff_id: 'B2110942',
@@ -24,10 +26,13 @@ const initialDb = {
       contribution_points: 65,
       uploads_count: 2,
       downloads_count: 4,
-      is_verified_edu: true
+      is_verified_edu: true,
+      is_locked: false
     },
     {
       id: 'usr-student-2',
+      username: 'B2204115',
+      password: '123',
       email: 'ngocb2204115@student.ctu.edu.vn',
       full_name: 'Lê Thảo Ngọc',
       student_or_staff_id: 'B2204115',
@@ -36,10 +41,13 @@ const initialDb = {
       contribution_points: 95,
       uploads_count: 3,
       downloads_count: 2,
-      is_verified_edu: true
+      is_verified_edu: true,
+      is_locked: false
     },
     {
       id: 'usr-lecturer-1',
+      username: 'CB00241',
+      password: '123',
       email: 'tvhai@ctu.edu.vn',
       full_name: 'TS. Trần Văn Hải',
       student_or_staff_id: 'CB00241',
@@ -423,6 +431,8 @@ function normalizeParsedDb(parsed) {
     return {
       is_locked: false,
       is_super_admin: false,
+      username: u.username || u.student_or_staff_id || (u.email ? u.email.split('@')[0] : 'user'),
+      password: u.password || '123',
       ...u,
       department: normalizeCtuUnitName(u.department)
     };
@@ -530,34 +540,56 @@ export function requestHandler(req, res) {
     return;
   }
 
-  // API: Đăng nhập xác thực Tài khoản Quản trị Cao nhất (admin / 123Ctu?!)
+  // API: Đăng nhập xác thực Tài khoản Thành viên & Quản trị viên
   if (url.pathname === '/api/login' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
       const payload = JSON.parse(body || '{}');
-      const usernameInput = (payload.username || '').trim();
+      const usernameInput = (payload.username || '').trim().toLowerCase();
       const passwordInput = payload.password || '';
       const db = loadDb();
 
-      const matched = db.users.find(u =>
-        ((u.username && u.username.toLowerCase() === usernameInput.toLowerCase()) ||
-         (u.email && u.email.toLowerCase() === usernameInput.toLowerCase())) &&
-        (u.password === passwordInput || (u.username === 'admin' && passwordInput === '123Ctu?!'))
-      );
+      const matched = db.users.find(u => {
+        const uname = (u.username || '').toLowerCase();
+        const sid = (u.student_or_staff_id || '').toLowerCase();
+        const mail = (u.email || '').toLowerCase();
+        const mailPrefix = mail.split('@')[0];
+        const isIdentifierMatch =
+          uname === usernameInput ||
+          sid === usernameInput ||
+          mail === usernameInput ||
+          (mailPrefix && mailPrefix === usernameInput);
+
+        if (!isIdentifierMatch) return false;
+        const isRoot = u.is_super_admin || u.username === 'admin' || u.id === 'usr-admin-1';
+        if (isRoot) {
+          return passwordInput === '123Ctu?!' || u.password === passwordInput;
+        }
+        return (u.password || '123') === passwordInput;
+      });
 
       if (!matched) {
         res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ ok: false, error: 'Sai tên đăng nhập hoặc mật khẩu Quản trị viên!' }));
+        res.end(JSON.stringify({ ok: false, error: 'Sai tên đăng nhập (Mã SV/CB/Email) hoặc mật khẩu!' }));
         return;
       }
 
+      if (matched.is_locked) {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Tài khoản này đang bị tạm khóa bởi Quản trị viên hệ thống!' }));
+        return;
+      }
+
+      const isRoot = matched.is_super_admin || matched.username === 'admin' || matched.id === 'usr-admin-1';
       addAuditLog(
         db,
         `${matched.full_name} (${matched.username || matched.student_or_staff_id})`,
-        'Đăng nhập Quản trị Tối cao',
-        'Xác thực thành công tài khoản Quản trị viên Cao nhất (Super Admin) của hệ thống.',
-        'admin'
+        isRoot ? 'Đăng nhập Quản trị Tối cao' : 'Đăng nhập Hệ thống',
+        isRoot
+          ? 'Xác thực thành công tài khoản Quản trị viên Cao nhất (Super Admin).'
+          : `Đăng nhập thành công với vai trò [${matched.role === 'lecturer' ? 'Giảng viên' : matched.role === 'admin' ? 'Admin' : 'Sinh viên'}] — Đơn vị: ${matched.department}`,
+        isRoot ? 'admin' : 'user'
       );
       saveDb(db);
 
@@ -575,28 +607,51 @@ export function requestHandler(req, res) {
       const payload = JSON.parse(body || '{}');
       const db = loadDb();
       const email = (payload.email || '').trim().toLowerCase();
-      let existing = db.users.find(u => u.email.toLowerCase() === email);
-      if (!existing) {
-        const bonus = Number(db.settings?.signup_bonus ?? 50);
-        existing = {
-          id: 'usr-' + Date.now(),
-          email,
-          full_name: payload.full_name || 'Sinh viên Nghiên cứu',
-          student_or_staff_id: payload.student_or_staff_id || 'B2300001',
-          department: payload.department || 'Trường Công nghệ Thông tin và Truyền thông',
-          role: payload.role || 'student',
-          contribution_points: bonus,
-          uploads_count: 0,
-          downloads_count: 0,
-          is_verified_edu: email.endsWith('.edu.vn'),
-          is_locked: false
-        };
-        db.users.push(existing);
-        addAuditLog(db, `${existing.full_name} (${existing.student_or_staff_id})`, 'Đăng ký Tài khoản mới', `Đơn vị: ${existing.department} (+${bonus} Credits khởi đầu)`, 'user');
-        saveDb(db);
+      const staffOrStudentId = (payload.student_or_staff_id || 'B2300001').trim();
+      const username = (payload.username || staffOrStudentId || email.split('@')[0]).trim();
+
+      if (username.toLowerCase() === 'admin' || email === 'admin@ctu.edu.vn') {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Tên đăng nhập [admin] thuộc quyền Quản trị cao nhất, không thể đăng ký mới!' }));
+        return;
       }
+
+      let existing = db.users.find(u =>
+        u.email.toLowerCase() === email ||
+        (u.student_or_staff_id && u.student_or_staff_id.toLowerCase() === staffOrStudentId.toLowerCase()) ||
+        (u.username && u.username.toLowerCase() === username.toLowerCase())
+      );
+
+      if (existing) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Email hoặc Mã số SV/CB này đã được đăng ký! Vui lòng chuyển sang Đăng nhập.' }));
+        return;
+      }
+
+      const bonus = Number(db.settings?.signup_bonus ?? 50);
+      const safeRole = payload.role === 'lecturer' ? 'lecturer' : 'student';
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        username,
+        password: payload.password || '123',
+        email,
+        full_name: payload.full_name || 'Sinh viên Nghiên cứu',
+        student_or_staff_id: staffOrStudentId,
+        department: payload.department || 'Trường Công nghệ Thông tin và Truyền thông',
+        role: safeRole,
+        is_super_admin: false,
+        contribution_points: bonus,
+        uploads_count: 0,
+        downloads_count: 0,
+        is_verified_edu: email.endsWith('.edu.vn'),
+        is_locked: false
+      };
+      db.users.push(newUser);
+      addAuditLog(db, `${newUser.full_name} (${newUser.student_or_staff_id})`, 'Đăng ký Tài khoản mới', `Đơn vị: ${newUser.department} (+${bonus} Credits khởi đầu)`, 'user');
+      saveDb(db);
+
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ user: existing, db }));
+      res.end(JSON.stringify({ ok: true, user: newUser, db }));
     });
     return;
   }
