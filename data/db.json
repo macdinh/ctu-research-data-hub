@@ -157,6 +157,7 @@
       "body_summary": "Chúc mừng Nguyễn Minh Khoa! Địa chỉ email @student.ctu.edu.vn của bạn đã được xác thực tự động. Tài khoản nhóm Sinh viên ĐH Cần Thơ đã trở thành thành viên chính thức và được cộng +50 Credits khởi đầu."
     }
   ],
+  "site_visits": 1280,
   "settings": {
     "signup_bonus": 50,
     "upload_reward": 30,
@@ -168,8 +169,8 @@
   },
   "audit_logs": [
     {
-      "id": "log-1793949867948-23",
-      "timestamp": "2026-11-06T07:24:27.948Z",
+      "id": "log-1793950393571-5",
+      "timestamp": "2026-11-06T07:33:13.571Z",
       "actor": "Quản trị viên (Admin)",
       "action": "Khôi phục Dữ liệu Gốc",
       "detail": "Đã đặt lại toàn bộ CSDL về trạng thái mẫu chuẩn ban đầu.",

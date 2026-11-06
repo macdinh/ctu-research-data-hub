@@ -171,6 +171,7 @@ const initialDb = {
       body_summary: 'Chúc mừng Nguyễn Minh Khoa! Địa chỉ email @student.ctu.edu.vn của bạn đã được xác thực tự động. Tài khoản nhóm Sinh viên ĐH Cần Thơ đã trở thành thành viên chính thức và được cộng +50 Credits khởi đầu.'
     }
   ],
+  site_visits: 1280,
   settings: {
     signup_bonus: 50,
     upload_reward: 30,
@@ -702,9 +703,11 @@ export function requestHandler(req, res) {
   const host = req.headers.host || 'localhost:3000';
   const url = new URL(req.url, `http://${host}`);
 
-  // API: Lấy toàn bộ dữ liệu khởi tạo
+  // API: Lấy toàn bộ dữ liệu khởi tạo & ghi nhận thêm số lượt truy cập
   if (url.pathname === '/api/state' && req.method === 'GET') {
     const db = loadDb();
+    db.site_visits = (Number(db.site_visits) || 1280) + 1;
+    saveDb(db);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(db));
     return;

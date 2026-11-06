@@ -550,6 +550,46 @@
 
   </main>
 
+  <!-- FOOTER: BẢN QUYỀN KHOA TÀI CHÍNH - NGÂN HÀNG (CTU/CSE) & THỐNG KÊ SỐ LƯỢT TRUY CẬP -->
+  <footer class="mt-12 border-t border-slate-200 bg-white/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Bản quyền chính thức -->
+        <div class="flex items-center gap-3 text-center md:text-left">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-900 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">
+            CTU
+          </div>
+          <div>
+            <div class="text-xs sm:text-sm font-bold text-slate-900">
+              &copy; 2026 CTU/CSE - Khoa Tài Chính - Ngân hàng
+            </div>
+            <div class="text-[11px] text-slate-500">
+              Cổng Dữ liệu Khoa học Mở phục vụ Nghiên cứu &amp; Học thuật — Trường Kinh tế, Đại học Cần Thơ
+            </div>
+          </div>
+        </div>
+
+        <!-- Bộ đếm Số lượt truy cập & Thống kê Hệ thống -->
+        <div class="flex flex-wrap items-center justify-center gap-2.5 text-xs">
+          <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50/90 border border-blue-200 text-slate-800 shadow-sm">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span class="font-medium text-slate-600">Số lượt truy cập:</span>
+            <span id="footer-visit-count" class="font-mono font-extrabold text-blue-700 text-sm tracking-tight">1.281</span>
+          </div>
+
+          <div class="hidden sm:inline-flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+            <span>📊 Dữ liệu công bố: <strong id="footer-total-datasets" class="font-mono text-slate-900">4</strong></span>
+            <span class="text-slate-300">|</span>
+            <span>👥 Thành viên: <strong id="footer-total-members" class="font-mono text-slate-900">6</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
   <!-- MODAL 1: DATASET DETAIL, INTERACTIVE PREVIEW & CITATION -->
   <div id="dataset-modal" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
@@ -1114,6 +1154,19 @@
       document.getElementById('stat-total-datasets').textContent = published.length;
       document.getElementById('stat-total-downloads').textContent = totalDownloads.toLocaleString('vi-VN');
       document.getElementById('pending-badge').textContent = pending.length;
+
+      const visitEl = document.getElementById('footer-visit-count');
+      if (visitEl) {
+        visitEl.textContent = Number(appState.site_visits || 1281).toLocaleString('vi-VN');
+      }
+      const footerDsEl = document.getElementById('footer-total-datasets');
+      if (footerDsEl) {
+        footerDsEl.textContent = published.length.toLocaleString('vi-VN');
+      }
+      const footerMemEl = document.getElementById('footer-total-members');
+      if (footerMemEl) {
+        footerMemEl.textContent = (appState.users || []).length.toLocaleString('vi-VN');
+      }
     }
 
     function openLoginModal(prefillUsername = '') {
