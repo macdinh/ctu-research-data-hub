@@ -100,16 +100,18 @@ const initialDb = {
     },
     {
       id: 'usr-ext-1',
-      username: 'EXT001',
+      username: 'hoangnam.research@gmail.com',
       password: '123',
       email: 'hoangnam.research@gmail.com',
-      full_name: 'Đặng Hoàng Nam (Viện Nghiên cứu Đối tác)',
-      student_or_staff_id: 'EXT001',
-      department: 'Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long',
+      full_name: 'Đặng Hoàng Nam',
+      student_or_staff_id: '',
+      department: 'Viện Lúa Đồng bằng sông Cửu Long (CLRRI) — Nghiên cứu viên',
+      workplace: 'Viện Lúa Đồng bằng sông Cửu Long (CLRRI) — Nghiên cứu viên',
       role: 'external',
       member_group: 'external_member',
       member_group_label: 'Thành viên Ngoài CTU (Xác nhận 2 bước)',
       is_ctu_domain: false,
+      requires_admin_approval: true,
       email_verified: true,
       admin_approved: false,
       account_status: 'pending_admin_approval',
@@ -809,8 +811,34 @@ export function requestHandler(req, res) {
       const payload = JSON.parse(body || '{}');
       const db = loadDb();
       const email = (payload.email || '').trim().toLowerCase();
-      const staffOrStudentId = (payload.student_or_staff_id || 'B2300001').trim();
-      const username = (payload.username || staffOrStudentId || email.split('@')[0]).trim();
+
+      // Phân loại tự động theo đuôi Email (@ctu.edu.vn, @student.ctu.edu.vn, @gstudent.ctu.edu.vn, @dttx.ctu.edu.vn hoặc Ngoài CTU)
+      const emailClass = classifyCtuEmail(email);
+
+      let staffOrStudentId = '';
+      let username = '';
+      let departmentOrWorkplace = '';
+
+      if (emailClass.is_ctu_domain) {
+        staffOrStudentId = (payload.student_or_staff_id || '').trim();
+        if (!staffOrStudentId) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: false, error: 'Thành viên thuộc hệ thống ĐH Cần Thơ (ctu.edu.vn) bắt buộc phải nhập Mã số SV / CB / HV!' }));
+          return;
+        }
+        username = (payload.username || staffOrStudentId).trim();
+        departmentOrWorkplace = (payload.department || 'Trường Công nghệ Thông tin và Truyền thông').trim();
+      } else {
+        // Thành viên KHÔNG thuộc nhóm CTU: Không có Mã số SV/CB/HV, bắt buộc nhập thông tin đơn vị đang Công tác/làm việc
+        staffOrStudentId = '';
+        username = email;
+        departmentOrWorkplace = (payload.workplace || payload.department || '').trim();
+        if (!departmentOrWorkplace) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: false, error: 'Thành viên ngoài hệ thống CTU bắt buộc phải nhập thông tin Đơn vị đang Công tác / Làm việc!' }));
+          return;
+        }
+      }
 
       if (username.toLowerCase() === 'admin' || email === 'admin@ctu.edu.vn') {
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -820,7 +848,7 @@ export function requestHandler(req, res) {
 
       let existing = db.users.find(u =>
         u.email.toLowerCase() === email ||
-        (u.student_or_staff_id && u.student_or_staff_id.toLowerCase() === staffOrStudentId.toLowerCase()) ||
+        (staffOrStudentId && u.student_or_staff_id && u.student_or_staff_id.toLowerCase() === staffOrStudentId.toLowerCase()) ||
         (u.username && u.username.toLowerCase() === username.toLowerCase())
       );
 
@@ -830,8 +858,6 @@ export function requestHandler(req, res) {
         return;
       }
 
-      // Phân loại tự động theo đuôi Email (@ctu.edu.vn, @student.ctu.edu.vn, @gstudent.ctu.edu.vn, @dttx.ctu.edu.vn hoặc Ngoài CTU)
-      const emailClass = classifyCtuEmail(email);
       const otpCode = String(Math.floor(100000 + Math.random() * 900000));
 
       const newUser = {
@@ -841,11 +867,13 @@ export function requestHandler(req, res) {
         email,
         full_name: payload.full_name || 'Thành viên Nghiên cứu',
         student_or_staff_id: staffOrStudentId,
-        department: payload.department || 'Trường Công nghệ Thông tin và Truyền thông',
+        department: departmentOrWorkplace,
+        workplace: emailClass.is_ctu_domain ? '' : departmentOrWorkplace,
         role: emailClass.default_role,
         member_group: emailClass.member_group,
         member_group_label: emailClass.member_group_label,
         is_ctu_domain: emailClass.is_ctu_domain,
+        requires_admin_approval: !emailClass.is_ctu_domain,
         email_verified: false,
         admin_approved: emailClass.is_ctu_domain ? true : false,
         account_status: 'pending_email_verification',
@@ -876,7 +904,7 @@ export function requestHandler(req, res) {
           : 'Chờ Bước 1/2: Xác thực Email người dùng',
         body_summary: emailClass.is_ctu_domain
           ? `Xin chào ${newUser.full_name} (${newUser.student_or_staff_id}), Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ ghi nhận địa chỉ email ${newUser.email} thuộc nhóm [${emailClass.member_group_label}]. Vui lòng nhập mã xác thực OTP [${otpCode}] để kích hoạt tài khoản thành viên chính thức ngay lập tức (+50 Credits).`
-          : `Xin chào ${newUser.full_name}, Địa chỉ email ${newUser.email} không thuộc hệ thống tên miền ctu.edu.vn nên cần qua 02 bước xác nhận: (1) Nhập mã OTP [${otpCode}] để xác thực đúng email của bạn; (2) Sau khi xác thực email, Ban Quản trị Hệ thống sẽ xét duyệt để kích hoạt thành viên chính thức.`
+          : `Xin chào ${newUser.full_name} (Đơn vị công tác: ${departmentOrWorkplace}), Địa chỉ email ${newUser.email} không thuộc hệ thống tên miền ctu.edu.vn nên cần qua 02 bước xác nhận: (1) Nhập mã OTP [${otpCode}] để xác thực đúng email của bạn; (2) Sau khi xác thực email, Ban Quản trị Hệ thống sẽ xét duyệt để kích hoạt thành viên chính thức.`
       });
 
       addAuditLog(

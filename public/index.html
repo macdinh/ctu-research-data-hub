@@ -783,18 +783,19 @@
             </ul>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
+        <div id="reg-id-pwd-grid" class="grid grid-cols-2 gap-3">
+          <div id="reg-ctu-id-wrapper">
             <label class="block font-semibold text-slate-700 mb-1">Mã số SV / CB / HV (Tên ĐN) *</label>
             <input id="reg-id" required type="text" placeholder="VD: B2201234 / CB00512" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
-          <div>
+          <div id="reg-pwd-wrapper">
             <label class="block font-semibold text-slate-700 mb-1">Mật khẩu đăng nhập *</label>
             <input id="reg-password" required type="password" value="123" placeholder="Nhập mật khẩu..." class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
         </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc / Liên kết (ĐH Cần Thơ) *</label>
+        <!-- Đơn vị trực thuộc dành cho nhóm thuộc hệ thống ĐH Cần Thơ (ctu.edu.vn) -->
+        <div id="reg-ctu-dept-wrapper">
+          <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc (ĐH Cần Thơ) *</label>
           <select id="reg-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
             <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
               <option value="Trường Bách khoa">Trường Bách khoa</option>
@@ -823,6 +824,14 @@
               <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
             </optgroup>
           </select>
+        </div>
+        <!-- Đơn vị trực thuộc dành cho thành viên KHÔNG thuộc nhóm CTU (Bắt buộc nhập thông tin đang Công tác/làm việc) -->
+        <div id="reg-ext-workplace-wrapper" class="hidden">
+          <label class="block font-semibold text-amber-900 mb-1">Đơn vị trực thuộc (Thông tin nơi đang Công tác / Làm việc) *</label>
+          <input id="reg-workplace" type="text" placeholder="Nhập bắt buộc: Tên Cơ quan, Trường, Viện, Doanh nghiệp &amp; vị trí đang công tác/làm việc..." class="w-full px-3 py-2.5 rounded-xl border border-amber-400 bg-amber-50/40 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          <p class="text-[11px] text-amber-800 mt-1">
+            📌 Thành viên ngoài hệ thống CTU không sử dụng Mã số SV/CB/HV (đăng nhập trực tiếp bằng Email) và <strong>bắt buộc phải nhập thông tin đơn vị đang Công tác/Làm việc</strong> để Ban Quản trị xác nhận ở Bước 2.
+          </p>
         </div>
         <div id="reg-error-box" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
         <div class="pt-3 flex items-center justify-between gap-2 border-t border-slate-100">
@@ -854,7 +863,7 @@
 
       <div class="p-6 space-y-4 text-xs sm:text-sm">
         <!-- Bước tiến trình (1 bước cho CTU / 2 bước cho Ngoài CTU) -->
-        <div id="verify-workflow-banner" class="p-3.5 rounded-xl border"></div>
+        <div id="verify-step-banner" class="p-3.5 rounded-xl border"></div>
 
         <!-- Bản xem trước Thư Điện tử Trả lời Tự động (Simulated Auto-Responder Email Client) -->
         <div class="rounded-xl border border-slate-300 overflow-hidden bg-slate-50 shadow-inner">
@@ -882,6 +891,7 @@
 
         <!-- Form Nhập Mã OTP Xác thực -->
         <form id="verify-otp-form" onsubmit="handleVerifyEmailSubmit(event)" class="space-y-3 pt-1">
+          <input type="hidden" id="verify-user-id" />
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Nhập Mã xác thực OTP (6 chữ số) từ Email trên *</label>
             <div class="flex gap-2">
@@ -1847,7 +1857,7 @@
                   <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold">⏳ Bước 2: Chờ Ban Quản trị duyệt</span>
                 </div>
                 <div class="text-[11px] text-slate-600">
-                  Mã/TK: <strong class="font-mono text-indigo-700">${u.username}</strong> • Đơn vị: <strong>${u.department}</strong> • Đăng ký: ${new Date(u.created_at || Date.now()).toLocaleString('vi-VN')}
+                  Tên ĐN (Email): <strong class="font-mono text-indigo-700">${u.email}</strong> <span class="text-slate-400">(Không có Mã SV/CB/HV)</span> • Đơn vị đang công tác/làm việc: <strong class="text-amber-900">${u.workplace || u.department}</strong>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -1869,7 +1879,7 @@
         const isRoot = u.is_super_admin === true || u.username === 'admin' || u.id === 'usr-admin-1';
         let statusBadge = '';
         if (u.account_status === 'active') {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">✓ Chính thức (${u.requires_admin_approval ? '2/2 bước' : '1/1 bước'})</span>`;
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">✓ Chính thức (${(!u.is_ctu_domain || u.requires_admin_approval) ? '2/2 bước' : '1/1 bước'})</span>`;
         } else if (u.account_status === 'pending_email_verification') {
           statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-bold">⏳ Chờ Bước 1: Xác thực Email (OTP: ${u.verification_code || '---'})</span>`;
         } else if (u.account_status === 'pending_admin_approval') {
@@ -1887,9 +1897,9 @@
               ${u.is_locked ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">Đã khóa</span>' : ''}
             </div>
             <div class="text-[11px] text-slate-500 font-mono">
-              <strong class="text-indigo-700">TK: ${u.username || u.student_or_staff_id}</strong> • MK: <strong class="text-slate-700">${isRoot ? '•••••••• (Root)' : (u.password || '123')}</strong> • ${u.email}
+              <strong class="text-indigo-700">TK: ${u.username || u.email}</strong> ${u.student_or_staff_id ? `• Mã CTU: <strong>${u.student_or_staff_id}</strong>` : '• <span class="text-amber-700">Không có Mã CTU</span>'} • MK: <strong class="text-slate-700">${isRoot ? '•••••••• (Root)' : (u.password || '123')}</strong> • ${u.email}
             </div>
-            <div class="text-[11px] text-slate-500">${u.department || ''}</div>
+            <div class="text-[11px] text-slate-600">${u.is_ctu_domain ? `Đơn vị CTU: ${u.department || ''}` : `🏢 Đơn vị công tác: <strong>${u.workplace || u.department || ''}</strong>`}</div>
           </td>
           <td class="py-3 px-3">
             <div class="font-semibold text-slate-800 text-xs">${u.member_group_label || (u.is_verified_edu ? 'Hệ thống CTU' : 'Ngoài CTU')}</div>
@@ -1948,12 +1958,12 @@
                 <div class="text-[11px] text-slate-500">Từ: <span class="font-mono">${m.from || 'noreply-datahub@ctu.edu.vn'}</span> → Tới: <strong class="text-blue-700 font-mono">${m.to_name} &lt;${m.to_email}&gt;</strong></div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-[10px]">${m.group_label || 'Auto-Responder'}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-[10px]">${m.member_group_label || m.group_label || 'Auto-Responder'}</span>
                 ${m.otp_code ? `<span class="px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 font-mono font-bold text-xs">OTP: ${m.otp_code}</span>` : ''}
-                <span class="text-[11px] font-mono text-slate-400">${new Date(m.sent_at).toLocaleString('vi-VN')}</span>
+                <span class="text-[11px] font-mono text-slate-400">${new Date(m.timestamp || m.sent_at || Date.now()).toLocaleString('vi-VN')}</span>
               </div>
             </div>
-            <pre class="whitespace-pre-wrap font-sans text-slate-700 bg-white p-3 rounded-lg border border-slate-200 text-[11px] leading-relaxed">${m.body_preview}</pre>
+            <pre class="whitespace-pre-wrap font-sans text-slate-700 bg-white p-3 rounded-lg border border-slate-200 text-[11px] leading-relaxed">${m.body_summary || m.body_preview || ''}</pre>
           </div>
         `).join('');
       }
@@ -2159,6 +2169,49 @@
       showToast('🔄 Đã khôi phục dữ liệu mẫu ban đầu của hệ thống!');
     }
 
+    function isCtuEmailDomain(domain) {
+      return ['ctu.edu.vn', 'student.ctu.edu.vn', 'gstudent.ctu.edu.vn', 'dttx.ctu.edu.vn'].includes(domain);
+    }
+
+    function toggleRegisterFieldsByEmail(isExternal) {
+      const idWrapper = document.getElementById('reg-ctu-id-wrapper');
+      const idInput = document.getElementById('reg-id');
+      const pwdWrapper = document.getElementById('reg-pwd-wrapper');
+      const ctuDeptWrapper = document.getElementById('reg-ctu-dept-wrapper');
+      const extWorkplaceWrapper = document.getElementById('reg-ext-workplace-wrapper');
+      const extWorkplaceInput = document.getElementById('reg-workplace');
+
+      if (isExternal) {
+        // Thành viên KHÔNG thuộc nhóm CTU:
+        // 1. Ẩn hoàn toàn ô nhập Mã số SV/CB/HV
+        if (idWrapper) idWrapper.classList.add('hidden');
+        if (idInput) {
+          idInput.required = false;
+          idInput.value = '';
+        }
+        if (pwdWrapper) pwdWrapper.className = 'col-span-2';
+
+        // 2. Ẩn danh sách đơn vị CTU, hiện ô bắt buộc nhập thông tin đang Công tác/làm việc
+        if (ctuDeptWrapper) ctuDeptWrapper.classList.add('hidden');
+        if (extWorkplaceWrapper) extWorkplaceWrapper.classList.remove('hidden');
+        if (extWorkplaceInput) extWorkplaceInput.required = true;
+      } else {
+        // Thành viên thuộc 4 nhóm CTU (hoặc chưa nhập xong email):
+        // 1. Hiện ô nhập Mã số SV/CB/HV bắt buộc
+        if (idWrapper) idWrapper.classList.remove('hidden');
+        if (idInput) idInput.required = true;
+        if (pwdWrapper) pwdWrapper.className = '';
+
+        // 2. Hiện danh sách Đơn vị trực thuộc ĐH Cần Thơ, ẩn ô nhập đơn vị ngoài
+        if (ctuDeptWrapper) ctuDeptWrapper.classList.remove('hidden');
+        if (extWorkplaceWrapper) extWorkplaceWrapper.classList.add('hidden');
+        if (extWorkplaceInput) {
+          extWorkplaceInput.required = false;
+          extWorkplaceInput.value = '';
+        }
+      }
+    }
+
     function previewEmailDomainGroup(emailVal) {
       const box = document.getElementById('reg-email-group-preview');
       if (!box) return;
@@ -2166,32 +2219,40 @@
       const domain = email.includes('@') ? email.split('@').pop() : '';
 
       if (!domain) {
-        box.className = 'p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600';
+        toggleRegisterFieldsByEmail(false);
+        box.className = 'mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600';
         box.innerHTML = '💡 Nhập địa chỉ email để hệ thống tự động nhận diện nhóm thành viên và quy trình xác thực (01 bước hoặc 02 bước).';
         return;
       }
 
       if (domain === 'ctu.edu.vn') {
-        box.className = 'p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900';
-        box.innerHTML = '👨‍🏫 <strong>Nhóm nhận diện:</strong> Cán bộ, giảng viên của Trường (<code>@ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+        toggleRegisterFieldsByEmail(false);
+        box.className = 'mt-2 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900';
+        box.innerHTML = '👨‍🏫 <strong>Nhóm nhận diện:</strong> Cán bộ, giảng viên của Trường (<code>@ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số CB, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
       } else if (domain === 'student.ctu.edu.vn') {
-        box.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900';
-        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Sinh viên (<code>@student.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+        toggleRegisterFieldsByEmail(false);
+        box.className = 'mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900';
+        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Sinh viên (<code>@student.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số SV, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
       } else if (domain === 'gstudent.ctu.edu.vn') {
-        box.className = 'p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900';
-        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Học viên sau đại học (<code>@gstudent.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+        toggleRegisterFieldsByEmail(false);
+        box.className = 'mt-2 p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900';
+        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Học viên sau đại học (<code>@gstudent.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số HV, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
       } else if (domain === 'dttx.ctu.edu.vn') {
-        box.className = 'p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900';
-        box.innerHTML = '💻 <strong>Nhóm nhận diện:</strong> Sinh viên đào tạo từ xa (<code>@dttx.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+        toggleRegisterFieldsByEmail(false);
+        box.className = 'mt-2 p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900';
+        box.innerHTML = '💻 <strong>Nhóm nhận diện:</strong> Sinh viên đào tạo từ xa (<code>@dttx.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số SV ĐTTX, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
       } else {
-        box.className = 'p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-900';
-        box.innerHTML = `🌐 <strong>Nhóm nhận diện:</strong> Thành viên ngoài hệ thống CTU (<code>@${domain}</code>)<br/>🛡️ <strong>Quy trình Bắt buộc 02 bước:</strong> (1) Xác thực đúng email người dùng qua OTP tự động &rarr; (2) Chờ <strong>Ban Quản trị xác nhận</strong> mới trở thành thành viên chính thức.`;
+        toggleRegisterFieldsByEmail(true);
+        box.className = 'mt-2 p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-900';
+        box.innerHTML = `🌐 <strong>Nhóm nhận diện:</strong> Thành viên ngoài hệ thống CTU (<code>@${domain}</code>)<br/>📋 <strong>Thông tin biểu mẫu:</strong> Đã ẩn ô Mã số SV/CB/HV và yêu cầu <strong>bắt buộc nhập Đơn vị đang Công tác/Làm việc</strong> bên dưới.<br/>🛡️ <strong>Quy trình 02 bước:</strong> (1) Xác thực đúng email người dùng qua OTP tự động &rarr; (2) Chờ <strong>Ban Quản trị xác nhận</strong> mới trở thành thành viên chính thức.`;
       }
     }
 
     function openRegisterModal() {
       const errBox = document.getElementById('reg-error-box');
       if (errBox) errBox.classList.add('hidden');
+      const emailInput = document.getElementById('reg-email');
+      if (emailInput) previewEmailDomainGroup(emailInput.value);
       document.getElementById('register-modal').classList.remove('hidden');
     }
 
@@ -2211,10 +2272,11 @@
       if (errBox) errBox.classList.add('hidden');
 
       const banner = document.getElementById('verify-step-banner');
-      if (user.requires_admin_approval) {
+      if (!user.is_ctu_domain || user.requires_admin_approval) {
         banner.className = 'p-3.5 rounded-xl border border-amber-300 bg-amber-50 text-xs text-amber-900 space-y-1';
         banner.innerHTML = `
           <div class="font-bold">🛡️ Quy trình Xác nhận 02 Bước (Dành cho Email ngoài hệ thống ctu.edu.vn)</div>
+          <div>• <strong>Đơn vị công tác/làm việc:</strong> ${user.workplace || user.department}</div>
           <div>• <strong>Bước 1 (Hiện tại):</strong> Xác thực đúng địa chỉ email <code>${user.email}</code> bằng mã OTP bên dưới.</div>
           <div>• <strong>Bước 2 (Tiếp theo):</strong> Sau khi xác thực email, hồ sơ sẽ chuyển đến <strong>Ban Quản trị xác nhận</strong> để trở thành thành viên chính thức.</div>
         `;
@@ -2228,7 +2290,7 @@
 
       document.getElementById('verify-mail-to').textContent = `${user.full_name} <${user.email}>`;
       document.getElementById('verify-mail-subject').textContent = autoMail?.subject || `[CTU Data Hub] Mã OTP xác thực email: ${user.verification_code}`;
-      document.getElementById('verify-mail-body').textContent = autoMail?.body_preview || `Mã OTP xác thực của bạn là: ${user.verification_code}`;
+      document.getElementById('verify-mail-body').textContent = autoMail?.body_summary || autoMail?.body_preview || `Mã OTP xác thực của bạn là: ${user.verification_code}`;
       document.getElementById('verify-mail-otp-display').textContent = autoMail?.otp_code || user.verification_code || '------';
 
       document.getElementById('email-verify-modal').classList.remove('hidden');
@@ -2303,12 +2365,27 @@
       const errBox = document.getElementById('reg-error-box');
       if (errBox) errBox.classList.add('hidden');
 
+      const emailVal = document.getElementById('reg-email').value.trim().toLowerCase();
+      const domain = emailVal.includes('@') ? emailVal.split('@').pop() : '';
+      const isExternal = Boolean(domain && !isCtuEmailDomain(domain));
+
+      const workplaceVal = document.getElementById('reg-workplace')?.value.trim() || '';
+      if (isExternal && !workplaceVal) {
+        if (errBox) {
+          errBox.textContent = 'Thành viên ngoài hệ thống CTU bắt buộc phải nhập thông tin Đơn vị đang Công tác / Làm việc!';
+          errBox.classList.remove('hidden');
+        }
+        document.getElementById('reg-workplace')?.focus();
+        return;
+      }
+
       const payload = {
         full_name: document.getElementById('reg-name').value.trim(),
-        email: document.getElementById('reg-email').value.trim(),
-        student_or_staff_id: document.getElementById('reg-id').value.trim(),
+        email: emailVal,
+        student_or_staff_id: isExternal ? '' : document.getElementById('reg-id').value.trim(),
         password: document.getElementById('reg-password').value || '123',
-        department: document.getElementById('reg-dept').value.trim()
+        department: isExternal ? workplaceVal : document.getElementById('reg-dept').value.trim(),
+        workplace: isExternal ? workplaceVal : ''
       };
       const res = await fetch('/api/register', {
         method: 'POST',
