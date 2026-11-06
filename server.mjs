@@ -48,7 +48,56 @@ const initialDb = {
       contribution_points: 250,
       uploads_count: 5,
       downloads_count: 12,
-      is_verified_edu: true
+      is_verified_edu: true,
+      is_locked: false
+    },
+    {
+      id: 'usr-admin-1',
+      email: 'admin.khcn@ctu.edu.vn',
+      full_name: 'PGS.TS. Quản trị Hệ thống',
+      student_or_staff_id: 'CB00001',
+      department: 'Phòng Khoa học, Công nghệ và Đổi mới sáng tạo',
+      role: 'admin',
+      contribution_points: 999,
+      uploads_count: 8,
+      downloads_count: 15,
+      is_verified_edu: true,
+      is_locked: false
+    }
+  ],
+  settings: {
+    signup_bonus: 50,
+    upload_reward: 30,
+    download_cost: 5,
+    author_royalty: 2,
+    require_review: false,
+    restrict_ctu_email: false,
+    max_direct_upload_mb: 50
+  },
+  audit_logs: [
+    {
+      id: 'log-1',
+      timestamp: '2026-11-06T08:00:00Z',
+      actor: 'PGS.TS. Quản trị Hệ thống (Admin)',
+      action: 'Khởi tạo Cấu hình Hệ thống',
+      detail: 'Thiết lập chính sách Credits (+50 đăng ký, +30 đóng góp, -5 tải dữ liệu) và đồng bộ 20 đơn vị trực thuộc ĐH Cần Thơ.',
+      type: 'system'
+    },
+    {
+      id: 'log-2',
+      timestamp: '2026-11-05T14:20:00Z',
+      actor: 'TS. Trần Văn Hải (Giảng viên)',
+      action: 'Phê duyệt Bộ dữ liệu',
+      detail: 'Đã duyệt bộ dữ liệu RiceLeaf-CTU-4K (4.800 ảnh bệnh lá lúa) của SV Nguyễn Minh Khoa (+30 Credits).',
+      type: 'review'
+    },
+    {
+      id: 'log-3',
+      timestamp: '2026-11-04T09:15:00Z',
+      actor: 'Lê Thảo Ngọc (B2204115)',
+      action: 'Đóng góp Dữ liệu mới',
+      detail: 'Tải lên bộ dữ liệu Khảo sát Năng suất Lúa & Độ phì nhiêu Đất ĐBSCL (650 mẫu CSV).',
+      type: 'upload'
     }
   ],
   datasets: [
@@ -340,34 +389,59 @@ function normalizeCtuUnitName(name) {
   return name;
 }
 
+function addAuditLog(db, actor, action, detail, type = 'system') {
+  if (!db.audit_logs) db.audit_logs = [];
+  db.audit_logs.unshift({
+    id: 'log-' + Date.now() + '-' + Math.floor(Math.random() * 100),
+    timestamp: new Date().toISOString(),
+    actor,
+    action,
+    detail,
+    type
+  });
+  if (db.audit_logs.length > 50) {
+    db.audit_logs = db.audit_logs.slice(0, 50);
+  }
+}
+
+function normalizeParsedDb(parsed) {
+  parsed.users = (parsed.users || []).map(u => ({
+    is_locked: false,
+    ...u,
+    department: normalizeCtuUnitName(u.department)
+  }));
+  if (!parsed.users.some(u => u.role === 'admin')) {
+    parsed.users.push(initialDb.users.find(u => u.role === 'admin'));
+  }
+  parsed.datasets = (parsed.datasets || []).map(ds => ({
+    storage_provider: ds.id === 'ds-ai-003' ? 'google_drive' : 'cloudflare_r2',
+    external_storage_url: ds.id === 'ds-ai-003' ? 'https://drive.google.com/drive/folders/ctu-riceleaf-4k-yolo-dataset-demo' : '',
+    ...ds,
+    department: normalizeCtuUnitName(ds.department)
+  }));
+  parsed.settings = { ...initialDb.settings, ...(parsed.settings || {}) };
+  parsed.audit_logs = parsed.audit_logs?.length ? parsed.audit_logs : [...initialDb.audit_logs];
+  return parsed;
+}
+
 function loadDb() {
   if (fs.existsSync(TMP_DB_FILE)) {
     try {
-      return JSON.parse(fs.readFileSync(TMP_DB_FILE, 'utf8'));
+      return normalizeParsedDb(JSON.parse(fs.readFileSync(TMP_DB_FILE, 'utf8')));
     } catch {
       // ignore
     }
   }
   if (fs.existsSync(DB_FILE)) {
     try {
-      const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-      parsed.users = (parsed.users || []).map(u => ({
-        ...u,
-        department: normalizeCtuUnitName(u.department)
-      }));
-      parsed.datasets = (parsed.datasets || []).map(ds => ({
-        storage_provider: ds.id === 'ds-ai-003' ? 'google_drive' : 'cloudflare_r2',
-        external_storage_url: ds.id === 'ds-ai-003' ? 'https://drive.google.com/drive/folders/ctu-riceleaf-4k-yolo-dataset-demo' : '',
-        ...ds,
-        department: normalizeCtuUnitName(ds.department)
-      }));
-      return parsed;
+      return normalizeParsedDb(JSON.parse(fs.readFileSync(DB_FILE, 'utf8')));
     } catch {
-      return initialDb;
+      return JSON.parse(JSON.stringify(initialDb));
     }
   }
-  saveDb(initialDb);
-  return initialDb;
+  const fresh = JSON.parse(JSON.stringify(initialDb));
+  saveDb(fresh);
+  return fresh;
 }
 
 function saveDb(db) {
@@ -377,7 +451,6 @@ function saveDb(db) {
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
   } catch {
-    // Fallback sang /tmp khi chạy trên môi trường Serverless Read-Only (như Vercel)
     try {
       fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
     } catch {
@@ -450,6 +523,7 @@ export function requestHandler(req, res) {
       const email = (payload.email || '').trim().toLowerCase();
       let existing = db.users.find(u => u.email.toLowerCase() === email);
       if (!existing) {
+        const bonus = Number(db.settings?.signup_bonus ?? 50);
         existing = {
           id: 'usr-' + Date.now(),
           email,
@@ -457,12 +531,14 @@ export function requestHandler(req, res) {
           student_or_staff_id: payload.student_or_staff_id || 'B2300001',
           department: payload.department || 'Trường Công nghệ Thông tin và Truyền thông',
           role: payload.role || 'student',
-          contribution_points: 50,
+          contribution_points: bonus,
           uploads_count: 0,
           downloads_count: 0,
-          is_verified_edu: email.endsWith('.edu.vn')
+          is_verified_edu: email.endsWith('.edu.vn'),
+          is_locked: false
         };
         db.users.push(existing);
+        addAuditLog(db, `${existing.full_name} (${existing.student_or_staff_id})`, 'Đăng ký Tài khoản mới', `Đơn vị: ${existing.department} (+${bonus} Credits khởi đầu)`, 'user');
         saveDb(db);
       }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -488,7 +564,10 @@ export function requestHandler(req, res) {
 
       const externalUrl = (payload.external_storage_url || '').trim();
       const storageProvider = detectStorageProvider(externalUrl, payload.storage_provider || 'cloudflare_r2');
-      const autoPublish = payload.auto_publish === true || user.role !== 'student';
+      const forceReview = db.settings?.require_review === true;
+      const autoPublish = (!forceReview && payload.auto_publish === true) || user.role !== 'student';
+      const reward = Number(db.settings?.upload_reward ?? 30);
+      const cost = Number(db.settings?.download_cost ?? 5);
 
       const newDataset = {
         id: 'ds-' + Date.now(),
@@ -513,8 +592,8 @@ export function requestHandler(req, res) {
         view_count: 1,
         download_count: 0,
         citation_count: 0,
-        credit_cost: 5,
-        credit_reward: 30,
+        credit_cost: cost,
+        credit_reward: reward,
         tags: payload.tags || ['Nghiên cứu sinh viên', 'CTU Data'],
         file_name: payload.file_name || 'dataset_upload.csv',
         file_extension: payload.file_extension || 'csv',
@@ -526,9 +605,17 @@ export function requestHandler(req, res) {
       db.datasets.unshift(newDataset);
 
       if (autoPublish) {
-        user.contribution_points += 30;
+        user.contribution_points += reward;
         user.uploads_count += 1;
       }
+
+      addAuditLog(
+        db,
+        `${user.full_name} (${user.student_or_staff_id})`,
+        autoPublish ? 'Công bố Bộ dữ liệu mới' : 'Gửi Bộ dữ liệu chờ duyệt',
+        `${newDataset.title} (${newDataset.department})`,
+        'upload'
+      );
 
       saveDb(db);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -542,7 +629,7 @@ export function requestHandler(req, res) {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
-      const { dataset_id, action } = JSON.parse(body || '{}');
+      const { dataset_id, action, reviewer_name } = JSON.parse(body || '{}');
       const db = loadDb();
       const ds = db.datasets.find(d => d.id === dataset_id);
       if (ds) {
@@ -551,10 +638,17 @@ export function requestHandler(req, res) {
         if (action === 'approve' && !wasPublished) {
           const owner = db.users.find(u => u.id === ds.owner_id);
           if (owner) {
-            owner.contribution_points += (ds.credit_reward || 30);
+            owner.contribution_points += (ds.credit_reward || Number(db.settings?.upload_reward ?? 30));
             owner.uploads_count += 1;
           }
         }
+        addAuditLog(
+          db,
+          reviewer_name || 'Giảng viên / Admin',
+          action === 'approve' ? 'Phê duyệt Bộ dữ liệu' : 'Từ chối Bộ dữ liệu',
+          `${ds.title} (DOI: ${ds.doi})`,
+          'review'
+        );
         saveDb(db);
       }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -563,12 +657,12 @@ export function requestHandler(req, res) {
     return;
   }
 
-  // API: Sinh viên tải dữ liệu (Trừ 5 điểm người tải, cộng 2 điểm cho tác giả & trả về file)
+  // API: Sinh viên tải dữ liệu (Trừ điểm người tải, cộng điểm cho tác giả & trả về file)
   if (url.pathname === '/api/datasets/download' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
-      const { dataset_id, user_id } = JSON.parse(body || '{}');
+      const { dataset_id, user_id, purpose } = JSON.parse(body || '{}');
       const db = loadDb();
       const ds = db.datasets.find(d => d.id === dataset_id);
       const user = db.users.find(u => u.id === user_id);
@@ -579,15 +673,25 @@ export function requestHandler(req, res) {
         return;
       }
 
+      const cost = Number(ds.credit_cost ?? db.settings?.download_cost ?? 5);
+      const royalty = Number(db.settings?.author_royalty ?? 2);
+
       if (user && user.id !== ds.owner_id) {
-        user.contribution_points = Math.max(0, user.contribution_points - (ds.credit_cost || 5));
+        user.contribution_points = Math.max(0, user.contribution_points - cost);
         user.downloads_count += 1;
         const owner = db.users.find(u => u.id === ds.owner_id);
         if (owner) {
-          owner.contribution_points += 2;
+          owner.contribution_points += royalty;
         }
       }
       ds.download_count += 1;
+      addAuditLog(
+        db,
+        user ? `${user.full_name} (${user.student_or_staff_id})` : 'Khách',
+        'Tải xuống Dữ liệu',
+        `Tải "${ds.file_name}" phục vụ: ${purpose || 'Nghiên cứu'}`,
+        'download'
+      );
       saveDb(db);
 
       const fileContent = generateDownloadContent(ds);
@@ -600,6 +704,127 @@ export function requestHandler(req, res) {
         db
       }));
     });
+    return;
+  }
+
+  // ==========================================================================
+  // ADMIN API 1: Quản lý Người dùng (Phân quyền, Cộng/Trừ Credits, Khóa, Xóa)
+  // ==========================================================================
+  if (url.pathname === '/api/admin/user' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const { target_user_id, action, role, delta_points, department } = JSON.parse(body || '{}');
+      const db = loadDb();
+      const target = db.users.find(u => u.id === target_user_id);
+
+      if (target) {
+        if (action === 'delete') {
+          db.users = db.users.filter(u => u.id !== target_user_id);
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Xóa Tài khoản', `Đã xóa tài khoản ${target.full_name} (${target.email})`, 'admin');
+        } else if (action === 'role' && role) {
+          const oldRole = target.role;
+          target.role = role;
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Phân quyền Tài khoản', `Đổi vai trò của ${target.full_name} từ [${oldRole}] sang [${role}]`, 'admin');
+        } else if (action === 'points' && typeof delta_points === 'number') {
+          target.contribution_points = Math.max(0, target.contribution_points + delta_points);
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Điều chỉnh Điểm Credits', `${delta_points >= 0 ? '+' : ''}${delta_points} Credits cho ${target.full_name} (Số dư mới: ${target.contribution_points} Cr)`, 'admin');
+        } else if (action === 'toggle_lock') {
+          target.is_locked = !target.is_locked;
+          addAuditLog(db, 'Quản trị viên (Admin)', target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id})`, 'admin');
+        } else if (action === 'department' && department) {
+          target.department = department;
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Cập nhật Đơn vị', `Chuyển ${target.full_name} sang ${department}`, 'admin');
+        }
+        saveDb(db);
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ db }));
+    });
+    return;
+  }
+
+  // ==========================================================================
+  // ADMIN API 2: Quản lý Kho Dữ liệu (Đổi trạng thái, Đổi phí tải, Xóa Dataset)
+  // ==========================================================================
+  if (url.pathname === '/api/admin/dataset' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const { dataset_id, action, status, credit_cost } = JSON.parse(body || '{}');
+      const db = loadDb();
+      const ds = db.datasets.find(d => d.id === dataset_id);
+
+      if (ds) {
+        if (action === 'delete') {
+          db.datasets = db.datasets.filter(d => d.id !== dataset_id);
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Xóa Bộ dữ liệu', `Đã xóa vĩnh viễn "${ds.title}" (${ds.doi})`, 'admin');
+        } else if (action === 'status' && status) {
+          const wasPublished = ds.status === 'published';
+          ds.status = status;
+          if (status === 'published' && !wasPublished) {
+            const owner = db.users.find(u => u.id === ds.owner_id);
+            if (owner) {
+              owner.contribution_points += (ds.credit_reward || 30);
+              owner.uploads_count += 1;
+            }
+          }
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Cập nhật Trạng thái Dataset', `Chuyển "${ds.title}" sang trạng thái [${status}]`, 'admin');
+        } else if (action === 'cost' && typeof credit_cost === 'number') {
+          ds.credit_cost = Math.max(0, credit_cost);
+          addAuditLog(db, 'Quản trị viên (Admin)', 'Cập nhật Phí tải Dataset', `Đặt phí tải "${ds.title}" = ${ds.credit_cost} Credits`, 'admin');
+        }
+        saveDb(db);
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ db }));
+    });
+    return;
+  }
+
+  // ==========================================================================
+  // ADMIN API 3: Lưu Cấu hình Hệ thống & Chính sách Điểm
+  // ==========================================================================
+  if (url.pathname === '/api/admin/settings' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const payload = JSON.parse(body || '{}');
+      const db = loadDb();
+      db.settings = {
+        ...db.settings,
+        signup_bonus: Number(payload.signup_bonus ?? 50),
+        upload_reward: Number(payload.upload_reward ?? 30),
+        download_cost: Number(payload.download_cost ?? 5),
+        author_royalty: Number(payload.author_royalty ?? 2),
+        require_review: Boolean(payload.require_review),
+        restrict_ctu_email: Boolean(payload.restrict_ctu_email)
+      };
+      addAuditLog(
+        db,
+        'Quản trị viên (Admin)',
+        'Cập nhật Cấu hình Hệ thống',
+        `Thưởng đăng ký: +${db.settings.signup_bonus} Cr | Đóng góp: +${db.settings.upload_reward} Cr | Phí tải: -${db.settings.download_cost} Cr | Duyệt bắt buộc: ${db.settings.require_review ? 'Bật' : 'Tắt'}`,
+        'system'
+      );
+      saveDb(db);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ db }));
+    });
+    return;
+  }
+
+  // ==========================================================================
+  // ADMIN API 4: Khôi phục Dữ liệu Gốc (Reset Demo State)
+  // ==========================================================================
+  if (url.pathname === '/api/admin/reset' && req.method === 'POST') {
+    const fresh = JSON.parse(JSON.stringify(initialDb));
+    addAuditLog(fresh, 'Quản trị viên (Admin)', 'Khôi phục Dữ liệu Gốc', 'Đã đặt lại toàn bộ CSDL về trạng thái mẫu chuẩn ban đầu.', 'system');
+    saveDb(fresh);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ db: fresh }));
     return;
   }
 

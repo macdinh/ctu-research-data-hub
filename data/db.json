@@ -34,7 +34,56 @@
       "contribution_points": 250,
       "uploads_count": 5,
       "downloads_count": 12,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "is_locked": false
+    },
+    {
+      "id": "usr-admin-1",
+      "email": "admin.khcn@ctu.edu.vn",
+      "full_name": "PGS.TS. Quản trị Hệ thống",
+      "student_or_staff_id": "CB00001",
+      "department": "Phòng Khoa học, Công nghệ và Đổi mới sáng tạo",
+      "role": "admin",
+      "contribution_points": 999,
+      "uploads_count": 8,
+      "downloads_count": 15,
+      "is_verified_edu": true,
+      "is_locked": false
+    }
+  ],
+  "settings": {
+    "signup_bonus": 50,
+    "upload_reward": 30,
+    "download_cost": 5,
+    "author_royalty": 2,
+    "require_review": false,
+    "restrict_ctu_email": false,
+    "max_direct_upload_mb": 50
+  },
+  "audit_logs": [
+    {
+      "id": "log-1",
+      "timestamp": "2026-11-06T08:00:00Z",
+      "actor": "PGS.TS. Quản trị Hệ thống (Admin)",
+      "action": "Khởi tạo Cấu hình Hệ thống",
+      "detail": "Thiết lập chính sách Credits (+50 đăng ký, +30 đóng góp, -5 tải dữ liệu) và đồng bộ 20 đơn vị trực thuộc ĐH Cần Thơ.",
+      "type": "system"
+    },
+    {
+      "id": "log-2",
+      "timestamp": "2026-11-05T14:20:00Z",
+      "actor": "TS. Trần Văn Hải (Giảng viên)",
+      "action": "Phê duyệt Bộ dữ liệu",
+      "detail": "Đã duyệt bộ dữ liệu RiceLeaf-CTU-4K (4.800 ảnh bệnh lá lúa) của SV Nguyễn Minh Khoa (+30 Credits).",
+      "type": "review"
+    },
+    {
+      "id": "log-3",
+      "timestamp": "2026-11-04T09:15:00Z",
+      "actor": "Lê Thảo Ngọc (B2204115)",
+      "action": "Đóng góp Dữ liệu mới",
+      "detail": "Tải lên bộ dữ liệu Khảo sát Năng suất Lúa & Độ phì nhiêu Đất ĐBSCL (650 mẫu CSV).",
+      "type": "upload"
     }
   ],
   "datasets": [

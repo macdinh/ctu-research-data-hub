@@ -49,7 +49,7 @@
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+      <div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
         <button onclick="switchMainTab('explore')" id="tab-btn-explore" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white text-blue-700 shadow-sm transition">
           Khám phá Dữ liệu
         </button>
@@ -57,8 +57,11 @@
           <span>Kiểm duyệt</span>
           <span id="pending-badge" class="px-1.5 py-0.2 rounded-full text-[11px] bg-amber-500 text-white font-semibold">1</span>
         </button>
+        <button onclick="switchMainTab('admin')" id="tab-btn-admin" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+          <span>⚙️ Quản trị Hệ thống</span>
+        </button>
         <button onclick="switchMainTab('architecture')" id="tab-btn-architecture" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition">
-          Kiến trúc & CSDL
+          Kiến trúc &amp; CSDL
         </button>
       </div>
 
@@ -257,6 +260,220 @@
               File nhỏ (<code>&lt; 20MB</code>) lưu trên <strong>Cloudflare R2 (10GB Free)</strong>. Bộ dữ liệu lớn (<code>&gt; 50MB</code> như ảnh AI, GIS) kết hợp link <strong>Google Drive trường / Zenodo (50GB Free)</strong>.
             </p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: SYSTEM ADMINISTRATION DASHBOARD (QUẢN TRỊ HỆ THỐNG) -->
+    <section id="section-admin" class="hidden space-y-6">
+      <!-- Admin Header Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-md">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-2 text-xs font-semibold bg-rose-500/20 text-rose-200 border border-rose-400/30 px-3 py-0.5 rounded-full">
+              <span>🛡️ Bảng Điều Khiển Quản Trị Hệ Thống (System Administration Portal)</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold">Quản lý Tài khoản, Phân quyền, Kho Dữ liệu &amp; Chính sách Credits</h2>
+            <p class="text-xs sm:text-sm text-slate-300">
+              Dành cho Ban Quản trị Cổng Dữ liệu Khoa học ĐH Cần Thơ (Phòng KH, CN &amp; Đổi mới sáng tạo / Quản trị viên Khoa &amp; Trường).
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="exportDatabaseBackup()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition flex items-center gap-1.5">
+              <span>📥 Xuất Sao lưu CSDL (.JSON)</span>
+            </button>
+            <button onclick="handleAdminResetDemo()" class="px-3.5 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-xs font-semibold text-white transition flex items-center gap-1.5">
+              <span>🔄 Khôi phục Dữ liệu Gốc</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Admin KPI Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mt-5 pt-5 border-t border-white/10">
+          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
+            <div class="text-xs text-slate-300">Tổng số Tài khoản</div>
+            <div id="admin-kpi-users" class="text-2xl font-bold text-white mt-1">4</div>
+            <div id="admin-kpi-users-sub" class="text-[11px] text-emerald-300 mt-0.5">2 SV • 1 GV • 1 Admin</div>
+          </div>
+          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
+            <div class="text-xs text-slate-300">Tổng Kho Dữ liệu</div>
+            <div id="admin-kpi-datasets" class="text-2xl font-bold text-white mt-1">5</div>
+            <div id="admin-kpi-datasets-sub" class="text-[11px] text-amber-300 mt-0.5">4 Công bố • 1 Chờ duyệt</div>
+          </div>
+          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
+            <div class="text-xs text-slate-300">Dung lượng Lưu trữ Cloud</div>
+            <div id="admin-kpi-storage" class="text-2xl font-bold text-cyan-300 mt-1">642 MB</div>
+            <div class="text-[11px] text-slate-300 mt-0.5">R2 + Supabase + Google Drive EDU</div>
+          </div>
+          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
+            <div class="text-xs text-slate-300">Tổng Lượt tải &amp; Trích dẫn</div>
+            <div id="admin-kpi-activity" class="text-2xl font-bold text-amber-400 mt-1">670</div>
+            <div id="admin-kpi-citations-sub" class="text-[11px] text-slate-300 mt-0.5">87 trích dẫn học thuật</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Sub-navigation Pills -->
+      <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+        <button onclick="switchAdminSubTab('users')" id="admin-subbtn-users" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition">
+          👥 1. Quản lý Người dùng &amp; Phân quyền
+        </button>
+        <button onclick="switchAdminSubTab('datasets')" id="admin-subbtn-datasets" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+          🗄️ 2. Quản lý Toàn bộ Kho Dữ liệu
+        </button>
+        <button onclick="switchAdminSubTab('units')" id="admin-subbtn-units" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+          🏛️ 3. Thống kê theo Đơn vị ĐH Cần Thơ
+        </button>
+        <button onclick="switchAdminSubTab('settings')" id="admin-subbtn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+          ⚙️ 4. Cấu hình Chính sách &amp; Nhật ký Hệ thống
+        </button>
+      </div>
+
+      <!-- ADMIN SUB-TAB 1: USER & ROLE MANAGEMENT -->
+      <div id="admin-subtab-users" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Danh sách Tài khoản Người dùng &amp; Phân quyền Hệ thống</h3>
+            <p class="text-xs text-slate-500">Thay đổi vai trò (Sinh viên / Giảng viên duyệt bài / Admin), cấp phát điểm Credits hoặc khóa tài khoản vi phạm.</p>
+          </div>
+          <button onclick="openRegisterModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm">
+            + Thêm Tài khoản Mới
+          </button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                <th class="py-3 px-3.5 font-bold">Họ và tên / Email</th>
+                <th class="py-3 px-3 font-bold">Mã SV / CB</th>
+                <th class="py-3 px-3 font-bold">Đơn vị trực thuộc (CTU)</th>
+                <th class="py-3 px-3 font-bold">Vai trò (Phân quyền)</th>
+                <th class="py-3 px-3 font-bold text-center">Đóng góp / Tải</th>
+                <th class="py-3 px-3 font-bold text-right">Số dư Credits</th>
+                <th class="py-3 px-3.5 font-bold text-right">Thao tác Quản trị</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADMIN SUB-TAB 2: MASTER DATASET MANAGEMENT -->
+      <div id="admin-subtab-datasets" class="hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Quản lý Toàn bộ Kho Dữ liệu Khoa học (Master Dataset Control)</h3>
+            <p class="text-xs text-slate-500">Kiểm soát trạng thái hiển thị (Công bố / Chờ duyệt / Từ chối), điều chỉnh phí tải Credits hoặc xóa dữ liệu.</p>
+          </div>
+          <button onclick="openUploadModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm">
+            + Đăng tải Bộ dữ liệu Mới
+          </button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                <th class="py-3 px-3.5 font-bold">Bộ dữ liệu &amp; Mã DOI</th>
+                <th class="py-3 px-3 font-bold">Đơn vị / Tác giả</th>
+                <th class="py-3 px-3 font-bold">Định dạng &amp; Lưu trữ</th>
+                <th class="py-3 px-3 font-bold">Trạng thái</th>
+                <th class="py-3 px-3 font-bold text-center">Phí tải (Cr)</th>
+                <th class="py-3 px-3 font-bold text-right">Lượt tải</th>
+                <th class="py-3 px-3.5 font-bold text-right">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="admin-datasets-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADMIN SUB-TAB 3: CTU DEPARTMENT ANALYTICS & CLOUD STORAGE BREAKDOWN -->
+      <div id="admin-subtab-units" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Thống kê Đóng góp Dữ liệu theo Trường / Khoa / Viện (ĐH Cần Thơ)</h3>
+            <p class="text-xs text-slate-500">Tổng hợp số lượng bộ dữ liệu, lượt tải và dung lượng đóng góp của từng đơn vị trực thuộc.</p>
+          </div>
+          <div id="admin-units-breakdown" class="space-y-3"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Phân bổ Hạ tầng Lưu trữ Lai</h3>
+            <p class="text-xs text-slate-500">Giám sát dung lượng đang sử dụng trên từng nền tảng đám mây.</p>
+          </div>
+          <div id="admin-storage-breakdown" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN SUB-TAB 4: SYSTEM SETTINGS & AUDIT LOGS -->
+      <div id="admin-subtab-settings" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Credit & Review Policy Form -->
+        <div class="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Cấu hình Chính sách Điểm (Credits) &amp; Kiểm duyệt</h3>
+            <p class="text-xs text-slate-500">Điều chỉnh cơ chế khuyến khích sinh viên đóng góp và chia sẻ dữ liệu nghiên cứu.</p>
+          </div>
+
+          <form onsubmit="handleSaveAdminSettings(event)" class="space-y-3.5 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Điểm tặng khi Đăng ký mới</label>
+                <input id="set-signup-bonus" type="number" min="0" max="500" value="50" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-semibold text-slate-900" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Thưởng khi Đóng góp Dataset</label>
+                <input id="set-upload-reward" type="number" min="0" max="500" value="30" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-semibold text-emerald-700" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Phí mỗi lượt Tải dữ liệu</label>
+                <input id="set-download-cost" type="number" min="0" max="100" value="5" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-semibold text-blue-700" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Thưởng Tác giả / Lượt tải</label>
+                <input id="set-author-royalty" type="number" min="0" max="100" value="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-semibold text-amber-700" />
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input id="set-require-review" type="checkbox" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                <div>
+                  <div class="font-semibold text-slate-800">Bắt buộc Giảng viên / Admin duyệt bài trước khi công bố</div>
+                  <div class="text-[11px] text-slate-500">Nếu bật, mọi bộ dữ liệu do Sinh viên tải lên sẽ vào hàng đợi <code>Chờ duyệt</code>.</div>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-2.5 cursor-pointer pt-2 border-t border-slate-200">
+                <input id="set-restrict-email" type="checkbox" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                <div>
+                  <div class="font-semibold text-slate-800">Ưu tiên xác thực Email ĐH Cần Thơ (<code>@student.ctu.edu.vn</code> / <code>@ctu.edu.vn</code>)</div>
+                  <div class="text-[11px] text-slate-500">Tự động gắn huy hiệu <code>Verified CTU</code> cho tài khoản thuộc trường.</div>
+                </div>
+              </label>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition">
+              💾 Lưu Cấu hình Hệ thống
+            </button>
+          </form>
+        </div>
+
+        <!-- Real-time System Audit Logs -->
+        <div class="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Nhật ký Hoạt động Hệ thống (System Audit Logs)</h3>
+              <p class="text-xs text-slate-500">Ghi nhận tự động mọi sự kiện đăng ký, đóng góp, tải dữ liệu, duyệt bài và thao tác quản trị.</p>
+            </div>
+            <span id="admin-logs-count" class="text-xs font-mono bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg">0 sự kiện</span>
+          </div>
+          <div id="admin-audit-logs" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 flex-1"></div>
         </div>
       </div>
     </section>
@@ -495,6 +712,7 @@
             <select id="reg-role" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
               <option value="student">Sinh viên</option>
               <option value="lecturer">Giảng viên / Reviewer</option>
+              <option value="admin">Quản trị viên (Admin)</option>
             </select>
           </div>
         </div>
@@ -538,7 +756,7 @@
   </div>
 
   <script>
-    let appState = { users: [], datasets: [] };
+    let appState = { users: [], datasets: [], settings: {}, audit_logs: [] };
     let currentUser = null;
     let activeTypeFilter = 'all';
     let selectedDataset = null;
@@ -589,12 +807,19 @@
       syncHeaderUI();
       renderDatasets();
       renderReviewQueue();
+      renderAdminDashboard();
+    }
+
+    function getRoleLabel(role) {
+      if (role === 'admin') return 'Admin';
+      if (role === 'lecturer') return 'Giảng viên';
+      return 'SV';
     }
 
     function syncHeaderUI() {
       const select = document.getElementById('user-select');
       select.innerHTML = appState.users.map(u =>
-        `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>${u.full_name} (${u.role === 'lecturer' ? 'Giảng viên' : 'SV'} - ${u.contribution_points} Cr)</option>`
+        `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>${u.full_name} (${getRoleLabel(u.role)} - ${u.contribution_points} Cr)</option>`
       ).join('');
 
       document.getElementById('current-user-name').textContent = currentUser.full_name;
@@ -602,7 +827,10 @@
       document.getElementById('current-user-points').textContent = currentUser.contribution_points;
 
       const roleBadge = document.getElementById('current-user-role-badge');
-      if (currentUser.role === 'lecturer') {
+      if (currentUser.role === 'admin') {
+        roleBadge.textContent = 'Quản trị viên';
+        roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold';
+      } else if (currentUser.role === 'lecturer') {
         roleBadge.textContent = 'Giảng viên';
         roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
       } else {
@@ -625,12 +853,13 @@
         currentUser = found;
         syncHeaderUI();
         renderReviewQueue();
+        renderAdminDashboard();
         showToast(`Đã chuyển sang tài khoản <strong>${currentUser.full_name}</strong> (${currentUser.contribution_points} Credits)`);
       }
     }
 
     function switchMainTab(tab) {
-      ['explore', 'review', 'architecture'].forEach(t => {
+      ['explore', 'review', 'admin', 'architecture'].forEach(t => {
         document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (t === tab) {
@@ -639,6 +868,9 @@
           btn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5';
         }
       });
+      if (tab === 'admin') {
+        renderAdminDashboard();
+      }
     }
 
     function setTypeFilter(type) {
@@ -1175,7 +1407,7 @@
       const res = await fetch('/api/datasets/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataset_id: datasetId, action })
+        body: JSON.stringify({ dataset_id: datasetId, action, reviewer_name: currentUser?.full_name })
       });
       const data = await res.json();
       appState = data.db;
@@ -1183,7 +1415,270 @@
       syncHeaderUI();
       renderDatasets();
       renderReviewQueue();
+      renderAdminDashboard();
       showToast('✅ Đã phê duyệt bộ dữ liệu! Sinh viên đóng góp đã được cộng +30 Credits.');
+    }
+
+    // ========================================================================
+    // SYSTEM ADMINISTRATION PORTAL FUNCTIONS
+    // ========================================================================
+    function switchAdminSubTab(sub) {
+      ['users', 'datasets', 'units', 'settings'].forEach(s => {
+        document.getElementById(`admin-subtab-${s}`).classList.toggle('hidden', s !== sub);
+        const btn = document.getElementById(`admin-subbtn-${s}`);
+        if (s === sub) {
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition';
+        } else {
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition';
+        }
+      });
+    }
+
+    function renderAdminDashboard() {
+      const users = appState.users || [];
+      const datasets = appState.datasets || [];
+      const settings = appState.settings || {};
+      const logs = appState.audit_logs || [];
+
+      // 1. Update KPI Cards
+      const studentCount = users.filter(u => u.role === 'student').length;
+      const lecturerCount = users.filter(u => u.role === 'lecturer').length;
+      const adminCount = users.filter(u => u.role === 'admin').length;
+      document.getElementById('admin-kpi-users').textContent = users.length;
+      document.getElementById('admin-kpi-users-sub').textContent = `${studentCount} Sinh viên • ${lecturerCount} Giảng viên • ${adminCount} Admin`;
+
+      const pubCount = datasets.filter(d => d.status === 'published').length;
+      const pendCount = datasets.filter(d => d.status === 'pending_review').length;
+      const rejCount = datasets.filter(d => d.status === 'rejected').length;
+      document.getElementById('admin-kpi-datasets').textContent = datasets.length;
+      document.getElementById('admin-kpi-datasets-sub').textContent = `${pubCount} Công bố • ${pendCount} Chờ duyệt • ${rejCount} Từ chối`;
+
+      const totalBytes = datasets.reduce((sum, d) => sum + (d.total_size_bytes || 0), 0);
+      document.getElementById('admin-kpi-storage').textContent = formatBytes(totalBytes);
+
+      const totalDl = datasets.reduce((sum, d) => sum + (d.download_count || 0), 0);
+      const totalCit = datasets.reduce((sum, d) => sum + (d.citation_count || 0), 0);
+      document.getElementById('admin-kpi-activity').textContent = totalDl.toLocaleString('vi-VN');
+      document.getElementById('admin-kpi-citations-sub').textContent = `${totalCit} trích dẫn học thuật`;
+
+      // 2. Render Users Table
+      const usersTbody = document.getElementById('admin-users-tbody');
+      usersTbody.innerHTML = users.map(u => `
+        <tr class="hover:bg-slate-50 ${u.is_locked ? 'opacity-60 bg-red-50/30' : ''}">
+          <td class="py-3 px-3.5">
+            <div class="font-bold text-slate-900 flex items-center gap-1.5">
+              <span>${u.full_name}</span>
+              ${u.is_verified_edu ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">CTU Edu</span>' : ''}
+              ${u.is_locked ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">Đã khóa</span>' : ''}
+            </div>
+            <div class="text-[11px] text-slate-500 font-mono">${u.email}</div>
+          </td>
+          <td class="py-3 px-3 font-mono font-semibold text-slate-700">${u.student_or_staff_id}</td>
+          <td class="py-3 px-3 text-slate-700">${u.department}</td>
+          <td class="py-3 px-3">
+            <select onchange="handleAdminUserAction('${u.id}', 'role', { role: this.value })" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800">
+              <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên</option>
+              <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Giảng viên / Reviewer</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Quản trị viên (Admin)</option>
+            </select>
+          </td>
+          <td class="py-3 px-3 text-center font-mono text-slate-600">
+            ⬆️ ${u.uploads_count || 0} / ⬇️ ${u.downloads_count || 0}
+          </td>
+          <td class="py-3 px-3 text-right font-mono font-bold text-amber-600 text-sm">
+            ${u.contribution_points} Cr
+          </td>
+          <td class="py-3 px-3.5 text-right whitespace-nowrap space-x-1">
+            <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: 20 })" class="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-[11px]" title="Thưởng +20 Credits">+20 Cr</button>
+            <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: -10 })" class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold text-[11px]" title="Trừ 10 Credits">-10 Cr</button>
+            <button onclick="handleAdminUserAction('${u.id}', 'toggle_lock')" class="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">${u.is_locked ? 'Mở khóa' : 'Khóa'}</button>
+            <button onclick="handleAdminUserAction('${u.id}', 'delete')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px]">Xóa</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // 3. Render Master Datasets Table
+      const dsTbody = document.getElementById('admin-datasets-tbody');
+      dsTbody.innerHTML = datasets.map(ds => {
+        const meta = TYPE_META[ds.data_type] || TYPE_META.tabular;
+        const stMeta = STORAGE_META[ds.storage_provider || 'cloudflare_r2'] || STORAGE_META.cloudflare_r2;
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3.5 max-w-xs">
+              <div onclick="openDatasetModal('${ds.id}')" class="font-bold text-slate-900 hover:text-blue-600 cursor-pointer line-clamp-1">${ds.title}</div>
+              <div class="text-[11px] font-mono text-slate-500">DOI: ${ds.doi} • ${formatBytes(ds.total_size_bytes)}</div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="font-semibold text-slate-800">${ds.department}</div>
+              <div class="text-[11px] text-slate-500">${(ds.authors || []).join(', ')}</div>
+            </td>
+            <td class="py-3 px-3 space-y-1">
+              <div><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${meta.badgeClass}">${meta.label}</span></div>
+              <div><span class="text-[10px] font-medium px-2 py-0.5 rounded-full border ${stMeta.badgeClass}">${stMeta.label}</span></div>
+            </td>
+            <td class="py-3 px-3">
+              <select onchange="handleAdminDatasetAction('${ds.id}', 'status', { status: this.value })" class="px-2.5 py-1 rounded-lg border text-xs font-semibold ${
+                ds.status === 'published' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                ds.status === 'pending_review' ? 'bg-amber-50 text-amber-800 border-amber-300' :
+                'bg-rose-50 text-rose-800 border-rose-300'
+              }">
+                <option value="published" ${ds.status === 'published' ? 'selected' : ''}>✓ Đã công bố (Published)</option>
+                <option value="pending_review" ${ds.status === 'pending_review' ? 'selected' : ''}>⏳ Chờ duyệt (Pending)</option>
+                <option value="rejected" ${ds.status === 'rejected' ? 'selected' : ''}>✕ Từ chối / Ẩn (Rejected)</option>
+              </select>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <input type="number" min="0" max="100" value="${ds.credit_cost ?? 5}" onchange="handleAdminDatasetAction('${ds.id}', 'cost', { credit_cost: Number(this.value) })" class="w-16 text-center font-mono font-bold text-slate-800 border border-slate-300 rounded-lg py-1" />
+            </td>
+            <td class="py-3 px-3 text-right font-mono font-semibold text-blue-700">
+              ${ds.download_count || 0}
+            </td>
+            <td class="py-3 px-3.5 text-right whitespace-nowrap space-x-1">
+              <button onclick="openDatasetModal('${ds.id}')" class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">Xem</button>
+              <button onclick="handleAdminDatasetAction('${ds.id}', 'delete')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px]">Xóa</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // 4. Render CTU Unit Breakdown & Cloud Storage Breakdown
+      const unitMap = {};
+      datasets.forEach(d => {
+        const u = d.department || 'Đơn vị khác';
+        if (!unitMap[u]) unitMap[u] = { count: 0, downloads: 0, bytes: 0 };
+        unitMap[u].count += 1;
+        unitMap[u].downloads += (d.download_count || 0);
+        unitMap[u].bytes += (d.total_size_bytes || 0);
+      });
+      const unitEntries = Object.entries(unitMap).sort((a, b) => b[1].count - a[1].count);
+      document.getElementById('admin-units-breakdown').innerHTML = unitEntries.map(([unitName, info]) => `
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span class="font-bold text-slate-900">${unitName}</span>
+            <span class="font-mono text-slate-600"><strong>${info.count}</strong> bộ dữ liệu • <strong>${info.downloads}</strong> lượt tải • ${formatBytes(info.bytes)}</span>
+          </div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div style="width: ${Math.min(100, info.count * 25)}%" class="bg-blue-600 h-full"></div>
+          </div>
+        </div>
+      `).join('');
+
+      const storageMap = {};
+      datasets.forEach(d => {
+        const sp = d.storage_provider || 'cloudflare_r2';
+        if (!storageMap[sp]) storageMap[sp] = { count: 0, bytes: 0 };
+        storageMap[sp].count += 1;
+        storageMap[sp].bytes += (d.total_size_bytes || 0);
+      });
+      document.getElementById('admin-storage-breakdown').innerHTML = Object.entries(storageMap).map(([sp, info]) => {
+        const stMeta = STORAGE_META[sp] || STORAGE_META.cloudflare_r2;
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+            <div>
+              <span class="font-semibold px-2.5 py-0.5 rounded-full border ${stMeta.badgeClass}">${stMeta.label}</span>
+              <div class="text-[11px] text-slate-500 mt-1.5">${info.count} gói dữ liệu đang lưu trữ</div>
+            </div>
+            <div class="font-mono font-bold text-slate-900 text-sm">${formatBytes(info.bytes)}</div>
+          </div>
+        `;
+      }).join('');
+
+      // 5. Sync Settings Inputs & Audit Logs
+      document.getElementById('set-signup-bonus').value = settings.signup_bonus ?? 50;
+      document.getElementById('set-upload-reward').value = settings.upload_reward ?? 30;
+      document.getElementById('set-download-cost').value = settings.download_cost ?? 5;
+      document.getElementById('set-author-royalty').value = settings.author_royalty ?? 2;
+      document.getElementById('set-require-review').checked = Boolean(settings.require_review);
+      document.getElementById('set-restrict-email').checked = Boolean(settings.restrict_ctu_email);
+
+      document.getElementById('admin-logs-count').textContent = `${logs.length} sự kiện`;
+      document.getElementById('admin-audit-logs').innerHTML = logs.map(l => `
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900">${l.action}</span>
+            <span class="font-mono text-[11px] text-slate-400">${new Date(l.timestamp).toLocaleString('vi-VN')}</span>
+          </div>
+          <div class="text-slate-600">${l.detail}</div>
+          <div class="text-[11px] text-blue-700 font-medium">Thực hiện bởi: ${l.actor}</div>
+        </div>
+      `).join('');
+    }
+
+    async function handleAdminUserAction(targetUserId, action, extra = {}) {
+      const res = await fetch('/api/admin/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_user_id: targetUserId, action, ...extra })
+      });
+      const data = await res.json();
+      appState = data.db;
+      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      syncHeaderUI();
+      renderAdminDashboard();
+      showToast('Đã cập nhật thông tin tài khoản người dùng!');
+    }
+
+    async function handleAdminDatasetAction(datasetId, action, extra = {}) {
+      const res = await fetch('/api/admin/dataset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataset_id: datasetId, action, ...extra })
+      });
+      const data = await res.json();
+      appState = data.db;
+      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      syncHeaderUI();
+      renderDatasets();
+      renderReviewQueue();
+      renderAdminDashboard();
+      showToast('Đã cập nhật trạng thái Bộ dữ liệu!');
+    }
+
+    async function handleSaveAdminSettings(e) {
+      e.preventDefault();
+      const payload = {
+        signup_bonus: Number(document.getElementById('set-signup-bonus').value),
+        upload_reward: Number(document.getElementById('set-upload-reward').value),
+        download_cost: Number(document.getElementById('set-download-cost').value),
+        author_royalty: Number(document.getElementById('set-author-royalty').value),
+        require_review: document.getElementById('set-require-review').checked,
+        restrict_ctu_email: document.getElementById('set-restrict-email').checked
+      };
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      appState = data.db;
+      renderAdminDashboard();
+      showToast('💾 Đã lưu Cấu hình Chính sách Hệ thống thành công!');
+    }
+
+    function exportDatabaseBackup() {
+      const jsonStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ctu_research_data_hub_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('📥 Đã xuất file Sao lưu toàn bộ Cơ sở dữ liệu (.JSON)!');
+    }
+
+    async function handleAdminResetDemo() {
+      const res = await fetch('/api/admin/reset', { method: 'POST' });
+      const data = await res.json();
+      appState = data.db;
+      currentUser = appState.users[0];
+      syncHeaderUI();
+      renderDatasets();
+      renderReviewQueue();
+      renderAdminDashboard();
+      showToast('🔄 Đã khôi phục dữ liệu mẫu ban đầu của hệ thống!');
     }
 
     function openRegisterModal() {
@@ -1213,7 +1708,8 @@
       currentUser = data.user;
       closeRegisterModal();
       syncHeaderUI();
-      showToast(`🎉 Chào mừng <strong>${currentUser.full_name}</strong>! Tài khoản của bạn đã được tặng <strong>50 Credits</strong> khởi đầu.`);
+      renderAdminDashboard();
+      showToast(`🎉 Chào mừng <strong>${currentUser.full_name}</strong>! Tài khoản của bạn đã được khởi tạo.`);
     }
 
     initApp();
