@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ctu-research-data-hub
+    runtime: node
+    plan: free
+    buildCommand: echo "Zero external build needed"
+    startCommand: node server.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production

@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CTU Research Data Hub — Cổng Dữ Liệu Khoa Học Sinh Viên</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- HEADER NAVIGATION -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          CTU
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight">Research Data Hub</h1>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">FAIR Data</span>
+          </div>
+          <p class="text-xs text-slate-500">Không gian Lưu trữ & Chia sẻ Dữ liệu Khoa học Sinh viên</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+        <button onclick="switchMainTab('explore')" id="tab-btn-explore" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white text-blue-700 shadow-sm transition">
+          Khám phá Dữ liệu
+        </button>
+        <button onclick="switchMainTab('review')" id="tab-btn-review" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+          <span>Kiểm duyệt</span>
+          <span id="pending-badge" class="px-1.5 py-0.2 rounded-full text-[11px] bg-amber-500 text-white font-semibold">1</span>
+        </button>
+        <button onclick="switchMainTab('architecture')" id="tab-btn-architecture" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+          Kiến trúc & CSDL
+        </button>
+      </div>
+
+      <!-- Account & Actions -->
+      <div class="flex items-center gap-2.5">
+        <!-- User Switcher / Current Account -->
+        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+          <div class="text-right hidden md:block">
+            <div class="flex items-center justify-end gap-1.5">
+              <span id="current-user-name" class="text-xs font-semibold text-slate-800">Nguyễn Minh Khoa</span>
+              <span id="current-user-role-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">SV</span>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center justify-end gap-2">
+              <span id="current-user-id">B2110942</span>
+              <span>•</span>
+              <span class="font-semibold text-amber-600"><span id="current-user-points">65</span> Credits</span>
+            </div>
+          </div>
+          <select id="user-select" onchange="handleUserSwitch(this.value)" class="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Chuyển đổi tài khoản thử nghiệm">
+          </select>
+          <button onclick="openRegisterModal()" class="text-xs font-medium text-blue-600 hover:text-blue-800 px-1.5 py-1 rounded hover:bg-blue-50 transition" title="Đăng ký tài khoản mới">
+            + Đăng ký
+          </button>
+        </div>
+
+        <button onclick="openUploadModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5">
+          <span>+ Đóng góp Dữ liệu</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTIFICATION BANNER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- TAB 1: EXPLORE DATASETS -->
+    <section id="section-explore" class="space-y-6">
+      <!-- Hero & Stats Bar -->
+      <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 rounded-2xl p-6 text-white shadow-md">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div class="lg:col-span-7 space-y-2.5">
+            <div class="inline-flex items-center gap-2 text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-400/30 px-3 py-1 rounded-full">
+              <span>Mô hình Cộng đồng Chia sẻ Dữ liệu Khoa học Sinh viên</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold tracking-tight">
+              Một tài khoản — Đóng góp dữ liệu nghiên cứu & Khai thác kho dữ liệu chuẩn hóa
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Hỗ trợ xem trước trực tiếp (Preview) bảng <strong>CSV/Excel</strong>, bản đồ cảm biến <strong>GIS/IoT</strong>, bộ ảnh huấn luyện <strong>AI/Computer Vision</strong> và <strong>Jupyter Notebook (.ipynb)</strong> kèm tạo trích dẫn chuẩn <strong>APA / IEEE / BibTeX</strong> tự động.
+            </p>
+          </div>
+          <div class="lg:col-span-5 grid grid-cols-3 gap-3">
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3.5 border border-white/10 text-center">
+              <div id="stat-total-datasets" class="text-2xl font-bold text-white">4</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Bộ dữ liệu chuẩn</div>
+            </div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3.5 border border-white/10 text-center">
+              <div id="stat-total-downloads" class="text-2xl font-bold text-emerald-400">670</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Lượt tải nghiên cứu</div>
+            </div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3.5 border border-white/10 text-center">
+              <div class="text-2xl font-bold text-amber-400">+30</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">Credits / Đóng góp</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search & Filter Bar inside Hero -->
+        <div class="mt-5 pt-5 border-t border-white/10 flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <input
+              id="search-input"
+              type="text"
+              oninput="renderDatasets()"
+              placeholder="Tìm kiếm theo tên bộ dữ liệu, từ khóa (VD: năng suất lúa, xâm nhập mặn, YOLOv8, IoT, khảo sát...)"
+              class="w-full pl-4 pr-10 py-2.5 rounded-xl bg-white text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <select id="department-filter" onchange="renderDatasets()" class="bg-slate-800 text-white border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="all">Tất cả Trường / Khoa / Viện (ĐH Cần Thơ)</option>
+            <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
+              <option value="Trường Bách khoa">Trường Bách khoa</option>
+              <option value="Trường Công nghệ Thông tin và Truyền thông">Trường Công nghệ Thông tin và Truyền thông</option>
+              <option value="Trường Kinh tế">Trường Kinh tế</option>
+              <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
+              <option value="Trường Thủy sản">Trường Thủy sản</option>
+              <option value="Trường Sư phạm">Trường Sư phạm</option>
+              <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
+            </optgroup>
+            <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
+              <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
+              <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
+              <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
+              <option value="Khoa Luật">Khoa Luật</option>
+              <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
+              <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
+              <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
+              <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
+              <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
+              <option value="Khoa Sau đại học">Khoa Sau đại học</option>
+            </optgroup>
+            <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
+              <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
+              <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
+              <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <!-- 4 Data Type Filter Pills -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2" id="type-filter-pills">
+          <button onclick="setTypeFilter('all')" data-type="all" class="type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-sm transition">
+            Tất cả định dạng
+          </button>
+          <button onclick="setTypeFilter('tabular')" data-type="tabular" class="type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+            📊 Dữ liệu Bảng (CSV / Excel / SQL)
+          </button>
+          <button onclick="setTypeFilter('gis_iot')" data-type="gis_iot" class="type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+            🗺️ Không gian GIS & Cảm biến IoT
+          </button>
+          <button onclick="setTypeFilter('multimedia')" data-type="multimedia" class="type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+            🖼️ Đa phương tiện & AI Dataset
+          </button>
+          <button onclick="setTypeFilter('academic_code')" data-type="academic_code" class="type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+            📓 Học thuật & Notebook (.ipynb)
+          </button>
+        </div>
+        <div class="text-xs text-slate-500">
+          Bấm vào bất kỳ bộ dữ liệu nào để <strong>Xem trước (Preview)</strong> & lấy mã <strong>Trích dẫn (Citation)</strong>
+        </div>
+      </div>
+
+      <!-- Dataset Grid -->
+      <div id="dataset-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      </div>
+    </section>
+
+    <!-- TAB 2: REVIEWER QUEUE (GIẢNG VIÊN / ADMIN DUYỆT DỮ LIỆU) -->
+    <section id="section-review" class="hidden space-y-5">
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Hàng đợi Kiểm duyệt Chất lượng Dữ liệu (Data Curation & Review)</h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Giảng viên hoặc Quản trị viên kiểm tra mô tả biến (Data Dictionary), tính ẩn danh và định dạng trước khi công khai. Khi nhấn <strong>Phê duyệt</strong>, sinh viên đóng góp sẽ tự động nhận <strong>+30 Credits</strong>.
+            </p>
+          </div>
+          <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 px-3.5 py-2 rounded-xl">
+            Mẹo: Bạn có thể chuyển sang tài khoản <strong>TS. Trần Văn Hải (Giảng viên)</strong> ở góc trên bên phải để duyệt bài.
+          </div>
+        </div>
+
+        <div id="review-list" class="mt-5 space-y-4"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: DATABASE & CLOUD ARCHITECTURE SUMMARY -->
+    <section id="section-architecture" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
+        <div class="border-b border-slate-100 pb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Lộ trình Triển khai Thử nghiệm Miễn phí 100% (Cloud Pilot Setup)</h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Tối ưu hóa cho giai đoạn thử nghiệm (100 – 1.000 sinh viên) với chi phí 0đ bằng kiến trúc Lưu trữ Lai (Hybrid Cloud Storage).
+            </p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Sẵn sàng Deploy (Render / Vercel + Supabase + R2)
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-900 text-sm">1. Web Host Miễn phí (Render / Vercel)</div>
+            <div class="font-mono text-blue-700 bg-blue-50 px-2 py-1 rounded inline-block">render.yaml &amp; vercel.json</div>
+            <p class="text-slate-600 leading-relaxed">
+              Đã tạo sẵn file cấu hình tự động. Bạn chỉ cần đẩy thư mục này lên GitHub và bấm <strong>New Web Service</strong> trên Render.com hoặc Vercel để nhận ngay tên miền <code>https://...</code> miễn phí.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-900 text-sm">2. CSDL PostgreSQL (Supabase Free)</div>
+            <div class="font-mono text-blue-700 bg-blue-50 px-2 py-1 rounded inline-block">supabase/schema.sql</div>
+            <p class="text-slate-600 leading-relaxed">
+              Lưu tài khoản sinh viên, điểm Credits, trích dẫn DOI và dữ liệu Preview JSON (20 dòng đầu). Gói miễn phí 500MB lưu được tới <strong>50.000+ bộ dữ liệu</strong>.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-900 text-sm">3. Lưu trữ Lai Không Giới Hạn</div>
+            <div class="font-mono text-blue-700 bg-blue-50 px-2 py-1 rounded inline-block">Cloudflare R2 + Google Drive EDU</div>
+            <p class="text-slate-600 leading-relaxed">
+              File nhỏ (<code>&lt; 20MB</code>) lưu trên <strong>Cloudflare R2 (10GB Free)</strong>. Bộ dữ liệu lớn (<code>&gt; 50MB</code> như ảnh AI, GIS) kết hợp link <strong>Google Drive trường / Zenodo (50GB Free)</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: DATASET DETAIL, INTERACTIVE PREVIEW & CITATION -->
+  <div id="dataset-modal" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2" id="modal-badges"></div>
+          <h3 id="modal-title" class="text-lg sm:text-xl font-bold text-slate-900"></h3>
+          <p id="modal-authors" class="text-xs text-slate-500"></p>
+        </div>
+        <button onclick="closeDatasetModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2">&times;</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1">
+        <!-- Description & Metadata Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="lg:col-span-2 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Mô tả & Phương pháp Thu thập</h4>
+            <p id="modal-description" class="text-sm text-slate-700 leading-relaxed"></p>
+            <div id="modal-tags" class="flex flex-wrap gap-1.5 pt-1"></div>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2.5 text-xs">
+            <div class="font-bold text-slate-800 border-b border-slate-200 pb-2">Thông tin Học thuật & Lưu trữ</div>
+            <div class="flex justify-between"><span class="text-slate-500">Mã định danh DOI:</span><span id="modal-doi" class="font-mono font-semibold text-blue-700"></span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Giấy phép (License):</span><span id="modal-license" class="font-semibold text-slate-800"></span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Nguồn lưu trữ Cloud:</span><span id="modal-storage-provider" class="font-semibold text-indigo-700"></span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Phạm vi không gian:</span><span id="modal-geo" class="font-medium text-slate-800 text-right"></span></div>
+            <div class="flex justify-between"><span class="text-slate-500">File gốc:</span><span id="modal-filename" class="font-mono text-slate-700"></span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Dung lượng:</span><span id="modal-size" class="font-semibold text-slate-800"></span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Lượt tải / Trích dẫn:</span><span id="modal-stats" class="font-semibold text-emerald-700"></span></div>
+          </div>
+        </div>
+
+        <!-- Dynamic Interactive Preview Container (Changes per Data Type) -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Xem trước Dữ liệu Trực tuyến (Interactive Data Preview)</h4>
+            <span class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Miễn phí xem trước (0 Credit)</span>
+          </div>
+          <div id="modal-preview-container" class="border border-slate-200 rounded-xl overflow-hidden bg-white"></div>
+        </div>
+
+        <!-- Auto Citation Box -->
+        <div class="bg-slate-900 text-slate-100 rounded-xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="text-xs font-semibold text-blue-300">Trích dẫn Bộ dữ liệu này trong Khóa luận / Bài báo khoa học (Auto-Citation)</div>
+            <div class="flex items-center gap-1">
+              <button onclick="switchCitationFormat('apa')" id="cite-btn-apa" class="px-2.5 py-1 rounded text-xs font-semibold bg-blue-600 text-white">APA 7th</button>
+              <button onclick="switchCitationFormat('ieee')" id="cite-btn-ieee" class="px-2.5 py-1 rounded text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">IEEE</button>
+              <button onclick="switchCitationFormat('bibtex')" id="cite-btn-bibtex" class="px-2.5 py-1 rounded text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">BibTeX</button>
+              <button onclick="copyCitation()" class="ml-2 px-2.5 py-1 rounded text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white">Sao chép</button>
+            </div>
+          </div>
+          <pre id="modal-citation-text" class="text-xs font-mono text-slate-200 whitespace-pre-wrap bg-slate-950/70 p-3 rounded-lg border border-slate-800"></pre>
+        </div>
+      </div>
+
+      <!-- Modal Footer: Purpose selection & Download button -->
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs text-slate-600">
+          <span>Mục đích sử dụng:</span>
+          <select id="download-purpose" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800">
+            <option value="Luận văn / Khóa luận tốt nghiệp">Luận văn / Khóa luận tốt nghiệp</option>
+            <option value="Đồ án môn học / Thực hành">Đồ án môn học / Thực hành</option>
+            <option value="Bài báo Nghiên cứu khoa học">Bài báo Nghiên cứu khoa học</option>
+            <option value="Tham khảo / Huấn luyện mô hình thử nghiệm">Tham khảo / Huấn luyện mô hình thử nghiệm</option>
+          </select>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="closeDatasetModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+            Đóng
+          </button>
+          <a id="modal-external-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="hidden px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition items-center gap-1.5">
+            <span>☁️ Mở Kho Lưu Trữ Gốc (Google Drive / Zenodo)</span>
+          </a>
+          <button onclick="handleDownloadDataset()" id="modal-download-btn" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-2">
+            <span>⬇️ Tải xuống Bộ dữ liệu (-5 Credits)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: UPLOAD NEW DATASET (SMART AUTO-PARSER + HYBRID CLOUD LINK) -->
+  <div id="upload-modal" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">Đóng góp Bộ Dữ Liệu Khoa Học Mới</h3>
+          <p class="text-xs text-slate-500">Nhận ngay <strong class="text-emerald-600">+30 Credits</strong> khi bộ dữ liệu được công bố và <strong class="text-emerald-600">+2 Credits</strong> mỗi khi có bạn khác tải về.</p>
+        </div>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2">&times;</button>
+      </div>
+
+      <form onsubmit="handleUploadSubmit(event)" class="p-6 overflow-y-auto space-y-4 text-xs sm:text-sm flex-1">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Tên bộ dữ liệu khoa học *</label>
+          <input id="up-title" required type="text" placeholder="VD: Khảo sát chất lượng nước nuôi tôm thẻ chân trắng tại Bạc Liêu 2026" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nhóm định dạng dữ liệu *</label>
+            <select id="up-type" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="tabular">📊 Dữ liệu dạng bảng (CSV, Excel, SQL)</option>
+              <option value="gis_iot">🗺️ Không gian GIS & Cảm biến IoT (GeoJSON)</option>
+              <option value="multimedia">🖼️ Đa phương tiện & AI Dataset (ZIP/Ảnh)</option>
+              <option value="academic_code">📓 Học thuật & Mã nguồn (Notebook .ipynb)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc (Trường / Khoa / Viện) *</label>
+            <select id="up-category" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
+                <option value="Trường Bách khoa">Trường Bách khoa</option>
+                <option value="Trường Công nghệ Thông tin và Truyền thông" selected>Trường Công nghệ Thông tin và Truyền thông</option>
+                <option value="Trường Kinh tế">Trường Kinh tế</option>
+                <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
+                <option value="Trường Thủy sản">Trường Thủy sản</option>
+                <option value="Trường Sư phạm">Trường Sư phạm</option>
+                <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
+              </optgroup>
+              <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
+                <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
+                <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
+                <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
+                <option value="Khoa Luật">Khoa Luật</option>
+                <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
+                <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
+                <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
+                <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
+                <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
+                <option value="Khoa Sau đại học">Khoa Sau đại học</option>
+              </optgroup>
+              <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
+                <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
+                <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
+                <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- HYBRID STORAGE SECTION -->
+        <div class="p-4 rounded-xl bg-blue-50/50 border border-blue-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 text-xs uppercase tracking-wider">Lưu trữ Lai (Hybrid Cloud Storage)</span>
+            <span class="text-[11px] font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">Không giới hạn dung lượng</span>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 text-xs">
+              Bước 1: Chọn file dữ liệu hoặc file mẫu từ máy tính (Tự động tạo bảng Preview CSV/GeoJSON/IPYNB)
+            </label>
+            <input id="up-file" type="file" onchange="handleFileSelect(event)" accept=".csv,.json,.geojson,.ipynb,.zip,.xlsx,.txt" class="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 bg-white border border-dashed border-slate-300 rounded-xl p-2" />
+            <div id="up-file-parse-info" class="hidden mt-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800"></div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 text-xs">
+              Bước 2 (Tùy chọn cho Dataset lớn &gt; 50MB): Link Google Drive Trường / OneDrive / Zenodo / Kaggle
+            </label>
+            <input id="up-external-url" type="url" placeholder="https://drive.google.com/drive/folders/... hoặc https://zenodo.org/record/..." class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p class="text-[11px] text-slate-500 mt-1">
+              Mẹo: Với tập dữ liệu ảnh AI (<code>.zip</code> hàng chục GB), bạn chỉ cần đính kèm link Google Drive <code>@student.ctu.edu.vn</code> hoặc Zenodo vào đây để không tốn dung lượng Cloud Server.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Tóm tắt & Phương pháp thu thập dữ liệu *</label>
+          <textarea id="up-summary" required rows="3" placeholder="Mô tả ngắn gọn cách thu thập mẫu, số lượng mẫu, thời gian thu thập và ý nghĩa các biến..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Phạm vi địa lý</label>
+            <input id="up-geo" type="text" value="Cần Thơ, Đồng bằng sông Cửu Long" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Từ khóa (cách nhau bởi dấu phẩy)</label>
+            <input id="up-tags" type="text" placeholder="Thủy sản, IoT, CSV, ĐBSCL" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <input id="up-autopublish" type="checkbox" checked class="w-4 h-4 text-blue-600 rounded" />
+          <label for="up-autopublish" class="text-xs text-slate-700">
+            Công bố ngay sau khi kiểm tra định dạng tự động (Bỏ chọn nếu muốn gửi vào hàng đợi để <strong>Giảng viên duyệt</strong> trước)
+          </label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">Hủy</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm">
+            Tải lên & Lưu vào Cơ sở dữ liệu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: REGISTER ACCOUNT -->
+  <div id="register-modal" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Đăng ký Tài khoản Nghiên cứu</h3>
+          <p class="text-xs text-slate-500">Tặng ngay <strong>50 Credits</strong> khởi đầu để tải dữ liệu phục vụ học tập</p>
+        </div>
+        <button onclick="closeRegisterModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2">&times;</button>
+      </div>
+      <form onsubmit="handleRegisterSubmit(event)" class="p-6 space-y-3.5 text-xs sm:text-sm">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Họ và tên *</label>
+          <input id="reg-name" required type="text" placeholder="VD: Phạm Hoàng Nam" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Email trường (@student.ctu.edu.vn / @ctu.edu.vn) *</label>
+          <input id="reg-email" required type="email" placeholder="namb2201234@student.ctu.edu.vn" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Mã số SV / CB *</label>
+            <input id="reg-id" required type="text" placeholder="B2201234" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Vai trò</label>
+            <select id="reg-role" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="student">Sinh viên</option>
+              <option value="lecturer">Giảng viên / Reviewer</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc (Trường / Khoa / Viện) *</label>
+          <select id="reg-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+            <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
+              <option value="Trường Bách khoa">Trường Bách khoa</option>
+              <option value="Trường Công nghệ Thông tin và Truyền thông" selected>Trường Công nghệ Thông tin và Truyền thông</option>
+              <option value="Trường Kinh tế">Trường Kinh tế</option>
+              <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
+              <option value="Trường Thủy sản">Trường Thủy sản</option>
+              <option value="Trường Sư phạm">Trường Sư phạm</option>
+              <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
+            </optgroup>
+            <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
+              <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
+              <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
+              <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
+              <option value="Khoa Luật">Khoa Luật</option>
+              <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
+              <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
+              <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
+              <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
+              <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
+              <option value="Khoa Sau đại học">Khoa Sau đại học</option>
+            </optgroup>
+            <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
+              <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
+              <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
+              <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="pt-3 flex justify-end gap-2">
+          <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">Đóng</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Tạo tài khoản (+50 Credits)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let appState = { users: [], datasets: [] };
+    let currentUser = null;
+    let activeTypeFilter = 'all';
+    let selectedDataset = null;
+    let currentCitationFormat = 'apa';
+    let parsedUploadFile = null;
+
+    const TYPE_META = {
+      tabular: { label: '📊 Bảng (CSV/Excel)', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      gis_iot: { label: '🗺️ Không gian GIS & IoT', badgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+      multimedia: { label: '🖼️ Đa phương tiện & AI', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+      academic_code: { label: '📓 Học thuật & Notebook', badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' }
+    };
+
+    const STORAGE_META = {
+      cloudflare_r2: { label: '☁️ Cloudflare R2', badgeClass: 'bg-orange-50 text-orange-700 border-orange-200' },
+      supabase_storage: { label: '⚡ Supabase Storage', badgeClass: 'bg-teal-50 text-teal-700 border-teal-200' },
+      google_drive: { label: '📁 Google Drive EDU', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
+      zenodo: { label: '🏛️ Zenodo Archive', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+      onedrive: { label: '☁️ Microsoft OneDrive', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },
+      huggingface_kaggle: { label: '🤗 HF / Kaggle', badgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+      external_cloud: { label: '🔗 External Cloud', badgeClass: 'bg-slate-100 text-slate-700 border-slate-300' }
+    };
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 KB';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = type === 'success'
+        ? 'bg-slate-900 text-white border-emerald-500'
+        : 'bg-red-900 text-white border-red-400';
+      el.className = `px-4 py-3 rounded-xl shadow-lg border-l-4 text-xs font-medium transition-all ${colors}`;
+      el.innerHTML = message;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 4200);
+    }
+
+    async function initApp() {
+      const res = await fetch('/api/state');
+      appState = await res.json();
+      currentUser = appState.users[0];
+      syncHeaderUI();
+      renderDatasets();
+      renderReviewQueue();
+    }
+
+    function syncHeaderUI() {
+      const select = document.getElementById('user-select');
+      select.innerHTML = appState.users.map(u =>
+        `<option value="${u.id}" ${u.id === currentUser.id ? 'selected' : ''}>${u.full_name} (${u.role === 'lecturer' ? 'Giảng viên' : 'SV'} - ${u.contribution_points} Cr)</option>`
+      ).join('');
+
+      document.getElementById('current-user-name').textContent = currentUser.full_name;
+      document.getElementById('current-user-id').textContent = currentUser.student_or_staff_id;
+      document.getElementById('current-user-points').textContent = currentUser.contribution_points;
+
+      const roleBadge = document.getElementById('current-user-role-badge');
+      if (currentUser.role === 'lecturer') {
+        roleBadge.textContent = 'Giảng viên';
+        roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
+      } else {
+        roleBadge.textContent = 'Sinh viên';
+        roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
+      }
+
+      const published = appState.datasets.filter(d => d.status === 'published');
+      const pending = appState.datasets.filter(d => d.status === 'pending_review');
+      const totalDownloads = published.reduce((acc, d) => acc + (d.download_count || 0), 0);
+
+      document.getElementById('stat-total-datasets').textContent = published.length;
+      document.getElementById('stat-total-downloads').textContent = totalDownloads.toLocaleString('vi-VN');
+      document.getElementById('pending-badge').textContent = pending.length;
+    }
+
+    function handleUserSwitch(userId) {
+      const found = appState.users.find(u => u.id === userId);
+      if (found) {
+        currentUser = found;
+        syncHeaderUI();
+        renderReviewQueue();
+        showToast(`Đã chuyển sang tài khoản <strong>${currentUser.full_name}</strong> (${currentUser.contribution_points} Credits)`);
+      }
+    }
+
+    function switchMainTab(tab) {
+      ['explore', 'review', 'architecture'].forEach(t => {
+        document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tab) {
+          btn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white text-blue-700 shadow-sm transition flex items-center gap-1.5';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5';
+        }
+      });
+    }
+
+    function setTypeFilter(type) {
+      activeTypeFilter = type;
+      document.querySelectorAll('.type-pill').forEach(btn => {
+        if (btn.dataset.type === type) {
+          btn.className = 'type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-sm transition';
+        } else {
+          btn.className = 'type-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition';
+        }
+      });
+      renderDatasets();
+    }
+
+    function renderDatasets() {
+      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+      const dept = document.getElementById('department-filter').value;
+      const grid = document.getElementById('dataset-grid');
+
+      const filtered = appState.datasets.filter(ds => {
+        if (ds.status !== 'published') return false;
+        if (activeTypeFilter !== 'all' && ds.data_type !== activeTypeFilter) return false;
+        if (dept !== 'all' && ds.department !== dept && ds.category_name !== dept) return false;
+        if (query) {
+          const hay = `${ds.title} ${ds.summary} ${ds.department} ${(ds.tags || []).join(' ')} ${ds.authors.join(' ')}`.toLowerCase();
+          return hay.includes(query);
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-2 bg-white rounded-2xl p-10 text-center border border-slate-200">
+            <p class="text-sm font-semibold text-slate-700">Không tìm thấy bộ dữ liệu phù hợp với bộ lọc hiện tại.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(ds => {
+        const meta = TYPE_META[ds.data_type] || TYPE_META.tabular;
+        const stMeta = STORAGE_META[ds.storage_provider || 'cloudflare_r2'] || STORAGE_META.cloudflare_r2;
+        return `
+          <article onclick="openDatasetModal('${ds.id}')" class="bg-white rounded-2xl p-5 border border-slate-200 hover:border-blue-400 hover:shadow-md transition cursor-pointer flex flex-col justify-between gap-4">
+            <div class="space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${meta.badgeClass}">
+                    ${meta.label}
+                  </span>
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded-full border ${stMeta.badgeClass}">
+                    ${stMeta.label}
+                  </span>
+                </div>
+                <span class="text-[11px] font-mono text-slate-500">DOI: ${ds.doi}</span>
+              </div>
+              <h3 class="font-bold text-base text-slate-900 hover:text-blue-700 transition leading-snug">
+                ${ds.title}
+              </h3>
+              <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                ${ds.summary}
+              </p>
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                ${(ds.tags || []).slice(0, 4).map(t => `<span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">#${t}</span>`).join('')}
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div>
+                <span class="font-medium text-slate-700">${ds.authors[0]}</span>
+                <span>• ${ds.department}</span>
+              </div>
+              <div class="flex items-center gap-3 font-medium">
+                <span>📦 ${formatBytes(ds.total_size_bytes)}</span>
+                <span class="text-blue-700 font-semibold">⬇️ ${ds.download_count}</span>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function generateCitationStrings(ds) {
+      const authors = (ds.authors || []).join(', ');
+      const year = ds.collection_year || 2026;
+      const url = `https://doi.org/${ds.doi}`;
+      return {
+        apa: `${authors} (${year}). ${ds.title} [Data set]. CTU Research Data Hub. ${url}`,
+        ieee: `${authors}, "${ds.title}," CTU Research Data Hub, ${year}. [Online]. Available: ${url}`,
+        bibtex: `@dataset{ctudata_${ds.id.replace(/[^a-z0-9]/gi, '')},\n  author    = {${(ds.authors || []).join(' and ')}},\n  title     = {{${ds.title}}},\n  year      = {${year}},\n  publisher = {CTU Research Data Hub},\n  doi       = {${ds.doi}}\n}`
+      };
+    }
+
+    function openDatasetModal(id) {
+      const ds = appState.datasets.find(d => d.id === id);
+      if (!ds) return;
+      selectedDataset = ds;
+
+      const meta = TYPE_META[ds.data_type] || TYPE_META.tabular;
+      const stMeta = STORAGE_META[ds.storage_provider || 'cloudflare_r2'] || STORAGE_META.cloudflare_r2;
+      document.getElementById('modal-badges').innerHTML = `
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${meta.badgeClass}">${meta.label}</span>
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${stMeta.badgeClass}">${stMeta.label}</span>
+        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">${ds.category_name}</span>
+      `;
+      document.getElementById('modal-title').textContent = ds.title;
+      document.getElementById('modal-authors').textContent = `Tác giả đóng góp: ${ds.authors.join(', ')} • Đơn vị: ${ds.department} • Năm thu thập: ${ds.collection_year}`;
+      document.getElementById('modal-description').textContent = ds.description;
+      document.getElementById('modal-tags').innerHTML = (ds.tags || []).map(t =>
+        `<span class="text-xs bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-lg font-medium">#${t}</span>`
+      ).join('');
+
+      document.getElementById('modal-doi').textContent = ds.doi;
+      document.getElementById('modal-license').textContent = ds.license;
+      document.getElementById('modal-storage-provider').textContent = stMeta.label;
+      document.getElementById('modal-geo').textContent = ds.geographic_coverage;
+      document.getElementById('modal-filename').textContent = ds.file_name;
+      document.getElementById('modal-size').textContent = formatBytes(ds.total_size_bytes);
+      document.getElementById('modal-stats').textContent = `${ds.download_count} lượt tải • ${ds.citation_count} trích dẫn`;
+
+      const extBtn = document.getElementById('modal-external-link-btn');
+      if (ds.external_storage_url) {
+        extBtn.href = ds.external_storage_url;
+        extBtn.classList.remove('hidden');
+        extBtn.classList.add('inline-flex');
+      } else {
+        extBtn.classList.add('hidden');
+        extBtn.classList.remove('inline-flex');
+      }
+
+      renderInteractivePreview(ds);
+      switchCitationFormat('apa');
+
+      document.getElementById('dataset-modal').classList.remove('hidden');
+    }
+
+    function closeDatasetModal() {
+      document.getElementById('dataset-modal').classList.add('hidden');
+    }
+
+    function renderInteractivePreview(ds) {
+      const container = document.getElementById('modal-preview-container');
+
+      // 1. TABULAR PREVIEW (CSV / EXCEL)
+      if (ds.data_type === 'tabular') {
+        const headers = ds.preview_data?.headers || [];
+        const rows = ds.preview_data?.rows || [];
+        const columns = ds.metadata_schema?.columns || [];
+
+        container.innerHTML = `
+          <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-700">Bảng dữ liệu mẫu (${ds.metadata_schema?.row_count || rows.length} dòng × ${headers.length} cột)</span>
+            <span class="text-slate-500">Hiển thị ${rows.length} dòng đầu tiên từ <code>${ds.file_name}</code></span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                  ${headers.map(h => `<th class="py-2.5 px-3 font-mono font-semibold whitespace-nowrap">${h}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${rows.map(r => `
+                  <tr class="hover:bg-blue-50/40">
+                    ${r.map(cell => `<td class="py-2 px-3 font-mono text-slate-700 whitespace-nowrap">${cell}</td>`).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ${columns.length ? `
+            <div class="p-4 bg-slate-50 border-t border-slate-200">
+              <div class="text-xs font-bold text-slate-700 mb-2">Từ điển Biến & Thống kê Mô tả (Data Dictionary)</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                ${columns.map(c => `
+                  <div class="p-2.5 rounded-lg bg-white border border-slate-200 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                      <span class="font-mono font-bold text-blue-700">${c.name}</span>
+                      <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">${c.type} • Khuyết: ${c.missing}</span>
+                    </div>
+                    <div class="text-slate-600 mt-1">${c.desc}</div>
+                    <div class="text-[11px] font-mono text-emerald-700 mt-1">${c.stats}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        `;
+        return;
+      }
+
+      // 2. GIS & IOT PREVIEW
+      if (ds.data_type === 'gis_iot') {
+        const stations = ds.preview_data?.stations || [];
+        const ts = ds.preview_data?.timeseries_sample || [];
+        container.innerHTML = `
+          <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <div class="text-xs font-bold text-slate-800">📍 Tọa độ Trạm Quan trắc IoT (GeoJSON EPSG:4326)</div>
+              <div class="space-y-2">
+                ${stations.map(st => `
+                  <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+                    <div>
+                      <div class="font-semibold text-slate-900">${st.id} — ${st.name}</div>
+                      <div class="font-mono text-[11px] text-slate-500">Lat: ${st.lat}°N, Lng: ${st.lng}°E</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="font-mono font-bold ${st.salinity_ppt > 4 ? 'text-red-600' : 'text-emerald-600'}">Độ mặn: ${st.salinity_ppt} ‰</div>
+                      <div class="text-[11px] text-slate-500">pH: ${st.ph} | DO: ${st.do_mgl} mg/L</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="text-xs font-bold text-slate-800">📈 Biểu đồ Chuỗi thời gian Độ mặn (‰) theo Khung giờ</div>
+              <div class="p-4 rounded-xl bg-slate-900 text-white space-y-3">
+                ${ts.map(point => `
+                  <div class="space-y-1 text-xs">
+                    <div class="flex justify-between font-mono text-[11px] text-slate-300">
+                      <span>Giờ: ${point.time}</span>
+                      <span>Trần Đề: ${point.st04}‰ | Đại Ngãi: ${point.st03}‰ | Ninh Kiều: ${point.st01}‰</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
+                      <div style="width: ${Math.min(100, point.st04 * 5.5)}%" class="bg-rose-500 h-full" title="Trạm Trần Đề"></div>
+                    </div>
+                  </div>
+                `).join('')}
+                <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-800">
+                  Hệ quy chiếu: ${ds.metadata_schema?.crs} • Chu kỳ lấy mẫu: ${ds.metadata_schema?.sampling_interval}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 3. MULTIMEDIA & AI DATASET PREVIEW
+      if (ds.data_type === 'multimedia') {
+        const classes = ds.metadata_schema?.classes || [];
+        const folders = ds.preview_data?.folder_structure || [];
+        container.innerHTML = `
+          <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-2 space-y-3">
+              <div class="text-xs font-bold text-slate-800">Phân bố Nhãn Lớp Huấn luyện (Class Distribution — Tổng ${ds.metadata_schema?.total_images} ảnh)</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                ${classes.map(c => `
+                  <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-bold text-slate-900">${c.name}</span>
+                      <span class="font-mono font-semibold text-blue-700">${c.count} ảnh</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div style="width: ${Math.round((c.count / 1400) * 100)}%; background:${c.color}" class="h-full"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-600">${c.sample_desc}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-xs space-y-2">
+              <div class="text-blue-300 font-sans font-bold">Cấu trúc gói Dataset (.zip)</div>
+              <pre class="text-[11px] text-emerald-300 leading-relaxed">${folders.join('\n')}</pre>
+              <div class="pt-2 border-t border-slate-800 text-[11px] font-sans text-slate-300 space-y-1">
+                <div>Độ phân giải: <strong>${ds.metadata_schema?.resolution}</strong></div>
+                <div>Định dạng nhãn: <strong>${ds.metadata_schema?.annotation_format}</strong></div>
+                <div>Tỉ lệ chia: <strong>${ds.metadata_schema?.train_val_test_split}</strong></div>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 4. ACADEMIC & JUPYTER NOTEBOOK (.IPYNB) PREVIEW
+      const cells = ds.preview_data?.notebook_cells || [];
+      container.innerHTML = `
+        <div class="p-4 space-y-3 bg-slate-50">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-800">Trình đọc Jupyter Notebook trực tuyến (<code>${ds.file_name}</code>)</span>
+            <span class="font-mono text-slate-600">${ds.metadata_schema?.environment || 'Python 3.11'}</span>
+          </div>
+          <div class="space-y-3">
+            ${cells.map((cell, idx) => cell.type === 'markdown' ? `
+              <div class="p-3.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800">
+                <div class="font-semibold text-slate-900">${cell.content.replace('### ', '')}</div>
+              </div>
+            ` : `
+              <div class="rounded-xl overflow-hidden border border-slate-300 bg-slate-950 text-slate-100 text-xs font-mono">
+                <div class="px-3 py-1.5 bg-slate-900 text-slate-400 text-[11px] border-b border-slate-800 flex justify-between">
+                  <span>In [${idx}]: Python</span>
+                  <span>Executable Cell</span>
+                </div>
+                <pre class="p-3 text-emerald-300 overflow-x-auto">${cell.code}</pre>
+                ${cell.output ? `
+                  <div class="p-3 bg-slate-900/90 border-t border-slate-800 text-slate-200">
+                    <div class="text-[10px] uppercase text-amber-400 mb-1">Output [${idx}]:</div>
+                    <pre class="overflow-x-auto text-[11px]">${cell.output}</pre>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function switchCitationFormat(fmt) {
+      currentCitationFormat = fmt;
+      ['apa', 'ieee', 'bibtex'].forEach(f => {
+        const btn = document.getElementById(`cite-btn-${f}`);
+        btn.className = f === fmt
+          ? 'px-2.5 py-1 rounded text-xs font-semibold bg-blue-600 text-white'
+          : 'px-2.5 py-1 rounded text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700';
+      });
+      if (selectedDataset) {
+        const cites = generateCitationStrings(selectedDataset);
+        document.getElementById('modal-citation-text').textContent = cites[fmt];
+      }
+    }
+
+    function copyCitation() {
+      const text = document.getElementById('modal-citation-text').textContent;
+      navigator.clipboard.writeText(text);
+      showToast('Đã sao chép trích dẫn chuẩn vào Clipboard!');
+    }
+
+    async function handleDownloadDataset() {
+      if (!selectedDataset) return;
+      const res = await fetch('/api/datasets/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dataset_id: selectedDataset.id,
+          user_id: currentUser.id,
+          purpose: document.getElementById('download-purpose').value
+        })
+      });
+      const data = await res.json();
+      if (data.db) {
+        appState = data.db;
+        currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+        selectedDataset = appState.datasets.find(d => d.id === selectedDataset.id);
+        syncHeaderUI();
+        renderDatasets();
+        document.getElementById('modal-stats').textContent = `${selectedDataset.download_count} lượt tải • ${selectedDataset.citation_count} trích dẫn`;
+      }
+
+      // Trigger real browser file download
+      const blob = new Blob([data.file_content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.file_name || 'dataset.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      showToast(`Đã tải xuống <strong>${data.file_name}</strong>! Tác giả bộ dữ liệu được thưởng +2 Credits.`);
+    }
+
+    // SMART FILE PARSER IN BROWSER FOR CSV / GEOJSON / IPYNB
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const infoBox = document.getElementById('up-file-parse-info');
+      infoBox.classList.remove('hidden');
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'csv') {
+        document.getElementById('up-type').value = 'tabular';
+      } else if (ext === 'geojson' || ext === 'json') {
+        document.getElementById('up-type').value = 'gis_iot';
+      } else if (ext === 'ipynb') {
+        document.getElementById('up-type').value = 'academic_code';
+      } else if (ext === 'zip') {
+        document.getElementById('up-type').value = 'multimedia';
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result || '';
+        if (ext === 'csv') {
+          const lines = content.split(/\r?\n/).filter(Boolean);
+          const headers = (lines[0] || '').split(',').map(h => h.trim());
+          const sampleRows = lines.slice(1, 8).map(l => l.split(',').map(c => c.trim()));
+          parsedUploadFile = {
+            file_name: file.name,
+            file_extension: ext,
+            total_size_bytes: file.size,
+            metadata_schema: {
+              row_count: Math.max(0, lines.length - 1),
+              column_count: headers.length,
+              columns: headers.map(h => ({ name: h, type: 'Auto-detected', missing: '0%', stats: 'Trích xuất tự động', desc: `Biến ${h}` }))
+            },
+            preview_data: { headers, rows: sampleRows }
+          };
+          infoBox.innerHTML = `✅ Đã phân tích tự động file CSV: <strong>${lines.length - 1} dòng</strong> × <strong>${headers.length} cột</strong> (<code>${headers.slice(0, 5).join(', ')}</code>)`;
+        } else {
+          parsedUploadFile = {
+            file_name: file.name,
+            file_extension: ext,
+            total_size_bytes: file.size
+          };
+          infoBox.innerHTML = `✅ Đã đọc file <strong>${file.name}</strong> (${formatBytes(file.size)}) sẵn sàng tải lên kho lưu trữ.`;
+        }
+      };
+      reader.readAsText(file.slice(0, 1024 * 256));
+    }
+
+    function openUploadModal() {
+      parsedUploadFile = null;
+      document.getElementById('up-file-parse-info').classList.add('hidden');
+      const extUrlEl = document.getElementById('up-external-url');
+      if (extUrlEl) extUrlEl.value = '';
+      const catEl = document.getElementById('up-category');
+      if (catEl && currentUser?.department) {
+        catEl.value = currentUser.department;
+      }
+      document.getElementById('upload-modal').classList.remove('hidden');
+    }
+
+    function closeUploadModal() {
+      document.getElementById('upload-modal').classList.add('hidden');
+    }
+
+    async function handleUploadSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('up-title').value.trim();
+      const data_type = document.getElementById('up-type').value;
+      const category_name = document.getElementById('up-category').value;
+      const summary = document.getElementById('up-summary').value.trim();
+      const geographic_coverage = document.getElementById('up-geo').value.trim();
+      const tagsRaw = document.getElementById('up-tags').value.trim();
+      const external_storage_url = (document.getElementById('up-external-url')?.value || '').trim();
+      const auto_publish = document.getElementById('up-autopublish').checked;
+
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : ['Nghiên cứu sinh viên', 'CTU Data'];
+
+      const payload = {
+        user_id: currentUser.id,
+        title,
+        data_type,
+        category_name,
+        department: category_name,
+        summary,
+        description: summary,
+        geographic_coverage,
+        tags,
+        external_storage_url,
+        auto_publish,
+        file_name: parsedUploadFile?.file_name || 'student_dataset_2026.csv',
+        file_extension: parsedUploadFile?.file_extension || 'csv',
+        total_size_bytes: parsedUploadFile?.total_size_bytes || (external_storage_url ? 256000000 : 1420000),
+        metadata_schema: parsedUploadFile?.metadata_schema || {
+          row_count: 150,
+          column_count: 4,
+          columns: [
+            { name: 'sample_id', type: 'String', missing: '0%', stats: '150 mẫu', desc: 'Mã mẫu thu thập' },
+            { name: 'measurement_val', type: 'Float', missing: '0%', stats: 'Mean: 12.4', desc: 'Giá trị đo đạc thực nghiệm' }
+          ]
+        },
+        preview_data: parsedUploadFile?.preview_data || {
+          headers: ['sample_id', 'location', 'measurement_val', 'note'],
+          rows: [
+            ['SMP_01', geographic_coverage, 12.4, 'Mẫu đạt chuẩn'],
+            ['SMP_02', geographic_coverage, 11.9, 'Mẫu đạt chuẩn'],
+            ['SMP_03', geographic_coverage, 13.1, 'Mẫu đối chứng']
+          ]
+        }
+      };
+
+      const res = await fetch('/api/datasets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      appState = data.db;
+      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+
+      closeUploadModal();
+      syncHeaderUI();
+      renderDatasets();
+      renderReviewQueue();
+
+      if (data.dataset.status === 'published') {
+        showToast(`🎉 Đã công bố bộ dữ liệu <strong>${data.dataset.title}</strong>! Bạn nhận được <strong>+30 Credits</strong>.`);
+      } else {
+        showToast(`⏳ Bộ dữ liệu đã được gửi vào <strong>Hàng đợi Kiểm duyệt</strong> chờ Giảng viên phê duyệt.`);
+      }
+    }
+
+    function renderReviewQueue() {
+      const container = document.getElementById('review-list');
+      const pending = appState.datasets.filter(d => d.status === 'pending_review');
+
+      if (pending.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
+            Hiện không có bộ dữ liệu nào đang chờ duyệt. Tất cả các bộ dữ liệu hợp lệ đã được công bố!
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = pending.map(ds => `
+        <div class="p-5 rounded-xl border border-amber-200 bg-amber-50/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-900">Chờ duyệt</span>
+              <span class="text-xs font-semibold text-slate-600">${ds.category_name}</span>
+              <span class="text-xs font-mono text-slate-500">File: ${ds.file_name} (${formatBytes(ds.total_size_bytes)})</span>
+            </div>
+            <h4 class="font-bold text-base text-slate-900">${ds.title}</h4>
+            <p class="text-xs text-slate-600">${ds.summary}</p>
+            <div class="text-xs text-slate-500">
+              Người gửi: <strong class="text-slate-800">${ds.authors.join(', ')}</strong> (${ds.owner_email})
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="openDatasetModal('${ds.id}')" class="px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100">
+              Xem trước Dữ liệu
+            </button>
+            <button onclick="handleReviewAction('${ds.id}', 'approve')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm">
+              ✓ Phê duyệt (+30 Cr cho SV)
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function handleReviewAction(datasetId, action) {
+      const res = await fetch('/api/datasets/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataset_id: datasetId, action })
+      });
+      const data = await res.json();
+      appState = data.db;
+      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      syncHeaderUI();
+      renderDatasets();
+      renderReviewQueue();
+      showToast('✅ Đã phê duyệt bộ dữ liệu! Sinh viên đóng góp đã được cộng +30 Credits.');
+    }
+
+    function openRegisterModal() {
+      document.getElementById('register-modal').classList.remove('hidden');
+    }
+
+    function closeRegisterModal() {
+      document.getElementById('register-modal').classList.add('hidden');
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        full_name: document.getElementById('reg-name').value.trim(),
+        email: document.getElementById('reg-email').value.trim(),
+        student_or_staff_id: document.getElementById('reg-id').value.trim(),
+        role: document.getElementById('reg-role').value,
+        department: document.getElementById('reg-dept').value.trim()
+      };
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      appState = data.db;
+      currentUser = data.user;
+      closeRegisterModal();
+      syncHeaderUI();
+      showToast(`🎉 Chào mừng <strong>${currentUser.full_name}</strong>! Tài khoản của bạn đã được tặng <strong>50 Credits</strong> khởi đầu.`);
+    }
+
+    initApp();
+  </script>
+</body>
+</html>

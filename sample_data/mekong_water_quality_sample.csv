@@ -1,0 +1,9 @@
+station_code,province,water_temp_c,ph_level,dissolved_oxygen_mgl,salinity_ppt,ammonia_mgl,quality_index
+ST_CT_01,Can Tho,28.4,7.15,6.42,0.35,0.08,Good
+ST_CT_02,Can Tho,28.9,7.08,6.18,0.42,0.11,Good
+ST_HG_01,Hau Giang,29.1,6.85,5.74,1.65,0.19,Moderate
+ST_ST_01,Soc Trang,29.5,7.42,5.30,6.80,0.24,Saline_Warning
+ST_ST_02,Soc Trang,29.8,7.65,5.12,12.40,0.31,High_Salinity
+ST_TV_01,Tra Vinh,29.2,7.50,5.48,8.15,0.22,Saline_Warning
+ST_AG_01,An Giang,28.1,7.22,6.65,0.18,0.05,Excellent
+ST_DT_01,Dong Thap,28.3,7.10,6.50,0.21,0.07,Excellent
