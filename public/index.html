@@ -329,29 +329,72 @@
 
       <!-- Admin Sub-navigation Pills -->
       <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
-        <button onclick="switchAdminSubTab('users')" id="admin-subbtn-users" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition">
-          👥 1. Quản lý Người dùng &amp; Phân quyền
+        <button onclick="switchAdminSubTab('users')" id="admin-subbtn-users" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition flex items-center gap-1.5">
+          <span>👥 1. Quản lý Thành viên &amp; Duyệt 2 Bước</span>
+          <span id="admin-pending-ext-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-white font-bold">1</span>
+        </button>
+        <button onclick="switchAdminSubTab('emails')" id="admin-subbtn-emails" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+          📧 2. Hộp thư Trả lời Tự động (Email OTP)
         </button>
         <button onclick="switchAdminSubTab('datasets')" id="admin-subbtn-datasets" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          🗄️ 2. Quản lý Toàn bộ Kho Dữ liệu
+          🗄️ 3. Quản lý Toàn bộ Kho Dữ liệu
         </button>
         <button onclick="switchAdminSubTab('units')" id="admin-subbtn-units" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          🏛️ 3. Thống kê theo Đơn vị ĐH Cần Thơ
+          🏛️ 4. Thống kê theo Đơn vị ĐH Cần Thơ
         </button>
         <button onclick="switchAdminSubTab('settings')" id="admin-subbtn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          ⚙️ 4. Cấu hình Chính sách &amp; Nhật ký Hệ thống
+          ⚙️ 5. Cấu hình Chính sách &amp; Nhật ký
         </button>
       </div>
 
-      <!-- ADMIN SUB-TAB 1: USER & ROLE MANAGEMENT -->
-      <div id="admin-subtab-users" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- ADMIN SUB-TAB 1: USER & ROLE MANAGEMENT + 2-STEP EXTERNAL APPROVAL -->
+      <div id="admin-subtab-users" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
+        <!-- Quy tắc Phân nhóm Email CTU & Xác thực 2 bước -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 md:grid-cols-5 gap-2.5 text-xs">
+          <div class="p-2.5 rounded-lg bg-white border border-indigo-200">
+            <div class="font-bold text-indigo-800">👨‍🏫 xxx@ctu.edu.vn</div>
+            <div class="text-[11px] text-slate-600 mt-0.5">Nhóm Cán bộ, Giảng viên • Xác thực Email tự động (1 bước)</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-white border border-emerald-200">
+            <div class="font-bold text-emerald-800">👨‍🎓 xxx@student.ctu.edu.vn</div>
+            <div class="text-[11px] text-slate-600 mt-0.5">Nhóm Sinh viên • Xác thực Email tự động (1 bước)</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-white border border-blue-200">
+            <div class="font-bold text-blue-800">🎓 xxx@gstudent.ctu.edu.vn</div>
+            <div class="text-[11px] text-slate-600 mt-0.5">Nhóm Học viên Sau đại học • Xác thực Email tự động (1 bước)</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-white border border-cyan-200">
+            <div class="font-bold text-cyan-800">🌐 xxx@dttx.ctu.edu.vn</div>
+            <div class="text-[11px] text-slate-600 mt-0.5">Nhóm SV Đào tạo Từ xa • Xác thực Email tự động (1 bước)</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-amber-50/70 border border-amber-300">
+            <div class="font-bold text-amber-900">🛡️ Email Ngoài CTU</div>
+            <div class="text-[11px] text-amber-800 mt-0.5">Qua 02 bước: (1) Xác thực Email OTP &amp; (2) Ban Quản trị xác nhận</div>
+          </div>
+        </div>
+
+        <!-- Hàng đợi Bước 2/2: Phê duyệt Thành viên Ngoài hệ thống ctu.edu.vn -->
+        <div id="admin-pending-external-section" class="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 class="text-sm font-bold text-amber-950 flex items-center gap-1.5">
+                <span>⏳ Hàng đợi Xác nhận Thành viên Ngoài Hệ thống ctu.edu.vn (Bước 2/2 — Ban Quản trị Xác nhận)</span>
+              </h4>
+              <p class="text-xs text-amber-800">
+                Các tài khoản dưới đây có email không thuộc <code>ctu.edu.vn</code>, đã hoàn thành <strong>Bước 1 (Xác thực đúng Email)</strong> và đang chờ Ban Quản trị xác nhận để trở thành thành viên chính thức.
+              </p>
+            </div>
+          </div>
+          <div id="admin-pending-external-list" class="space-y-2.5"></div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Danh sách Tài khoản Người dùng &amp; Phân quyền Hệ thống</h3>
-            <p class="text-xs text-slate-500">Thay đổi vai trò (Sinh viên / Giảng viên duyệt bài / Admin), cấp phát điểm Credits hoặc khóa tài khoản vi phạm.</p>
+            <h3 class="text-base font-bold text-slate-900">Danh sách Toàn bộ Thành viên &amp; Phân quyền Hệ thống</h3>
+            <p class="text-xs text-slate-500">Quản lý nhóm thành viên theo tên miền email, trạng thái xác thực, cấp phát Credits hoặc khóa tài khoản.</p>
           </div>
           <button onclick="openRegisterModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm">
-            + Thêm Tài khoản Mới
+            + Đăng ký Thành viên Mới
           </button>
         </div>
 
@@ -359,11 +402,10 @@
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
-                <th class="py-3 px-3.5 font-bold">Họ và tên / Email</th>
-                <th class="py-3 px-3 font-bold">Mã SV / CB</th>
-                <th class="py-3 px-3 font-bold">Đơn vị trực thuộc (CTU)</th>
+                <th class="py-3 px-3.5 font-bold">Họ và tên / Tài khoản &amp; Email</th>
+                <th class="py-3 px-3 font-bold">Nhóm Thành viên (Theo Email)</th>
+                <th class="py-3 px-3 font-bold">Trạng thái Xác thực</th>
                 <th class="py-3 px-3 font-bold">Vai trò (Phân quyền)</th>
-                <th class="py-3 px-3 font-bold text-center">Đóng góp / Tải</th>
                 <th class="py-3 px-3 font-bold text-right">Số dư Credits</th>
                 <th class="py-3 px-3.5 font-bold text-right">Thao tác Quản trị</th>
               </tr>
@@ -371,6 +413,20 @@
             <tbody id="admin-users-tbody" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- ADMIN SUB-TAB 2: AUTOMATED EMAIL OUTBOX (HỘP THƯ TRẢ LỜI TỰ ĐỘNG) -->
+      <div id="admin-subtab-emails" class="hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">📧 Nhật ký Hệ thống Trả lời Email Tự động (Auto-Responder Outbox)</h3>
+            <p class="text-xs text-slate-500">
+              Lưu trữ toàn bộ thư tự động gửi mã OTP xác thực Email (Bước 1) và thư thông báo kích hoạt chính thức / phê duyệt của Ban Quản trị (Bước 2).
+            </p>
+          </div>
+          <span id="admin-emails-count" class="text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-lg font-semibold">0 email đã gửi</span>
+        </div>
+        <div id="admin-emails-list" class="space-y-3"></div>
       </div>
 
       <!-- ADMIN SUB-TAB 2: MASTER DATASET MANAGEMENT -->
@@ -697,13 +753,13 @@
     </div>
   </div>
 
-  <!-- MODAL 3: REGISTER ACCOUNT -->
-  <div id="register-modal" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+  <!-- MODAL 3: REGISTER ACCOUNT (WITH AUTO CTU EMAIL DOMAIN CLASSIFICATION) -->
+  <div id="register-modal" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
       <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <div>
-          <h3 class="text-base font-bold text-slate-900">Đăng ký Tài khoản Nghiên cứu</h3>
-          <p class="text-xs text-slate-500">Tặng ngay <strong>50 Credits</strong> khởi đầu để tải dữ liệu phục vụ học tập</p>
+          <h3 class="text-base font-bold text-slate-900">Đăng ký Thành viên &amp; Xác thực Email Tự động</h3>
+          <p class="text-xs text-slate-500">Tự động phân nhóm theo hệ thống tên miền <code>ctu.edu.vn</code> &amp; gửi mã xác thực OTP qua Email</p>
         </div>
         <button onclick="closeRegisterModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2">&times;</button>
       </div>
@@ -713,58 +769,60 @@
           <input id="reg-name" required type="text" placeholder="VD: Phạm Hoàng Nam" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
         </div>
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">Email trường (@student.ctu.edu.vn / @ctu.edu.vn) *</label>
-          <input id="reg-email" required type="email" placeholder="namb2201234@student.ctu.edu.vn" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          <label class="block font-semibold text-slate-700 mb-1">Địa chỉ Email Đăng ký *</label>
+          <input id="reg-email" required type="email" oninput="previewEmailDomainGroup(this.value)" placeholder="VD: xxx@student.ctu.edu.vn, xxx@ctu.edu.vn, xxx@gstudent.ctu.edu.vn, xxx@dttx.ctu.edu.vn..." class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <!-- Hộp hiển thị phân nhóm tự động khi gõ Email -->
+          <div id="reg-email-group-preview" class="mt-2 p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-slate-700 space-y-1">
+            <div class="font-bold text-blue-900">📌 Quy tắc Phân nhóm &amp; Xác thực Tự động theo Email:</div>
+            <ul class="list-disc list-inside text-[11px] space-y-0.5 text-slate-600">
+              <li><code>xxx@ctu.edu.vn</code> → <strong>Cán bộ, Giảng viên của Trường</strong> (Xác thực Email 1 bước)</li>
+              <li><code>xxx@student.ctu.edu.vn</code> → <strong>Sinh viên</strong> (Xác thực Email 1 bước)</li>
+              <li><code>xxx@gstudent.ctu.edu.vn</code> → <strong>Học viên Sau đại học</strong> (Xác thực Email 1 bước)</li>
+              <li><code>xxx@dttx.ctu.edu.vn</code> → <strong>Sinh viên Đào tạo Từ xa</strong> (Xác thực Email 1 bước)</li>
+              <li><strong>Email ngoài hệ thống <code>ctu.edu.vn</code></strong> → Qua <strong>02 bước</strong>: (1) Xác thực Email &amp; (2) Ban Quản trị xác nhận.</li>
+            </ul>
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Mã số SV / CB (Tên ĐN) *</label>
-            <input id="reg-id" required type="text" placeholder="B2201234" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
+            <label class="block font-semibold text-slate-700 mb-1">Mã số SV / CB / HV (Tên ĐN) *</label>
+            <input id="reg-id" required type="text" placeholder="VD: B2201234 / CB00512" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Mật khẩu đăng nhập *</label>
             <input id="reg-password" required type="password" value="123" placeholder="Nhập mật khẩu..." class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Vai trò đăng ký</label>
-            <select id="reg-role" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
-              <option value="student">Sinh viên Nghiên cứu</option>
-              <option value="lecturer">Giảng viên / Reviewer</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc (CTU) *</label>
-            <select id="reg-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
-              <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
-                <option value="Trường Bách khoa">Trường Bách khoa</option>
-                <option value="Trường Công nghệ Thông tin và Truyền thông" selected>Trường Công nghệ Thông tin và Truyền thông</option>
-                <option value="Trường Kinh tế">Trường Kinh tế</option>
-                <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
-                <option value="Trường Thủy sản">Trường Thủy sản</option>
-                <option value="Trường Sư phạm">Trường Sư phạm</option>
-                <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
-              </optgroup>
-              <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
-                <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
-                <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
-                <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
-                <option value="Khoa Luật">Khoa Luật</option>
-                <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
-                <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
-                <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
-                <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
-                <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
-                <option value="Khoa Sau đại học">Khoa Sau đại học</option>
-              </optgroup>
-              <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
-                <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
-                <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
-                <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
-              </optgroup>
-            </select>
-          </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Đơn vị trực thuộc / Liên kết (ĐH Cần Thơ) *</label>
+          <select id="reg-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+            <optgroup label="1. Các Trường trực thuộc ĐH Cần Thơ">
+              <option value="Trường Bách khoa">Trường Bách khoa</option>
+              <option value="Trường Công nghệ Thông tin và Truyền thông" selected>Trường Công nghệ Thông tin và Truyền thông</option>
+              <option value="Trường Kinh tế">Trường Kinh tế</option>
+              <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
+              <option value="Trường Thủy sản">Trường Thủy sản</option>
+              <option value="Trường Sư phạm">Trường Sư phạm</option>
+              <option value="Trường THPT Thực hành Sư phạm">Trường THPT Thực hành Sư phạm</option>
+            </optgroup>
+            <optgroup label="2. Các Khoa trực thuộc ĐH Cần Thơ">
+              <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
+              <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
+              <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
+              <option value="Khoa Luật">Khoa Luật</option>
+              <option value="Khoa Ngoại ngữ">Khoa Ngoại ngữ</option>
+              <option value="Khoa Khoa học Chính trị">Khoa Khoa học Chính trị</option>
+              <option value="Khoa Phát triển Nông thôn">Khoa Phát triển Nông thôn</option>
+              <option value="Khoa Giáo dục Thể chất">Khoa Giáo dục Thể chất</option>
+              <option value="Khoa Dự bị Dân tộc">Khoa Dự bị Dân tộc</option>
+              <option value="Khoa Sau đại học">Khoa Sau đại học</option>
+            </optgroup>
+            <optgroup label="3. Các Viện Nghiên cứu &amp; Trung tâm">
+              <option value="Viện Công nghệ Sinh học và Thực phẩm">Viện Công nghệ Sinh học và Thực phẩm</option>
+              <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
+              <option value="Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long">Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long</option>
+            </optgroup>
+          </select>
         </div>
         <div id="reg-error-box" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
         <div class="pt-3 flex items-center justify-between gap-2 border-t border-slate-100">
@@ -773,10 +831,80 @@
           </button>
           <div class="flex gap-2">
             <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">Đóng</button>
-            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Tạo tài khoản (+50 Credits)</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Đăng ký &amp; Nhận Email Xác thực</button>
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: AUTOMATED EMAIL RESPONDER & OTP VERIFICATION MODAL -->
+  <div id="email-verify-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">📧</span>
+          <div>
+            <h3 class="text-base font-bold">Hệ thống Trả lời Tự động qua Email &amp; Xác thực Tài khoản</h3>
+            <p id="verify-modal-subtitle" class="text-[11px] text-blue-200">Vui lòng kiểm tra thư tự động và nhập mã OTP để xác thực địa chỉ Email</p>
+          </div>
+        </div>
+        <button onclick="closeEmailVerifyModal()" class="text-slate-300 hover:text-white text-2xl leading-none px-2">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs sm:text-sm">
+        <!-- Bước tiến trình (1 bước cho CTU / 2 bước cho Ngoài CTU) -->
+        <div id="verify-workflow-banner" class="p-3.5 rounded-xl border"></div>
+
+        <!-- Bản xem trước Thư Điện tử Trả lời Tự động (Simulated Auto-Responder Email Client) -->
+        <div class="rounded-xl border border-slate-300 overflow-hidden bg-slate-50 shadow-inner">
+          <div class="px-4 py-2.5 bg-slate-200/80 border-b border-slate-300 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <div class="font-semibold text-slate-700">
+              <span>📩 Hộp thư đến (Auto-Responder):</span>
+              <code id="verify-mail-to" class="text-blue-700 font-bold ml-1"></code>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Đã gửi tự động tức thì</span>
+          </div>
+          <div class="p-4 space-y-2.5 text-xs bg-white">
+            <div class="font-bold text-slate-900 border-b border-slate-100 pb-1.5" id="verify-mail-subject"></div>
+            <p id="verify-mail-body" class="text-slate-600 leading-relaxed"></p>
+            <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+              <div>
+                <div class="text-[11px] text-slate-500">Mã xác thực Email (OTP 6 số) trong thư:</div>
+                <div id="verify-mail-otp-display" class="text-lg font-mono font-bold text-blue-700 tracking-widest mt-0.5">------</div>
+              </div>
+              <button type="button" onclick="autoFillOtpFromEmail()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition">
+                📋 Điền nhanh Mã OTP này
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Nhập Mã OTP Xác thực -->
+        <form id="verify-otp-form" onsubmit="handleVerifyEmailSubmit(event)" class="space-y-3 pt-1">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nhập Mã xác thực OTP (6 chữ số) từ Email trên *</label>
+            <div class="flex gap-2">
+              <input id="verify-otp-input" required type="text" maxlength="6" placeholder="Nhập 6 chữ số OTP..." class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-base font-bold tracking-widest text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition">
+                ✅ Xác thực Email Ngay
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <div id="verify-error-box" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
+        <div id="verify-step2-success-box" class="hidden p-4 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-2"></div>
+
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+          <button type="button" onclick="handleResendVerificationEmail()" class="font-semibold text-blue-600 hover:underline">
+            🔄 Gửi lại Email trả lời tự động (Mã OTP mới)
+          </button>
+          <button type="button" onclick="closeEmailVerifyModal()" class="px-4 py-1.5 rounded-lg border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50">
+            Đóng
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -810,24 +938,28 @@
           </div>
         </div>
 
-        <!-- Bảng Gợi ý Tài khoản Demo (Mật khẩu mặc định: 123) -->
+        <!-- Bảng Gợi ý Tài khoản Demo (Đủ 4 nhóm ctu.edu.vn + Ngoài CTU + Super Admin) -->
         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700">💡 Tài khoản Demo Thử nghiệm (Mật khẩu: <code class="text-blue-700 font-bold">123</code>)</span>
-            <span class="text-[10px] text-slate-400">Bấm để điền nhanh</span>
+            <span class="font-bold text-slate-700">💡 Tài khoản Demo theo Nhóm Email (MK: <code class="text-blue-700 font-bold">123</code>)</span>
+            <span class="text-[10px] text-slate-400">Bấm để điền</span>
           </div>
           <div class="grid grid-cols-1 gap-1.5">
+            <button type="button" onclick="fillDemoLogin('CB00241', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 flex items-center justify-between transition">
+              <span>👨‍🏫 <strong>Cán bộ, GV</strong> (<code>tvhai@ctu.edu.vn</code>)</span>
+              <span class="font-mono text-[11px] text-indigo-700">TK: <strong>CB00241</strong> | MK: <strong>123</strong></span>
+            </button>
             <button type="button" onclick="fillDemoLogin('B2110942', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
-              <span>👨‍🎓 <strong>Nguyễn Minh Khoa</strong> (SV Trường CNTT&amp;TT)</span>
+              <span>👨‍🎓 <strong>Sinh viên</strong> (<code>khoab2110942@student.ctu.edu.vn</code>)</span>
               <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2110942</strong> | MK: <strong>123</strong></span>
             </button>
             <button type="button" onclick="fillDemoLogin('B2204115', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
-              <span>👩‍🎓 <strong>Lê Thảo Ngọc</strong> (SV Trường Nông nghiệp)</span>
+              <span>🎓 <strong>HV Sau đại học</strong> (<code>ngocb2204115@gstudent.ctu.edu.vn</code>)</span>
               <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2204115</strong> | MK: <strong>123</strong></span>
             </button>
-            <button type="button" onclick="fillDemoLogin('CB00241', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 flex items-center justify-between transition">
-              <span>👨‍🏫 <strong>TS. Trần Văn Hải</strong> (Giảng viên duyệt bài)</span>
-              <span class="font-mono text-[11px] text-indigo-700">TK: <strong>CB00241</strong> | MK: <strong>123</strong></span>
+            <button type="button" onclick="fillDemoLogin('TX24091', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-cyan-50 border border-slate-200 flex items-center justify-between transition">
+              <span>🌐 <strong>SV Đào tạo Từ xa</strong> (<code>minhtx24091@dttx.ctu.edu.vn</code>)</span>
+              <span class="font-mono text-[11px] text-cyan-800">TK: <strong>TX24091</strong> | MK: <strong>123</strong></span>
             </button>
             <button type="button" onclick="fillDemoLogin('admin', '')" class="text-left px-2.5 py-1.5 rounded-lg bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200 flex items-center justify-between transition">
               <span>👑 <strong>Quản trị Cao nhất (Super Admin)</strong></span>
@@ -947,11 +1079,20 @@
         } else if (currentUser.role === 'admin') {
           roleBadge.textContent = 'Quản trị viên';
           roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold';
-        } else if (currentUser.role === 'lecturer') {
-          roleBadge.textContent = 'Giảng viên';
+        } else if (currentUser.member_group === 'ctu_staff' || currentUser.role === 'lecturer') {
+          roleBadge.textContent = 'Cán bộ, GV (@ctu.edu.vn)';
           roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
+        } else if (currentUser.member_group === 'ctu_graduate' || currentUser.role === 'graduate') {
+          roleBadge.textContent = 'HV Sau ĐH (@gstudent.ctu.edu.vn)';
+          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold';
+        } else if (currentUser.member_group === 'ctu_distance' || currentUser.role === 'distance_student') {
+          roleBadge.textContent = 'SV ĐTTX (@dttx.ctu.edu.vn)';
+          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 font-semibold';
+        } else if (currentUser.member_group === 'external_member') {
+          roleBadge.textContent = 'Thành viên Ngoài CTU';
+          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold';
         } else {
-          roleBadge.textContent = 'Sinh viên';
+          roleBadge.textContent = 'Sinh viên (@student.ctu.edu.vn)';
           roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
         }
       }
@@ -1028,6 +1169,12 @@
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
+        if (data.code === 'PENDING_EMAIL_VERIFICATION' && data.user) {
+          closeAdminLoginModal();
+          openEmailVerifyModal(data.user, data.auto_email);
+          showToast('📧 Tài khoản của bạn chưa xác thực Email. Vui lòng nhập mã OTP trong thư tự động!', 'error');
+          return;
+        }
         errBox.textContent = data.error || 'Sai tên đăng nhập hoặc mật khẩu!';
         errBox.classList.remove('hidden');
         return;
@@ -1047,10 +1194,8 @@
       if (isRoot) {
         switchMainTab('admin');
         showToast('👑 Đã đăng nhập thành công tài khoản <strong>Quản trị viên Cao nhất (admin)</strong>!');
-      } else if (currentUser.role === 'lecturer') {
-        showToast(`👨‍🏫 Xin chào <strong>${currentUser.full_name}</strong> (Giảng viên — ${currentUser.contribution_points} Credits)!`);
       } else {
-        showToast(`🎓 Xin chào <strong>${currentUser.full_name}</strong> (${currentUser.student_or_staff_id} — ${currentUser.contribution_points} Credits)!`);
+        showToast(`🎓 Xin chào <strong>${currentUser.full_name}</strong> (${currentUser.member_group_label || currentUser.role} — ${currentUser.contribution_points} Credits)!`);
       }
     }
 
@@ -1642,13 +1787,16 @@
     // SYSTEM ADMINISTRATION PORTAL FUNCTIONS
     // ========================================================================
     function switchAdminSubTab(sub) {
-      ['users', 'datasets', 'units', 'settings'].forEach(s => {
-        document.getElementById(`admin-subtab-${s}`).classList.toggle('hidden', s !== sub);
+      ['users', 'emails', 'datasets', 'units', 'settings'].forEach(s => {
+        const subEl = document.getElementById(`admin-subtab-${s}`);
         const btn = document.getElementById(`admin-subbtn-${s}`);
-        if (s === sub) {
-          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition';
-        } else {
-          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition';
+        if (subEl) subEl.classList.toggle('hidden', s !== sub);
+        if (btn) {
+          if (s === sub) {
+            btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm transition flex items-center gap-1.5';
+          } else {
+            btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5';
+          }
         }
       });
     }
@@ -1658,13 +1806,14 @@
       const datasets = appState.datasets || [];
       const settings = appState.settings || {};
       const logs = appState.audit_logs || [];
+      const emails = appState.email_outbox || [];
 
       // 1. Update KPI Cards
-      const studentCount = users.filter(u => u.role === 'student').length;
-      const lecturerCount = users.filter(u => u.role === 'lecturer').length;
-      const adminCount = users.filter(u => u.role === 'admin').length;
+      const activeUsers = users.filter(u => u.account_status === 'active').length;
+      const pendingStep1 = users.filter(u => u.account_status === 'pending_email_verification').length;
+      const pendingStep2 = users.filter(u => u.account_status === 'pending_admin_approval').length;
       document.getElementById('admin-kpi-users').textContent = users.length;
-      document.getElementById('admin-kpi-users-sub').textContent = `${studentCount} Sinh viên • ${lecturerCount} Giảng viên • ${adminCount} Admin`;
+      document.getElementById('admin-kpi-users-sub').textContent = `${activeUsers} Chính thức • ${pendingStep1} Chờ Email • ${pendingStep2} Chờ Admin duyệt`;
 
       const pubCount = datasets.filter(d => d.status === 'published').length;
       const pendCount = datasets.filter(d => d.status === 'pending_review').length;
@@ -1680,25 +1829,75 @@
       document.getElementById('admin-kpi-activity').textContent = totalDl.toLocaleString('vi-VN');
       document.getElementById('admin-kpi-citations-sub').textContent = `${totalCit} trích dẫn học thuật`;
 
-      // 2. Render Users Table
+      // 1b. Render Pending External Members (Step 2/2 Admin Approval Queue)
+      const pendingExtUsers = users.filter(u => u.account_status === 'pending_admin_approval');
+      const extBadge = document.getElementById('admin-pending-ext-badge');
+      if (extBadge) extBadge.textContent = pendingExtUsers.length;
+      const pendingExtList = document.getElementById('admin-pending-external-list');
+      if (pendingExtList) {
+        if (pendingExtUsers.length === 0) {
+          pendingExtList.innerHTML = `<div class="p-3 rounded-xl bg-white border border-amber-200 text-xs text-slate-600">✅ Hiện không có hồ sơ thành viên ngoài CTU nào đang chờ Ban Quản trị xác nhận Bước 2.</div>`;
+        } else {
+          pendingExtList.innerHTML = pendingExtUsers.map(u => `
+            <div class="p-3.5 rounded-xl bg-white border border-amber-300 shadow-sm flex flex-wrap items-center justify-between gap-3">
+              <div class="space-y-0.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-bold text-slate-900 text-xs">${u.full_name}</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">✓ Bước 1: Đã xác thực Email (${u.email})</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold">⏳ Bước 2: Chờ Ban Quản trị duyệt</span>
+                </div>
+                <div class="text-[11px] text-slate-600">
+                  Mã/TK: <strong class="font-mono text-indigo-700">${u.username}</strong> • Đơn vị: <strong>${u.department}</strong> • Đăng ký: ${new Date(u.created_at || Date.now()).toLocaleString('vi-VN')}
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="handleAdminUserAction('${u.id}', 'approve_member')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+                  ✓ Xác nhận Thành viên Chính thức (Bước 2/2)
+                </button>
+                <button onclick="handleAdminUserAction('${u.id}', 'reject_member')" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition">
+                  ✕ Từ chối
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      // 2. Render Users Table (6 columns)
       const usersTbody = document.getElementById('admin-users-tbody');
       usersTbody.innerHTML = users.map(u => {
         const isRoot = u.is_super_admin === true || u.username === 'admin' || u.id === 'usr-admin-1';
+        let statusBadge = '';
+        if (u.account_status === 'active') {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">✓ Chính thức (${u.requires_admin_approval ? '2/2 bước' : '1/1 bước'})</span>`;
+        } else if (u.account_status === 'pending_email_verification') {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-bold">⏳ Chờ Bước 1: Xác thực Email (OTP: ${u.verification_code || '---'})</span>`;
+        } else if (u.account_status === 'pending_admin_approval') {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">⏳ Chờ Bước 2: Ban Quản trị duyệt</span>`;
+        } else {
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-bold">✕ Đã từ chối</span>`;
+        }
+
         return `
         <tr class="hover:bg-slate-50 ${isRoot ? 'bg-amber-50/40' : ''} ${u.is_locked ? 'opacity-60 bg-red-50/30' : ''}">
           <td class="py-3 px-3.5">
             <div class="font-bold text-slate-900 flex flex-wrap items-center gap-1.5">
               <span>${u.full_name}</span>
               ${isRoot ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold">👑 Quản trị Cao nhất (Root)</span>' : ''}
-              ${u.is_verified_edu ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">CTU Edu</span>' : ''}
               ${u.is_locked ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">Đã khóa</span>' : ''}
             </div>
             <div class="text-[11px] text-slate-500 font-mono">
               <strong class="text-indigo-700">TK: ${u.username || u.student_or_staff_id}</strong> • MK: <strong class="text-slate-700">${isRoot ? '•••••••• (Root)' : (u.password || '123')}</strong> • ${u.email}
             </div>
+            <div class="text-[11px] text-slate-500">${u.department || ''}</div>
           </td>
-          <td class="py-3 px-3 font-mono font-semibold text-slate-700">${u.student_or_staff_id}</td>
-          <td class="py-3 px-3 text-slate-700">${u.department}</td>
+          <td class="py-3 px-3">
+            <div class="font-semibold text-slate-800 text-xs">${u.member_group_label || (u.is_verified_edu ? 'Hệ thống CTU' : 'Ngoài CTU')}</div>
+            <div class="text-[10px] text-slate-500">${u.is_verified_edu ? '📧 Xác thực 01 bước (@*.ctu.edu.vn)' : '🛡️ Xác thực 02 bước (Email + Admin)'}</div>
+          </td>
+          <td class="py-3 px-3">
+            ${statusBadge}
+          </td>
           <td class="py-3 px-3">
             ${isRoot ? `
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold">
@@ -1706,19 +1905,22 @@
               </span>
             ` : `
               <select onchange="handleAdminUserAction('${u.id}', 'role', { role: this.value })" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800">
-                <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên</option>
-                <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Giảng viên / Reviewer</option>
+                <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Cán bộ, Giảng viên (@ctu.edu.vn)</option>
+                <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên (@student.ctu.edu.vn)</option>
+                <option value="graduate" ${u.role === 'graduate' ? 'selected' : ''}>Học viên SĐH (@gstudent.ctu.edu.vn)</option>
+                <option value="distance_student" ${u.role === 'distance_student' ? 'selected' : ''}>SV ĐTTX (@dttx.ctu.edu.vn)</option>
+                <option value="external" ${u.role === 'external' ? 'selected' : ''}>Thành viên ngoài CTU</option>
                 <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Quản trị viên (Admin)</option>
               </select>
             `}
-          </td>
-          <td class="py-3 px-3 text-center font-mono text-slate-600">
-            ⬆️ ${u.uploads_count || 0} / ⬇️ ${u.downloads_count || 0}
           </td>
           <td class="py-3 px-3 text-right font-mono font-bold text-amber-600 text-sm">
             ${u.contribution_points} Cr
           </td>
           <td class="py-3 px-3.5 text-right whitespace-nowrap space-x-1">
+            ${!isRoot && u.account_status !== 'active' ? `
+              <button onclick="handleAdminUserAction('${u.id}', 'approve_member')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm" title="Xác nhận chính thức">✓ Duyệt Chính thức</button>
+            ` : ''}
             <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: 20 })" class="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-[11px]" title="Thưởng +20 Credits">+20 Cr</button>
             ${isRoot ? `
               <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-900 text-amber-300 font-semibold text-[11px]" title="Tài khoản Quản trị cao nhất không thể bị khóa hoặc xóa">
@@ -1732,6 +1934,29 @@
           </td>
         </tr>
       `}).join('');
+
+      // 2b. Render Automated Email Outbox Tab
+      const emailsCountEl = document.getElementById('admin-emails-count');
+      if (emailsCountEl) emailsCountEl.textContent = `${emails.length} email đã gửi`;
+      const emailsListEl = document.getElementById('admin-emails-list');
+      if (emailsListEl) {
+        emailsListEl.innerHTML = emails.map(m => `
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+              <div>
+                <span class="font-bold text-slate-900">${m.subject}</span>
+                <div class="text-[11px] text-slate-500">Từ: <span class="font-mono">${m.from || 'noreply-datahub@ctu.edu.vn'}</span> → Tới: <strong class="text-blue-700 font-mono">${m.to_name} &lt;${m.to_email}&gt;</strong></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-[10px]">${m.group_label || 'Auto-Responder'}</span>
+                ${m.otp_code ? `<span class="px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 font-mono font-bold text-xs">OTP: ${m.otp_code}</span>` : ''}
+                <span class="text-[11px] font-mono text-slate-400">${new Date(m.sent_at).toLocaleString('vi-VN')}</span>
+              </div>
+            </div>
+            <pre class="whitespace-pre-wrap font-sans text-slate-700 bg-white p-3 rounded-lg border border-slate-200 text-[11px] leading-relaxed">${m.body_preview}</pre>
+          </div>
+        `).join('');
+      }
 
       // 3. Render Master Datasets Table
       const dsTbody = document.getElementById('admin-datasets-tbody');
@@ -1853,10 +2078,18 @@
         return;
       }
       appState = data.db;
-      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      if (currentUser) {
+        currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      }
       syncHeaderUI();
       renderAdminDashboard();
-      showToast('Đã cập nhật thông tin tài khoản người dùng!');
+      if (action === 'approve_member') {
+        showToast('✅ Ban Quản trị đã xác nhận Bước 2/2! Thành viên đã chính thức được kích hoạt và gửi Email thông báo tự động.');
+      } else if (action === 'reject_member') {
+        showToast('✕ Đã từ chối hồ sơ đăng ký thành viên.');
+      } else {
+        showToast('Đã cập nhật thông tin tài khoản người dùng!');
+      }
     }
 
     async function handleAdminDatasetAction(datasetId, action, extra = {}) {
@@ -1867,7 +2100,9 @@
       });
       const data = await res.json();
       appState = data.db;
-      currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      if (currentUser) {
+        currentUser = appState.users.find(u => u.id === currentUser.id) || appState.users[0];
+      }
       syncHeaderUI();
       renderDatasets();
       renderReviewQueue();
@@ -1924,6 +2159,36 @@
       showToast('🔄 Đã khôi phục dữ liệu mẫu ban đầu của hệ thống!');
     }
 
+    function previewEmailDomainGroup(emailVal) {
+      const box = document.getElementById('reg-email-group-preview');
+      if (!box) return;
+      const email = String(emailVal || '').trim().toLowerCase();
+      const domain = email.includes('@') ? email.split('@').pop() : '';
+
+      if (!domain) {
+        box.className = 'p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600';
+        box.innerHTML = '💡 Nhập địa chỉ email để hệ thống tự động nhận diện nhóm thành viên và quy trình xác thực (01 bước hoặc 02 bước).';
+        return;
+      }
+
+      if (domain === 'ctu.edu.vn') {
+        box.className = 'p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900';
+        box.innerHTML = '👨‍🏫 <strong>Nhóm nhận diện:</strong> Cán bộ, giảng viên của Trường (<code>@ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+      } else if (domain === 'student.ctu.edu.vn') {
+        box.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900';
+        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Sinh viên (<code>@student.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+      } else if (domain === 'gstudent.ctu.edu.vn') {
+        box.className = 'p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900';
+        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Học viên sau đại học (<code>@gstudent.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+      } else if (domain === 'dttx.ctu.edu.vn') {
+        box.className = 'p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900';
+        box.innerHTML = '💻 <strong>Nhóm nhận diện:</strong> Sinh viên đào tạo từ xa (<code>@dttx.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhận email trả lời tự động và xác thực mã OTP qua email để kích hoạt ngay.';
+      } else {
+        box.className = 'p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-900';
+        box.innerHTML = `🌐 <strong>Nhóm nhận diện:</strong> Thành viên ngoài hệ thống CTU (<code>@${domain}</code>)<br/>🛡️ <strong>Quy trình Bắt buộc 02 bước:</strong> (1) Xác thực đúng email người dùng qua OTP tự động &rarr; (2) Chờ <strong>Ban Quản trị xác nhận</strong> mới trở thành thành viên chính thức.`;
+      }
+    }
+
     function openRegisterModal() {
       const errBox = document.getElementById('reg-error-box');
       if (errBox) errBox.classList.add('hidden');
@@ -1932,6 +2197,105 @@
 
     function closeRegisterModal() {
       document.getElementById('register-modal').classList.add('hidden');
+    }
+
+    let currentVerifyTargetUser = null;
+    let currentVerifyAutoEmail = null;
+
+    function openEmailVerifyModal(user, autoMail) {
+      currentVerifyTargetUser = user;
+      currentVerifyAutoEmail = autoMail;
+      document.getElementById('verify-user-id').value = user.id;
+      document.getElementById('verify-otp-input').value = '';
+      const errBox = document.getElementById('verify-error-box');
+      if (errBox) errBox.classList.add('hidden');
+
+      const banner = document.getElementById('verify-step-banner');
+      if (user.requires_admin_approval) {
+        banner.className = 'p-3.5 rounded-xl border border-amber-300 bg-amber-50 text-xs text-amber-900 space-y-1';
+        banner.innerHTML = `
+          <div class="font-bold">🛡️ Quy trình Xác nhận 02 Bước (Dành cho Email ngoài hệ thống ctu.edu.vn)</div>
+          <div>• <strong>Bước 1 (Hiện tại):</strong> Xác thực đúng địa chỉ email <code>${user.email}</code> bằng mã OTP bên dưới.</div>
+          <div>• <strong>Bước 2 (Tiếp theo):</strong> Sau khi xác thực email, hồ sơ sẽ chuyển đến <strong>Ban Quản trị xác nhận</strong> để trở thành thành viên chính thức.</div>
+        `;
+      } else {
+        banner.className = 'p-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-xs text-emerald-900 space-y-1';
+        banner.innerHTML = `
+          <div class="font-bold">✅ Quy trình Xác thực Email 01 Bước (${user.member_group_label})</div>
+          <div>• Tài khoản của bạn thuộc hệ thống <code>ctu.edu.vn</code> (<code>${user.email}</code>). Chỉ cần nhập mã OTP từ email trả lời tự động dưới đây để kích hoạt chính thức ngay lập tức!</div>
+        `;
+      }
+
+      document.getElementById('verify-mail-to').textContent = `${user.full_name} <${user.email}>`;
+      document.getElementById('verify-mail-subject').textContent = autoMail?.subject || `[CTU Data Hub] Mã OTP xác thực email: ${user.verification_code}`;
+      document.getElementById('verify-mail-body').textContent = autoMail?.body_preview || `Mã OTP xác thực của bạn là: ${user.verification_code}`;
+      document.getElementById('verify-mail-otp-display').textContent = autoMail?.otp_code || user.verification_code || '------';
+
+      document.getElementById('email-verify-modal').classList.remove('hidden');
+    }
+
+    function closeEmailVerifyModal() {
+      document.getElementById('email-verify-modal').classList.add('hidden');
+    }
+
+    function autoFillOtpFromEmail() {
+      const code = document.getElementById('verify-mail-otp-display').textContent.trim();
+      if (code && code !== '------') {
+        document.getElementById('verify-otp-input').value = code;
+        document.getElementById('verify-otp-input').focus();
+      }
+    }
+
+    async function handleVerifyEmailSubmit(e) {
+      e.preventDefault();
+      const userId = document.getElementById('verify-user-id').value;
+      const otpCode = document.getElementById('verify-otp-input').value.trim();
+      const errBox = document.getElementById('verify-error-box');
+      if (errBox) errBox.classList.add('hidden');
+
+      const res = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, otp_code: otpCode })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        if (errBox) {
+          errBox.textContent = data.error || 'Mã xác thực OTP không hợp lệ!';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      appState = data.db;
+      closeEmailVerifyModal();
+      renderAdminDashboard();
+
+      if (data.status === 'active') {
+        currentUser = data.user;
+        isSuperAdminAuthenticated = false;
+        localStorage.setItem('ctu_hub_session_user_id', currentUser.id);
+        syncHeaderUI();
+        showToast(`🎉 Xác thực Email thành công! Chào mừng <strong>${currentUser.full_name}</strong> (${currentUser.member_group_label}) trở thành thành viên chính thức (+${currentUser.contribution_points} Credits).`);
+      } else if (data.status === 'pending_admin_approval') {
+        showToast(`✅ Hoàn tất Bước 1/2 (Xác thực Email)! Hồ sơ của <strong>${data.user.full_name}</strong> đã được chuyển sang <strong>Bước 2/2: Chờ Ban Quản trị xác nhận</strong>.`);
+      }
+    }
+
+    async function handleResendVerificationEmail() {
+      const userId = document.getElementById('verify-user-id').value;
+      if (!userId) return;
+      const res = await fetch('/api/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        appState = data.db;
+        openEmailVerifyModal(data.user, data.auto_email);
+        showToast('📨 Hệ thống đã gửi lại Email trả lời tự động kèm mã OTP mới!');
+      }
     }
 
     async function handleRegisterSubmit(e) {
@@ -1944,7 +2308,6 @@
         email: document.getElementById('reg-email').value.trim(),
         student_or_staff_id: document.getElementById('reg-id').value.trim(),
         password: document.getElementById('reg-password').value || '123',
-        role: document.getElementById('reg-role').value,
         department: document.getElementById('reg-dept').value.trim()
       };
       const res = await fetch('/api/register', {
@@ -1961,13 +2324,10 @@
         return;
       }
       appState = data.db;
-      currentUser = data.user;
-      isSuperAdminAuthenticated = false;
-      localStorage.setItem('ctu_hub_session_user_id', currentUser.id);
       closeRegisterModal();
-      syncHeaderUI();
       renderAdminDashboard();
-      showToast(`🎉 Chào mừng <strong>${currentUser.full_name}</strong>! Tài khoản (${currentUser.username}) đã được tạo và tự động đăng nhập.`);
+      openEmailVerifyModal(data.user, data.auto_email);
+      showToast(`📧 Hệ thống đã gửi Email trả lời tự động tới <strong>${data.user.email}</strong>. Vui lòng nhập mã OTP để xác thực!`);
     }
 
     initApp();

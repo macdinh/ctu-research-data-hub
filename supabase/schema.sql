@@ -50,7 +50,13 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     downloads_count INTEGER NOT NULL DEFAULT 0,
     avatar_url TEXT,
     bio TEXT,
-    is_verified_edu BOOLEAN NOT NULL DEFAULT FALSE,  -- True nếu dùng email @student.ctu.edu.vn / @ctu.edu.vn
+    is_verified_edu BOOLEAN NOT NULL DEFAULT FALSE,  -- True nếu thuộc hệ sinh thái @ctu.edu.vn / @student.ctu.edu.vn / @gstudent.ctu.edu.vn / @dttx.ctu.edu.vn
+    member_group TEXT NOT NULL DEFAULT 'ctu_student', -- 'ctu_staff' | 'ctu_student' | 'ctu_graduate' | 'ctu_distance' | 'external_member' | 'super_admin'
+    member_group_label TEXT,                         -- Nhãn hiển thị nhóm thành viên theo tên miền email
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,   -- Bước 1: Đã xác thực email qua mã OTP trả lời tự động
+    admin_approved BOOLEAN NOT NULL DEFAULT FALSE,   -- Bước 2: Đã được Ban Quản trị xác nhận (bắt buộc cho nhóm ngoài ctu.edu.vn)
+    account_status TEXT NOT NULL DEFAULT 'pending_email_verification', -- 'pending_email_verification' | 'pending_admin_approval' | 'active' | 'rejected'
+    verification_code TEXT,                          -- Mã OTP 6 chữ số gửi qua email tự động
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

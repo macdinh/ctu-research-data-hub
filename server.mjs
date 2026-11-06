@@ -23,6 +23,12 @@ const initialDb = {
       student_or_staff_id: 'B2110942',
       department: 'Trường Công nghệ Thông tin và Truyền thông',
       role: 'student',
+      member_group: 'ctu_student',
+      member_group_label: 'Sinh viên (@student.ctu.edu.vn)',
+      is_ctu_domain: true,
+      email_verified: true,
+      admin_approved: true,
+      account_status: 'active',
       contribution_points: 65,
       uploads_count: 2,
       downloads_count: 4,
@@ -33,14 +39,41 @@ const initialDb = {
       id: 'usr-student-2',
       username: 'B2204115',
       password: '123',
-      email: 'ngocb2204115@student.ctu.edu.vn',
+      email: 'ngocb2204115@gstudent.ctu.edu.vn',
       full_name: 'Lê Thảo Ngọc',
       student_or_staff_id: 'B2204115',
       department: 'Trường Nông nghiệp',
-      role: 'student',
+      role: 'graduate',
+      member_group: 'ctu_graduate',
+      member_group_label: 'Học viên Sau đại học (@gstudent.ctu.edu.vn)',
+      is_ctu_domain: true,
+      email_verified: true,
+      admin_approved: true,
+      account_status: 'active',
       contribution_points: 95,
       uploads_count: 3,
       downloads_count: 2,
+      is_verified_edu: true,
+      is_locked: false
+    },
+    {
+      id: 'usr-dttx-1',
+      username: 'TX24091',
+      password: '123',
+      email: 'minhtx24091@dttx.ctu.edu.vn',
+      full_name: 'Phạm Quốc Minh',
+      student_or_staff_id: 'TX24091',
+      department: 'Trường Kinh tế',
+      role: 'distance_student',
+      member_group: 'ctu_distance',
+      member_group_label: 'SV Đào tạo Từ xa (@dttx.ctu.edu.vn)',
+      is_ctu_domain: true,
+      email_verified: true,
+      admin_approved: true,
+      account_status: 'active',
+      contribution_points: 50,
+      uploads_count: 1,
+      downloads_count: 1,
       is_verified_edu: true,
       is_locked: false
     },
@@ -53,10 +86,38 @@ const initialDb = {
       student_or_staff_id: 'CB00241',
       department: 'Trường Công nghệ Thông tin và Truyền thông',
       role: 'lecturer',
+      member_group: 'ctu_staff',
+      member_group_label: 'Cán bộ, Giảng viên (@ctu.edu.vn)',
+      is_ctu_domain: true,
+      email_verified: true,
+      admin_approved: true,
+      account_status: 'active',
       contribution_points: 250,
       uploads_count: 5,
       downloads_count: 12,
       is_verified_edu: true,
+      is_locked: false
+    },
+    {
+      id: 'usr-ext-1',
+      username: 'EXT001',
+      password: '123',
+      email: 'hoangnam.research@gmail.com',
+      full_name: 'Đặng Hoàng Nam (Viện Nghiên cứu Đối tác)',
+      student_or_staff_id: 'EXT001',
+      department: 'Viện Nghiên cứu Phát triển Đồng bằng sông Cửu Long',
+      role: 'external',
+      member_group: 'external_member',
+      member_group_label: 'Thành viên Ngoài CTU (Xác nhận 2 bước)',
+      is_ctu_domain: false,
+      email_verified: true,
+      admin_approved: false,
+      account_status: 'pending_admin_approval',
+      verification_code: '682419',
+      contribution_points: 0,
+      uploads_count: 0,
+      downloads_count: 0,
+      is_verified_edu: false,
       is_locked: false
     },
     {
@@ -68,12 +129,44 @@ const initialDb = {
       student_or_staff_id: 'ADMIN-ROOT',
       department: 'Ban Quản trị Hệ thống — Đại học Cần Thơ',
       role: 'admin',
+      member_group: 'ctu_staff',
+      member_group_label: 'Quản trị Tối cao (@ctu.edu.vn)',
+      is_ctu_domain: true,
+      email_verified: true,
+      admin_approved: true,
+      account_status: 'active',
       is_super_admin: true,
       contribution_points: 9999,
       uploads_count: 8,
       downloads_count: 15,
       is_verified_edu: true,
       is_locked: false
+    }
+  ],
+  email_outbox: [
+    {
+      id: 'mail-init-1',
+      timestamp: '2026-11-06T08:15:00Z',
+      to_email: 'hoangnam.research@gmail.com',
+      to_name: 'Đặng Hoàng Nam (Viện Nghiên cứu Đối tác)',
+      subject: '[CTU Research Data Hub] Hoàn tất Bước 1/2 (Xác thực Email) — Đang chờ Ban Quản trị Xác nhận',
+      member_group_label: 'Thành viên Ngoài CTU (Xác nhận 2 bước)',
+      otp_code: '682419',
+      email_type: 'step2_pending_admin',
+      status_label: 'Đã xác thực Email (Bước 1/2) • Chờ Admin duyệt (Bước 2/2)',
+      body_summary: 'Hệ thống tự động xác nhận bạn đã hoàn tất Bước 1 (Xác thực chính chủ địa chỉ email hoangnam.research@gmail.com). Vì email không thuộc tên miền ctu.edu.vn, hồ sơ của bạn đã được chuyển đến Ban Quản trị Hệ thống (Bước 2/2) để phê duyệt thành viên chính thức.'
+    },
+    {
+      id: 'mail-init-2',
+      timestamp: '2026-11-05T10:00:00Z',
+      to_email: 'khoab2110942@student.ctu.edu.vn',
+      to_name: 'Nguyễn Minh Khoa',
+      subject: '[CTU Research Data Hub] Xác thực Email Thành công — Kích hoạt Tài khoản Sinh viên (@student.ctu.edu.vn)',
+      member_group_label: 'Sinh viên (@student.ctu.edu.vn)',
+      otp_code: '519204',
+      email_type: 'activated',
+      status_label: 'Đã kích hoạt chính thức (+50 Credits)',
+      body_summary: 'Chúc mừng Nguyễn Minh Khoa! Địa chỉ email @student.ctu.edu.vn của bạn đã được xác thực tự động. Tài khoản nhóm Sinh viên ĐH Cần Thơ đã trở thành thành viên chính thức và được cộng +50 Credits khởi đầu.'
     }
   ],
   settings: {
@@ -400,6 +493,70 @@ function normalizeCtuUnitName(name) {
   return name;
 }
 
+function classifyCtuEmail(emailRaw) {
+  const email = (emailRaw || '').trim().toLowerCase();
+  const domain = email.includes('@') ? email.split('@')[1] : '';
+
+  if (domain === 'ctu.edu.vn') {
+    return {
+      member_group: 'ctu_staff',
+      member_group_label: 'Cán bộ, Giảng viên (@ctu.edu.vn)',
+      default_role: 'lecturer',
+      is_ctu_domain: true,
+      requires_admin_approval: false
+    };
+  }
+  if (domain === 'student.ctu.edu.vn') {
+    return {
+      member_group: 'ctu_student',
+      member_group_label: 'Sinh viên (@student.ctu.edu.vn)',
+      default_role: 'student',
+      is_ctu_domain: true,
+      requires_admin_approval: false
+    };
+  }
+  if (domain === 'gstudent.ctu.edu.vn') {
+    return {
+      member_group: 'ctu_graduate',
+      member_group_label: 'Học viên Sau đại học (@gstudent.ctu.edu.vn)',
+      default_role: 'graduate',
+      is_ctu_domain: true,
+      requires_admin_approval: false
+    };
+  }
+  if (domain === 'dttx.ctu.edu.vn') {
+    return {
+      member_group: 'ctu_distance',
+      member_group_label: 'SV Đào tạo Từ xa (@dttx.ctu.edu.vn)',
+      default_role: 'distance_student',
+      is_ctu_domain: true,
+      requires_admin_approval: false
+    };
+  }
+  return {
+    member_group: 'external_member',
+    member_group_label: 'Thành viên Ngoài CTU (Xác nhận 2 bước)',
+    default_role: 'external',
+    is_ctu_domain: false,
+    requires_admin_approval: true
+  };
+}
+
+function sendAutoResponderEmail(db, mailPayload) {
+  if (!db.email_outbox) db.email_outbox = [];
+  const mailRecord = {
+    id: 'mail-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    timestamp: new Date().toISOString(),
+    from: 'Auto-Responder <noreply@ctu-data-hub.edu.vn>',
+    ...mailPayload
+  };
+  db.email_outbox.unshift(mailRecord);
+  if (db.email_outbox.length > 60) {
+    db.email_outbox = db.email_outbox.slice(0, 60);
+  }
+  return mailRecord;
+}
+
 function addAuditLog(db, actor, action, detail, type = 'system') {
   if (!db.audit_logs) db.audit_logs = [];
   db.audit_logs.unshift({
@@ -425,14 +582,24 @@ function normalizeParsedDb(parsed) {
         contribution_points: Math.max(9999, u.contribution_points || 9999),
         is_locked: false,
         is_super_admin: true,
+        email_verified: true,
+        admin_approved: true,
+        account_status: 'active',
         role: 'admin'
       };
     }
+    const emailClass = classifyCtuEmail(u.email);
     return {
       is_locked: false,
       is_super_admin: false,
       username: u.username || u.student_or_staff_id || (u.email ? u.email.split('@')[0] : 'user'),
       password: u.password || '123',
+      member_group: u.member_group || emailClass.member_group,
+      member_group_label: u.member_group_label || emailClass.member_group_label,
+      is_ctu_domain: typeof u.is_ctu_domain === 'boolean' ? u.is_ctu_domain : emailClass.is_ctu_domain,
+      email_verified: typeof u.email_verified === 'boolean' ? u.email_verified : true,
+      admin_approved: typeof u.admin_approved === 'boolean' ? u.admin_approved : true,
+      account_status: u.account_status || 'active',
       ...u,
       department: normalizeCtuUnitName(u.department)
     };
@@ -448,6 +615,7 @@ function normalizeParsedDb(parsed) {
   }));
   parsed.settings = { ...initialDb.settings, ...(parsed.settings || {}) };
   parsed.audit_logs = parsed.audit_logs?.length ? parsed.audit_logs : [...initialDb.audit_logs];
+  parsed.email_outbox = parsed.email_outbox?.length ? parsed.email_outbox : [...initialDb.email_outbox];
   return parsed;
 }
 
@@ -581,6 +749,40 @@ export function requestHandler(req, res) {
         return;
       }
 
+      // Kiểm tra trạng thái xác thực Email (Bước 1)
+      if (matched.email_verified === false || matched.account_status === 'pending_email_verification') {
+        const latestMail = (db.email_outbox || []).find(m => m.to_email?.toLowerCase() === matched.email.toLowerCase());
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          code: 'PENDING_EMAIL_VERIFICATION',
+          user: matched,
+          auto_email: latestMail || null,
+          error: `Tài khoản [${matched.email}] chưa xác thực địa chỉ Email! Vui lòng nhập mã OTP trong thư trả lời tự động.`
+        }));
+        return;
+      }
+
+      // Kiểm tra trạng thái xác nhận của Ban Quản trị (Bước 2 đối với Email ngoài ctu.edu.vn)
+      if (matched.admin_approved === false || matched.account_status === 'pending_admin_approval') {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          code: 'PENDING_ADMIN_APPROVAL',
+          error: `Tài khoản ngoài hệ thống ĐH Cần Thơ (${matched.email}) đã hoàn thành Bước 1 (Xác thực Email), hiện đang chờ Bước 2: Ban Quản trị Hệ thống xác nhận để trở thành thành viên chính thức!`
+        }));
+        return;
+      }
+
+      if (matched.account_status === 'rejected') {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: 'Yêu cầu đăng ký tài khoản này đã bị Ban Quản trị từ chối!'
+        }));
+        return;
+      }
+
       const isRoot = matched.is_super_admin || matched.username === 'admin' || matched.id === 'usr-admin-1';
       addAuditLog(
         db,
@@ -588,7 +790,7 @@ export function requestHandler(req, res) {
         isRoot ? 'Đăng nhập Quản trị Tối cao' : 'Đăng nhập Hệ thống',
         isRoot
           ? 'Xác thực thành công tài khoản Quản trị viên Cao nhất (Super Admin).'
-          : `Đăng nhập thành công với vai trò [${matched.role === 'lecturer' ? 'Giảng viên' : matched.role === 'admin' ? 'Admin' : 'Sinh viên'}] — Đơn vị: ${matched.department}`,
+          : `Đăng nhập thành công nhóm [${matched.member_group_label || matched.role}] — Đơn vị: ${matched.department}`,
         isRoot ? 'admin' : 'user'
       );
       saveDb(db);
@@ -599,7 +801,7 @@ export function requestHandler(req, res) {
     return;
   }
 
-  // API: Đăng ký tài khoản mới cho Sinh viên / Giảng viên
+  // API: Đăng ký tài khoản mới + Tự động phân nhóm Email CTU & Gửi Email trả lời tự động (OTP)
   if (url.pathname === '/api/register' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -628,30 +830,210 @@ export function requestHandler(req, res) {
         return;
       }
 
-      const bonus = Number(db.settings?.signup_bonus ?? 50);
-      const safeRole = payload.role === 'lecturer' ? 'lecturer' : 'student';
+      // Phân loại tự động theo đuôi Email (@ctu.edu.vn, @student.ctu.edu.vn, @gstudent.ctu.edu.vn, @dttx.ctu.edu.vn hoặc Ngoài CTU)
+      const emailClass = classifyCtuEmail(email);
+      const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+
       const newUser = {
         id: 'usr-' + Date.now(),
         username,
         password: payload.password || '123',
         email,
-        full_name: payload.full_name || 'Sinh viên Nghiên cứu',
+        full_name: payload.full_name || 'Thành viên Nghiên cứu',
         student_or_staff_id: staffOrStudentId,
         department: payload.department || 'Trường Công nghệ Thông tin và Truyền thông',
-        role: safeRole,
+        role: emailClass.default_role,
+        member_group: emailClass.member_group,
+        member_group_label: emailClass.member_group_label,
+        is_ctu_domain: emailClass.is_ctu_domain,
+        email_verified: false,
+        admin_approved: emailClass.is_ctu_domain ? true : false,
+        account_status: 'pending_email_verification',
+        verification_code: otpCode,
         is_super_admin: false,
-        contribution_points: bonus,
+        contribution_points: 0,
         uploads_count: 0,
         downloads_count: 0,
-        is_verified_edu: email.endsWith('.edu.vn'),
-        is_locked: false
+        is_verified_edu: emailClass.is_ctu_domain,
+        is_locked: false,
+        created_at: new Date().toISOString()
       };
+
       db.users.push(newUser);
-      addAuditLog(db, `${newUser.full_name} (${newUser.student_or_staff_id})`, 'Đăng ký Tài khoản mới', `Đơn vị: ${newUser.department} (+${bonus} Credits khởi đầu)`, 'user');
+
+      // Tạo thư trả lời tự động (Auto-Responder Email)
+      const autoMail = sendAutoResponderEmail(db, {
+        to_email: newUser.email,
+        to_name: newUser.full_name,
+        subject: emailClass.is_ctu_domain
+          ? `[CTU Research Data Hub] Xác thực Email Thành viên ĐH Cần Thơ (${emailClass.member_group_label}) — Mã OTP: ${otpCode}`
+          : `[CTU Research Data Hub] [Bước 1/2] Xác thực Email Đăng ký Thành viên Ngoài CTU — Mã OTP: ${otpCode}`,
+        member_group_label: emailClass.member_group_label,
+        otp_code: otpCode,
+        email_type: emailClass.is_ctu_domain ? 'verify_ctu_1step' : 'verify_external_step1',
+        status_label: emailClass.is_ctu_domain
+          ? 'Chờ xác thực Email CTU (1 bước duy nhất)'
+          : 'Chờ Bước 1/2: Xác thực Email người dùng',
+        body_summary: emailClass.is_ctu_domain
+          ? `Xin chào ${newUser.full_name} (${newUser.student_or_staff_id}), Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ ghi nhận địa chỉ email ${newUser.email} thuộc nhóm [${emailClass.member_group_label}]. Vui lòng nhập mã xác thực OTP [${otpCode}] để kích hoạt tài khoản thành viên chính thức ngay lập tức (+50 Credits).`
+          : `Xin chào ${newUser.full_name}, Địa chỉ email ${newUser.email} không thuộc hệ thống tên miền ctu.edu.vn nên cần qua 02 bước xác nhận: (1) Nhập mã OTP [${otpCode}] để xác thực đúng email của bạn; (2) Sau khi xác thực email, Ban Quản trị Hệ thống sẽ xét duyệt để kích hoạt thành viên chính thức.`
+      });
+
+      addAuditLog(
+        db,
+        `${newUser.full_name} (${newUser.email})`,
+        'Đăng ký & Gửi Email Tự động (OTP)',
+        `Nhóm: ${emailClass.member_group_label} — Đã gửi thư trả lời tự động kèm mã OTP xác thực (${emailClass.is_ctu_domain ? 'Quy trình 1 bước CTU' : 'Quy trình 2 bước Ngoài CTU'}).`,
+        'user'
+      );
       saveDb(db);
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: true, user: newUser, db }));
+      res.end(JSON.stringify({
+        ok: true,
+        requires_verification: true,
+        user: newUser,
+        auto_email: autoMail,
+        db
+      }));
+    });
+    return;
+  }
+
+  // API: Xác thực Email bằng Mã OTP từ Hệ thống Trả lời Tự động
+  if (url.pathname === '/api/verify-email' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const { user_id, email, otp_code } = JSON.parse(body || '{}');
+      const db = loadDb();
+      const user = db.users.find(u =>
+        (user_id && u.id === user_id) ||
+        (email && u.email.toLowerCase() === String(email).trim().toLowerCase())
+      );
+
+      if (!user) {
+        res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Không tìm thấy tài khoản cần xác thực!' }));
+        return;
+      }
+
+      if (String(otp_code || '').trim() !== String(user.verification_code || '').trim()) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Mã xác thực OTP không chính xác! Vui lòng kiểm tra lại thư trả lời tự động.' }));
+        return;
+      }
+
+      user.email_verified = true;
+      user.email_verified_at = new Date().toISOString();
+      const bonus = Number(db.settings?.signup_bonus ?? 50);
+
+      // TRƯỜNG HỢP 1: Email thuộc 4 nhóm của ctu.edu.vn -> Trở thành thành viên chính thức ngay!
+      if (user.is_ctu_domain) {
+        user.admin_approved = true;
+        user.account_status = 'active';
+        if ((user.contribution_points || 0) === 0) {
+          user.contribution_points = bonus;
+        }
+
+        const welcomeMail = sendAutoResponderEmail(db, {
+          to_email: user.email,
+          to_name: user.full_name,
+          subject: `[CTU Research Data Hub] Xác thực Thành công — Chào mừng Thành viên Chính thức (${user.member_group_label})`,
+          member_group_label: user.member_group_label,
+          otp_code: user.verification_code,
+          email_type: 'activated',
+          status_label: `Đã kích hoạt chính thức (+${bonus} Credits)`,
+          body_summary: `Chúc mừng ${user.full_name}! Bạn đã hoàn tất xác thực email thuộc hệ thống ĐH Cần Thơ (${user.email}). Tài khoản của bạn thuộc nhóm [${user.member_group_label}] đã được kích hoạt chính thức và nhận +${bonus} Credits khởi đầu.`
+        });
+
+        addAuditLog(
+          db,
+          `${user.full_name} (${user.email})`,
+          'Xác thực Email CTU Thành công',
+          `Tài khoản nhóm [${user.member_group_label}] đã xác thực OTP và trở thành Thành viên Chính thức (+${bonus} Credits).`,
+          'user'
+        );
+        saveDb(db);
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: true,
+          status: 'active',
+          user,
+          auto_email: welcomeMail,
+          db
+        }));
+        return;
+      }
+
+      // TRƯỜNG HỢP 2: Email KHÔNG thuộc ctu.edu.vn -> Hoàn tất Bước 1, chuyển sang Bước 2 chờ Ban Quản trị xác nhận
+      user.admin_approved = false;
+      user.account_status = 'pending_admin_approval';
+
+      const step2Mail = sendAutoResponderEmail(db, {
+        to_email: user.email,
+        to_name: user.full_name,
+        subject: `[CTU Research Data Hub] Đã xác thực Email (Bước 1/2) — Đang chờ Ban Quản trị Xác nhận (Bước 2/2)`,
+        member_group_label: user.member_group_label,
+        otp_code: user.verification_code,
+        email_type: 'step2_pending_admin',
+        status_label: 'Hoàn tất Bước 1/2 (Email) • Chờ Bước 2/2 (Admin duyệt)',
+        body_summary: `Xin chào ${user.full_name}, Hệ thống xác nhận bạn đã hoàn thành Bước 1: Xác thực chính chủ email (${user.email}). Do email của bạn không thuộc hệ thống ctu.edu.vn, tài khoản hiện đã được chuyển sang Bước 2: Chờ Ban Quản trị Hệ thống xác nhận để kích hoạt chính thức.`
+      });
+
+      addAuditLog(
+        db,
+        `${user.full_name} (${user.email})`,
+        'Hoàn tất Bước 1/2 (Xác thực Email Ngoài CTU)',
+        `Đã xác thực đúng email ${user.email}. Đang chờ Bước 2/2: Ban Quản trị xác nhận thành viên chính thức.`,
+        'user'
+      );
+      saveDb(db);
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: true,
+        status: 'pending_admin_approval',
+        user,
+        auto_email: step2Mail,
+        db
+      }));
+    });
+    return;
+  }
+
+  // API: Gửi lại Email trả lời tự động kèm Mã OTP mới
+  if (url.pathname === '/api/resend-verification' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const { user_id, email } = JSON.parse(body || '{}');
+      const db = loadDb();
+      const user = db.users.find(u =>
+        (user_id && u.id === user_id) ||
+        (email && u.email.toLowerCase() === String(email).trim().toLowerCase())
+      );
+      if (!user) {
+        res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Không tìm thấy tài khoản!' }));
+        return;
+      }
+      const newOtp = String(Math.floor(100000 + Math.random() * 900000));
+      user.verification_code = newOtp;
+      const resentMail = sendAutoResponderEmail(db, {
+        to_email: user.email,
+        to_name: user.full_name,
+        subject: `[CTU Research Data Hub] Gửi lại Mã OTP Xác thực Email — Mã mới: ${newOtp}`,
+        member_group_label: user.member_group_label,
+        otp_code: newOtp,
+        email_type: user.is_ctu_domain ? 'verify_ctu_1step' : 'verify_external_step1',
+        status_label: 'Đã gửi lại mã OTP mới',
+        body_summary: `Hệ thống trả lời tự động gửi lại mã xác thực OTP mới [${newOtp}] cho tài khoản ${user.email} (${user.member_group_label}).`
+      });
+      saveDb(db);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: true, user, auto_email: resentMail, db }));
     });
     return;
   }
@@ -839,7 +1221,40 @@ export function requestHandler(req, res) {
           return;
         }
 
-        if (action === 'delete') {
+        if (action === 'approve_member') {
+          const bonus = Number(db.settings?.signup_bonus ?? 50);
+          target.email_verified = true;
+          target.admin_approved = true;
+          target.account_status = 'active';
+          if ((target.contribution_points || 0) === 0) {
+            target.contribution_points = bonus;
+          }
+          sendAutoResponderEmail(db, {
+            to_email: target.email,
+            to_name: target.full_name,
+            subject: `[CTU Research Data Hub] Ban Quản trị đã xác nhận (Bước 2/2) — Kích hoạt Thành viên Chính thức!`,
+            member_group_label: target.member_group_label || 'Thành viên Ngoài CTU',
+            otp_code: target.verification_code || 'APPROVED',
+            email_type: 'admin_approved_step2',
+            status_label: `Hoàn tất 2 bước • Đã kích hoạt (+${bonus} Credits)`,
+            body_summary: `Chúc mừng ${target.full_name}! Ban Quản trị Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ đã xác nhận hồ sơ của bạn (Bước 2/2). Tài khoản ${target.email} đã trở thành Thành viên Chính thức và được tặng +${bonus} Credits khởi đầu.`
+          });
+          addAuditLog(db, 'admin (Super Admin)', 'Phê duyệt Thành viên Ngoài CTU (Bước 2/2)', `Đã xác nhận tài khoản ${target.full_name} (${target.email}) trở thành thành viên chính thức (+${bonus} Credits).`, 'admin');
+        } else if (action === 'reject_member') {
+          target.admin_approved = false;
+          target.account_status = 'rejected';
+          sendAutoResponderEmail(db, {
+            to_email: target.email,
+            to_name: target.full_name,
+            subject: `[CTU Research Data Hub] Thông báo kết quả xét duyệt đăng ký thành viên`,
+            member_group_label: target.member_group_label || 'Thành viên Ngoài CTU',
+            otp_code: '-',
+            email_type: 'admin_rejected',
+            status_label: 'Từ chối phê duyệt (Bước 2/2)',
+            body_summary: `Xin chào ${target.full_name}, Rất tiếc yêu cầu đăng ký tài khoản ngoài hệ thống ctu.edu.vn (${target.email}) chưa được Ban Quản trị phê duyệt.`
+          });
+          addAuditLog(db, 'admin (Super Admin)', 'Từ chối Hồ sơ Thành viên Ngoài CTU', `Đã từ chối tài khoản ${target.full_name} (${target.email}).`, 'admin');
+        } else if (action === 'delete') {
           db.users = db.users.filter(u => u.id !== target_user_id);
           addAuditLog(db, 'admin (Super Admin)', 'Xóa Tài khoản', `Đã xóa tài khoản ${target.full_name} (${target.email})`, 'admin');
         } else if (action === 'role' && role) {
