@@ -1394,6 +1394,16 @@ export function requestHandler(req, res) {
     return;
   }
 
+  // Phục vụ file Logo SVG chính thức
+  if (url.pathname === '/logo-ctu-datahub.svg') {
+    const logoPath = path.join(__dirname, 'public', 'logo-ctu-datahub.svg');
+    if (fs.existsSync(logoPath)) {
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+      res.end(fs.readFileSync(logoPath, 'utf8'));
+      return;
+    }
+  }
+
   // Phục vụ giao diện Web App từ public/index.html
   const indexPath = path.join(__dirname, 'public', 'index.html');
   if (fs.existsSync(indexPath)) {

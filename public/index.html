@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CTU Research Data Hub — Cổng Dữ Liệu Khoa Học Sinh Viên</title>
+  <link rel="icon" type="image/svg+xml" href="/logo-ctu-datahub.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -34,17 +35,48 @@
   <!-- HEADER NAVIGATION -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-      <!-- Brand -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-          CTU
+      <!-- Brand & Official Logo (Đoàn kết - Chia sẻ - Trung thực) -->
+      <div onclick="openLogoMeaningModal()" class="flex items-center gap-3 cursor-pointer group" title="Bấm để xem Ý nghĩa Thiết kế Logo: Đoàn kết • Chia sẻ • Trung thực">
+        <div class="w-11 h-11 rounded-xl shadow-md group-hover:scale-105 transition-transform shrink-0 overflow-hidden ring-2 ring-blue-100">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" class="w-full h-full">
+            <defs>
+              <linearGradient id="hdrTruthBlue" x1="10" y1="8" x2="110" y2="112" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1E40AF" />
+                <stop offset="50%" stop-color="#1D4ED8" />
+                <stop offset="100%" stop-color="#0F172A" />
+              </linearGradient>
+              <linearGradient id="hdrShareEmerald" x1="20" y1="68" x2="100" y2="98" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#34D399" />
+                <stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="hdrUnityGold" x1="34" y1="24" x2="86" y2="74" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FDE68A" />
+                <stop offset="45%" stop-color="#FBBF24" />
+                <stop offset="100%" stop-color="#D97706" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="4" width="112" height="112" rx="28" fill="url(#hdrTruthBlue)" stroke="#60A5FA" stroke-width="2" stroke-opacity="0.35" />
+            <polygon points="60,18 94,37 94,75 60,94 26,75 26,37" fill="none" stroke="#93C5FD" stroke-width="1.5" stroke-opacity="0.24" stroke-dasharray="4 3" />
+            <path d="M24 76 C36 68, 49 72, 60 81 C71 72, 84 68, 96 76 L96 88 C84 80, 71 84, 60 93 C49 84, 36 80, 24 88 Z" fill="url(#hdrShareEmerald)" />
+            <path d="M30 93 C42 87, 51 90, 60 97 C69 90, 78 87, 90 93" stroke="#6EE7B7" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.85" />
+            <line x1="60" y1="30" x2="37" y2="58" stroke="url(#hdrUnityGold)" stroke-width="4" stroke-linecap="round" />
+            <line x1="60" y1="30" x2="83" y2="58" stroke="url(#hdrUnityGold)" stroke-width="4" stroke-linecap="round" />
+            <line x1="37" y1="58" x2="83" y2="58" stroke="url(#hdrUnityGold)" stroke-width="3.5" stroke-linecap="round" />
+            <line x1="60" y1="30" x2="60" y2="75" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.85" />
+            <circle cx="60" cy="52" r="5" fill="#FFFFFF" />
+            <circle cx="60" cy="30" r="8.5" fill="url(#hdrUnityGold)" stroke="#FFFFFF" stroke-width="2.5" />
+            <circle cx="37" cy="58" r="7.5" fill="url(#hdrUnityGold)" stroke="#FFFFFF" stroke-width="2.2" />
+            <circle cx="83" cy="58" r="7.5" fill="url(#hdrUnityGold)" stroke="#FFFFFF" stroke-width="2.2" />
+          </svg>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight">Research Data Hub</h1>
-            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">FAIR Data</span>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight group-hover:text-blue-700 transition">CTU Research Data Hub</h1>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-50 via-emerald-50 to-amber-50 text-blue-800 border border-blue-200">
+              Đoàn kết • Chia sẻ • Trung thực
+            </span>
           </div>
-          <p class="text-xs text-slate-500">Không gian Lưu trữ & Chia sẻ Dữ liệu Khoa học Sinh viên</p>
+          <p class="text-xs text-slate-500">Không gian Lưu trữ &amp; Chia sẻ Dữ liệu Khoa học Mở — Đại học Cần Thơ</p>
         </div>
       </div>
 
@@ -554,14 +586,17 @@
   <footer class="mt-12 border-t border-slate-200 bg-white/90 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-        <!-- Bản quyền chính thức -->
+        <!-- Bản quyền chính thức & Logo -->
         <div class="flex items-center gap-3 text-center md:text-left">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-900 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">
-            CTU
+          <div onclick="openLogoMeaningModal()" class="w-10 h-10 rounded-xl shadow-sm shrink-0 overflow-hidden cursor-pointer hover:scale-105 transition-transform ring-1 ring-slate-200" title="Xem ý nghĩa thiết kế Logo">
+            <img src="/logo-ctu-datahub.svg" alt="CTU Research Data Hub Logo" class="w-full h-full object-contain" />
           </div>
           <div>
-            <div class="text-xs sm:text-sm font-bold text-slate-900">
-              &copy; 2026 CTU/CSE - Khoa Tài Chính - Ngân hàng
+            <div class="text-xs sm:text-sm font-bold text-slate-900 flex flex-wrap items-center justify-center md:justify-start gap-2">
+              <span>&copy; 2026 CTU/CSE - Khoa Tài Chính - Ngân hàng</span>
+              <button onclick="openLogoMeaningModal()" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-semibold transition">
+                🎨 Ý nghĩa Logo
+              </button>
             </div>
             <div class="text-[11px] text-slate-500">
               Cổng Dữ liệu Khoa học Mở phục vụ Nghiên cứu &amp; Học thuật — Trường Kinh tế, Đại học Cần Thơ
@@ -1037,7 +1072,92 @@
     </div>
   </div>
 
+  <!-- MODAL 6: Ý NGHĨA THIẾT KẾ LOGO (ĐOÀN KẾT - CHIA SẺ - TRUNG THỰC) -->
+  <div id="logo-meaning-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🎨</span>
+          <div>
+            <h3 class="text-base font-bold">Biểu trưng (Logo) Chính thức — CTU Research Data Hub</h3>
+            <p class="text-[11px] text-blue-200">Triết lý Thiết kế: Đoàn kết • Chia sẻ • Trung thực (Khoa Tài Chính - Ngân hàng, CTU/CSE)</p>
+          </div>
+        </div>
+        <button onclick="closeLogoMeaningModal()" class="text-slate-300 hover:text-white text-2xl leading-none px-2">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-5 text-xs sm:text-sm">
+        <!-- Logo Preview Card -->
+        <div class="flex flex-col sm:flex-row items-center gap-5 p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/60 border border-slate-200">
+          <div class="w-28 h-28 rounded-3xl shadow-xl shrink-0 overflow-hidden ring-4 ring-white">
+            <img src="/logo-ctu-datahub.svg" alt="CTU Research Data Hub Official Logo" class="w-full h-full object-contain" />
+          </div>
+          <div class="space-y-2 text-center sm:text-left">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">
+              ✨ Thiết kế Tối giản • Thực tiễn • Chuẩn Vector SVG
+            </div>
+            <h4 class="text-base font-bold text-slate-900">Biểu tượng "Khiên Tri Thức Mở &amp; Mạng Lưới Dữ Liệu Hội Tụ"</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Logo kết hợp hài hòa giữa <strong>Khiên Học Thuật vững chãi</strong>, <strong>Đôi cánh Trang sách mở hóa sóng nước Cửu Long</strong> và <strong>3 Nút mạng lưới dữ liệu hội tụ</strong>, phản ánh trọn vẹn sứ mệnh kết nối và lan tỏa dữ liệu khoa học của Đại học Cần Thơ.
+            </p>
+          </div>
+        </div>
+
+        <!-- Ý nghĩa 3 Màu sắc chủ đạo -->
+        <div class="space-y-2.5">
+          <div class="font-bold text-slate-900 text-xs uppercase tracking-wider">1. Ý nghĩa 03 Màu sắc Chủ đạo</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 space-y-1">
+              <div class="flex items-center gap-2 font-bold text-amber-900">
+                <span class="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block"></span>
+                <span>Vàng Hổ Phách — ĐOÀN KẾT</span>
+              </div>
+              <p class="text-[11px] text-amber-950/80 leading-relaxed">
+                3 nút dữ liệu vàng kết nối thành khối tam giác hướng tâm thể hiện sự <strong>Đoàn kết</strong> gắn bó giữa Sinh viên – Học viên – Giảng viên và các đơn vị nghiên cứu trong &amp; ngoài CTU.
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-1">
+              <div class="flex items-center gap-2 font-bold text-emerald-900">
+                <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block"></span>
+                <span>Xanh Ngọc — CHIA SẺ</span>
+              </div>
+              <p class="text-[11px] text-emerald-950/80 leading-relaxed">
+                Trang sách mở mềm mại như dòng chảy sông Hậu thể hiện tinh thần <strong>Chia sẻ</strong> tri thức mở (Open Data), nuôi dưỡng hệ sinh thái nghiên cứu phát triển bền vững.
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 space-y-1">
+              <div class="flex items-center gap-2 font-bold text-blue-900">
+                <span class="w-3.5 h-3.5 rounded-full bg-blue-700 inline-block"></span>
+                <span>Xanh Dương CTU — TRUNG THỰC</span>
+              </div>
+              <p class="text-[11px] text-blue-950/80 leading-relaxed">
+                Nền khiên xanh đậm truyền thống ĐH Cần Thơ cùng tâm điểm trắng tinh khiết biểu trưng cho sự <strong>Trung thực</strong> khoa học, chuẩn mực kiểm duyệt và minh bạch dữ liệu (FAIR).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          <a href="/logo-ctu-datahub.svg" download="logo-ctu-research-data-hub.svg" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition inline-flex items-center gap-1.5">
+            <span>⬇️ Tải file Logo Vector gốc (.SVG)</span>
+          </a>
+          <button type="button" onclick="closeLogoMeaningModal()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    function openLogoMeaningModal() {
+      document.getElementById('logo-meaning-modal')?.classList.remove('hidden');
+    }
+    function closeLogoMeaningModal() {
+      document.getElementById('logo-meaning-modal')?.classList.add('hidden');
+    }
     let appState = { users: [], datasets: [], settings: {}, audit_logs: [] };
     let currentUser = null;
     let isSuperAdminAuthenticated = false;
