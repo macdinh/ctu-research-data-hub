@@ -560,33 +560,57 @@
               </label>
             </div>
 
-            <!-- Cấu hình Máy chủ Gửi Email Xác thực Thực tế (Real SMTP Auto-Responder) -->
+            <!-- Cấu hình Máy chủ Gửi Email Xác thực Thực tế (Real SMTP / Google Apps Script Bridge) -->
             <div class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2.5">
               <div class="flex items-center justify-between">
-                <div class="font-bold text-blue-950 text-xs">📧 Cấu hình Máy chủ SMTP Gửi Email Xác thực Thực tế</div>
+                <div class="font-bold text-blue-950 text-xs">📧 Cấu hình Máy chủ Gửi Email Xác thực Thực tế</div>
                 <span id="smtp-config-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Đang kiểm tra</span>
               </div>
               <p class="text-[11px] text-slate-600 leading-relaxed">
-                Hệ thống kiểm tra bản ghi DNS <code>MX</code> của tên miền email để chặn email giả/rác và tự động gửi mã OTP 6 số trực tiếp tới hộp thư thật của người đăng ký qua giao thức SMTPS bảo mật.
+                Để gửi mã OTP 6 chữ số tới hộp thư thật của thành viên (<code>@ctu.edu.vn</code>, <code>@student.ctu.edu.vn</code>, <code>@gmail.com</code>...), vui lòng cấu hình <strong>1 trong 2 cách</strong> dưới đây:
               </p>
-              <div class="grid grid-cols-3 gap-2">
-                <div class="col-span-2">
-                  <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">SMTP Host</label>
-                  <input id="set-smtp-host" type="text" value="smtp.gmail.com" placeholder="smtp.gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+
+              <!-- CÁCH 1: SMTPS Gmail App Password -->
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-2">
+                <div class="font-bold text-slate-800 text-[11px]">Cách 1: Dùng Gmail / Google Workspace (SMTPS Cổng 465)</div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div class="col-span-2">
+                    <label class="block font-semibold text-slate-700 mb-0.5 text-[10px]">SMTP Host</label>
+                    <input id="set-smtp-host" type="text" value="smtp.gmail.com" placeholder="smtp.gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-0.5 text-[10px]">Cổng (SSL)</label>
+                    <input id="set-smtp-port" type="number" value="465" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                  </div>
                 </div>
                 <div>
-                  <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">Cổng (SSL)</label>
-                  <input id="set-smtp-port" type="number" value="465" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                  <label class="block font-semibold text-slate-700 mb-0.5 text-[10px]">Email Gửi tự động (SMTP Username / Gmail)</label>
+                  <input id="set-smtp-user" type="email" autocomplete="off" placeholder="VD: tuyentd@gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-0.5 text-[10px]">Mật khẩu Ứng dụng Google 16 ký tự (App Password — Đã ẩn &amp; mã hóa)</label>
+                  <input id="set-smtp-pass" type="password" autocomplete="new-password" placeholder="Nhập App Password 16 ký tự (tạo tại myaccount.google.com/apppasswords)..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
                 </div>
               </div>
-              <div>
-                <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">Email Gửi tự động (SMTP Username / Gmail)</label>
-                <input id="set-smtp-user" type="email" autocomplete="off" placeholder="VD: ctu.datahub@gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+
+              <!-- CÁCH 2: Google Apps Script Bridge (Không cần tạo App Password) -->
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-slate-800 text-[11px]">Cách 2: Google Apps Script URL (Không cần App Password)</span>
+                  <button type="button" onclick="copyAppsScriptCode()" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold transition">
+                    📋 Copy mã Script 6 dòng
+                  </button>
+                </div>
+                <input id="set-email-webhook" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
               </div>
-              <div>
-                <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">Mật khẩu Ứng dụng (Google App Password 16 ký tự — Đã ẩn &amp; mã hóa)</label>
-                <input id="set-smtp-pass" type="password" autocomplete="new-password" placeholder="Nhập App Password mới nếu muốn thay đổi..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+
+              <div class="flex items-center gap-2 pt-1">
+                <input id="set-test-email-to" type="email" placeholder="Nhập email nhận thư test..." class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                <button type="button" onclick="handleTestEmailDelivery()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition whitespace-nowrap">
+                  📨 Gửi Email Thử nghiệm
+                </button>
               </div>
+              <div id="smtp-test-result-box" class="hidden p-2.5 rounded-lg text-[11px] font-medium"></div>
             </div>
 
             <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition">
@@ -2259,22 +2283,24 @@
       const smtpPortEl = document.getElementById('set-smtp-port');
       const smtpUserEl = document.getElementById('set-smtp-user');
       const smtpPassEl = document.getElementById('set-smtp-pass');
+      const webhookEl = document.getElementById('set-email-webhook');
       const smtpBadgeEl = document.getElementById('smtp-config-status-badge');
       if (smtpHostEl) smtpHostEl.value = settings.smtp_host || 'smtp.gmail.com';
       if (smtpPortEl) smtpPortEl.value = settings.smtp_port || 465;
       if (smtpUserEl) smtpUserEl.value = settings.smtp_user || '';
+      if (webhookEl) webhookEl.value = settings.email_webhook_url || '';
       if (smtpPassEl) {
         smtpPassEl.value = '';
         smtpPassEl.placeholder = settings.smtp_configured
           ? '•••••••••••• (Đã cấu hình — Nhập mới nếu muốn đổi)'
-          : 'Nhập Google App Password (16 ký tự)...';
+          : 'Nhập Google App Password 16 ký tự...';
       }
       if (smtpBadgeEl) {
         if (settings.smtp_configured) {
-          smtpBadgeEl.textContent = '✓ Đã kết nối SMTP Thật';
+          smtpBadgeEl.textContent = '✓ Đã kết nối Máy chủ Gửi Email Thật';
           smtpBadgeEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold';
         } else {
-          smtpBadgeEl.textContent = '⚙️ Chờ cấu hình SMTP Account';
+          smtpBadgeEl.textContent = '⚠️ Chưa gắn Tài khoản Email Gửi đi';
           smtpBadgeEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-semibold';
         }
       }
@@ -2349,7 +2375,8 @@
         smtp_host: document.getElementById('set-smtp-host')?.value.trim() || 'smtp.gmail.com',
         smtp_port: Number(document.getElementById('set-smtp-port')?.value || 465),
         smtp_user: document.getElementById('set-smtp-user')?.value.trim() || '',
-        smtp_pass: document.getElementById('set-smtp-pass')?.value.trim() || ''
+        smtp_pass: document.getElementById('set-smtp-pass')?.value.trim() || '',
+        email_webhook_url: document.getElementById('set-email-webhook')?.value.trim() || ''
       };
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
@@ -2360,6 +2387,52 @@
       appState = data.db;
       renderAdminDashboard();
       showToast('💾 Đã lưu Cấu hình Hệ thống & Máy chủ Email SMTP thành công!');
+    }
+
+    function copyAppsScriptCode() {
+      const code = `function doPost(e) {\n  var d = JSON.parse(e.postData.contents);\n  MailApp.sendEmail({ to: d.to, subject: d.subject, body: d.body, name: d.from_name || "CTU Research Data Hub" });\n  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);\n}`;
+      navigator.clipboard.writeText(code);
+      showToast('📋 Đã sao chép mã Google Apps Script! Hãy dán vào script.google.com -> Deploy -> Web App (Anyone) rồi dán URL vào ô.', 'success');
+    }
+
+    async function handleTestEmailDelivery() {
+      const box = document.getElementById('smtp-test-result-box');
+      if (box) {
+        box.className = 'p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-[11px] font-medium';
+        box.textContent = '⏳ Đang kết nối máy chủ Email và gửi thư thử nghiệm...';
+        box.classList.remove('hidden');
+      }
+      const payload = {
+        smtp_host: document.getElementById('set-smtp-host')?.value.trim() || 'smtp.gmail.com',
+        smtp_port: Number(document.getElementById('set-smtp-port')?.value || 465),
+        smtp_user: document.getElementById('set-smtp-user')?.value.trim() || '',
+        smtp_pass: document.getElementById('set-smtp-pass')?.value.trim() || '',
+        email_webhook_url: document.getElementById('set-email-webhook')?.value.trim() || '',
+        test_to_email: document.getElementById('set-test-email-to')?.value.trim() || document.getElementById('set-smtp-user')?.value.trim() || ''
+      };
+      const res = await fetch('/api/admin/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.db) {
+        appState = data.db;
+        renderAdminDashboard();
+      }
+      if (res.ok && data.ok) {
+        if (box) {
+          box.className = 'p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-[11px] font-semibold';
+          box.textContent = `✅ Thành công: ${data.detail}`;
+        }
+        showToast(`✅ ${data.detail}`);
+      } else {
+        if (box) {
+          box.className = 'p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-[11px] font-semibold';
+          box.textContent = `❌ Chưa gửi được: ${data.detail || data.error}`;
+        }
+        showToast(`❌ ${data.detail || data.error}`, 'error');
+      }
     }
 
     function exportDatabaseBackup() {
@@ -2516,18 +2589,25 @@
 
       const badgeEl = document.getElementById('verify-delivery-badge');
       const statusBox = document.getElementById('verify-delivery-status');
-      if (autoMail?.delivery_mode === 'smtp_sent') {
+      const isRealEmailSent = Boolean(
+        autoMail?.smtp_sent ||
+        autoMail?.delivery_status === 'sent_real_smtp' ||
+        autoMail?.delivery_status === 'google_apps_script'
+      );
+
+      if (isRealEmailSent) {
         if (badgeEl) {
-          badgeEl.textContent = '✓ Đã gửi SMTP tới hộp thư thật';
+          badgeEl.textContent = '✓ Đã gửi Email thật tới hộp thư';
           badgeEl.className = 'px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
         }
         if (statusBox) {
+          statusBox.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-slate-700 space-y-1.5 leading-relaxed';
           statusBox.innerHTML = `
             <div class="font-bold text-emerald-900 flex items-center gap-1.5">
               <span>✅ Đã gửi Email xác thực trực tiếp tới hộp thư <code>${user.email}</code>!</span>
             </div>
             <p class="text-[11px] text-slate-600">
-              Hệ thống đã xác minh tên miền email hợp lệ (DNS MX) và gửi mã OTP 6 chữ số tới hộp thư thật của bạn. Mã OTP đã được ẩn hoàn toàn trên trang web để chống đăng ký bằng email giả.
+              Hệ thống đã xác minh tên miền email hợp lệ (DNS MX) và gửi mã OTP 6 chữ số tới hộp thư thật của bạn (${autoMail?.smtp_detail || 'SMTPS / Gmail'}). Mã OTP được ẩn hoàn toàn trên trang web để chống đăng ký bằng email giả.
             </p>
             <p class="text-[11px] text-slate-600">
               👉 Vui lòng kiểm tra <strong>Hộp thư đến (Inbox)</strong> hoặc thư mục <strong>Spam / Thư rác</strong> của <code>${user.email}</code> và nhập 6 chữ số OTP vào ô bên dưới.
@@ -2536,25 +2616,78 @@
         }
       } else {
         if (badgeEl) {
-          badgeEl.textContent = '🔒 Đã kiểm tra DNS MX & Bảo mật OTP';
-          badgeEl.className = 'px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold';
+          badgeEl.textContent = '⚠️ Chưa cấu hình Email Gửi đi (SMTP)';
+          badgeEl.className = 'px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-semibold';
         }
         if (statusBox) {
+          statusBox.className = 'p-3.5 rounded-xl bg-amber-50/90 border border-amber-300 text-slate-800 space-y-2.5 leading-relaxed';
           statusBox.innerHTML = `
-            <div class="font-bold text-blue-900 flex items-center gap-1.5">
-              <span>🔒 Chế độ Bảo mật Chống Email Giả (Đã kiểm tra DNS MX cho <code>${user.email}</code>)</span>
+            <div class="font-bold text-amber-950 flex items-center gap-1.5">
+              <span>⚠️ Chưa gửi được Email tới <code>${user.email}</code> do Máy chủ chưa gắn Tài khoản Gửi thư!</span>
             </div>
-            <p class="text-[11px] text-slate-600">
-              Mã xác thực OTP (6 chữ số) <strong>tuyệt đối không hiển thị trên giao diện web</strong> để ngăn chặn việc dùng email giả mạo tự kích hoạt tài khoản.
+            <p class="text-[11px] text-amber-900">
+              <strong>Nguyên nhân:</strong> ${autoMail?.smtp_detail || 'Để gửi thư thật qua Internet tới Gmail / @ctu.edu.vn mà không lộ mã OTP trên màn hình, hệ thống cần 01 tài khoản Gmail làm máy chủ gửi thư tự động.'}
             </p>
-            <p class="text-[11px] text-slate-600">
-              👉 Vui lòng kiểm tra hộp thư <code>${user.email}</code> để nhận mã OTP (Quản trị viên có thể cấu hình tài khoản SMTP Gmail tại mục <em>Quản trị Hệ thống &rarr; Cấu hình &amp; Nhật ký</em> để gửi thư tự động 24/7).
-            </p>
+            <div class="p-3 rounded-xl bg-white border border-amber-300 space-y-2 text-[11px]">
+              <div class="font-bold text-slate-900">⚙️ Cấu hình Nhanh Máy chủ Gửi Email Tự động (Chỉ cần làm 1 lần):</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-0.5">Email Gmail Gửi đi (Sender):</label>
+                  <input id="quick-smtp-user" type="email" value="${appState.settings?.smtp_user_display || 'tuyentd@gmail.com'}" placeholder="VD: tuyentd@gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-0.5">Mật khẩu Ứng dụng Google (16 ký tự):</label>
+                  <input id="quick-smtp-pass" type="password" placeholder="Nhập App Password 16 ký tự..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs" />
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-500">
+                💡 Lấy Mật khẩu Ứng dụng Google (16 chữ cái) tại: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-semibold underline">myaccount.google.com/apppasswords</a> (Hoặc dán <strong>Google Apps Script Web App URL</strong> vào ô dưới nếu không dùng App Password):
+              </div>
+              <div class="flex gap-1.5">
+                <input id="quick-email-webhook" type="url" value="${appState.settings?.email_webhook_url || ''}" placeholder="Hoặc dán Google Apps Script URL (https://script.google.com/macros/s/.../exec)" class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-[11px]" />
+                <button type="button" onclick="copyAppsScriptCode()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[10px] shrink-0">📋 Copy mã Script</button>
+              </div>
+              <button type="button" onclick="saveQuickSmtpAndResend()" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition">
+                💾 Lưu Máy chủ Email &amp; Gửi ngay Mã OTP tới ${user.email}
+              </button>
+            </div>
           `;
         }
       }
 
       document.getElementById('email-verify-modal').classList.remove('hidden');
+    }
+
+    async function saveQuickSmtpAndResend() {
+      const smtpUser = document.getElementById('quick-smtp-user')?.value.trim() || '';
+      const smtpPass = document.getElementById('quick-smtp-pass')?.value.trim() || '';
+      const webhookUrl = document.getElementById('quick-email-webhook')?.value.trim() || '';
+      const errBox = document.getElementById('verify-error-box');
+      if (errBox) errBox.classList.add('hidden');
+
+      if ((!smtpUser || !smtpPass) && !webhookUrl) {
+        if (errBox) {
+          errBox.textContent = 'Vui lòng nhập Email Gmail + Mật khẩu ứng dụng (16 ký tự) HOẶC dán Google Apps Script URL!';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const saveRes = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          smtp_user: smtpUser,
+          smtp_pass: smtpPass,
+          email_webhook_url: webhookUrl
+        })
+      });
+      const saveData = await saveRes.json();
+      if (saveData.db) {
+        appState = saveData.db;
+        renderAdminDashboard();
+      }
+      await handleResendVerificationEmail();
     }
 
     function closeEmailVerifyModal() {
@@ -2609,7 +2742,11 @@
       if (res.ok && data.ok) {
         appState = data.db;
         openEmailVerifyModal(data.user, data.auto_email);
-        showToast('📨 Hệ thống đã tạo mã OTP mới và gửi lại tới hộp thư Email của bạn!');
+        if (data.auto_email?.smtp_sent) {
+          showToast(`✅ Đã gửi Email xác thực kèm mã OTP mới tới hộp thư ${data.user.email}!`);
+        } else {
+          showToast(`⚠️ Chưa gửi được Email: ${data.auto_email?.smtp_detail || 'Vui lòng nhập tài khoản Email gửi đi'}`, 'error');
+        }
       }
     }
 

@@ -217,6 +217,7 @@ const initialDb = {
     smtp_port: Number(process.env.SMTP_PORT || 465),
     smtp_user: process.env.SMTP_USER || '',
     smtp_pass: process.env.SMTP_PASS || '',
+    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || '',
     smtp_from_name: 'CTU Research Data Hub (ĐH Cần Thơ)'
   },
   audit_logs: [
@@ -624,21 +625,61 @@ async function validateRealEmailAddress(emailRaw) {
 }
 
 // ============================================================================
-// GỬI EMAIL XÁC THỰC THẬT QUA GIAO THỨC SMTPS (PORT 465 SSL/TLS)
+// GỬI EMAIL XÁC THỰC THẬT QUA GOOGLE APPS SCRIPT WEBHOOK HOẶC SMTPS (PORT 465)
 // ============================================================================
-function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
-  return new Promise(resolve => {
-    const smtpHost = (db.settings?.smtp_host || process.env.SMTP_HOST || 'smtp.gmail.com').trim();
-    const smtpPort = Number(db.settings?.smtp_port || process.env.SMTP_PORT || 465);
-    const smtpUser = (db.settings?.smtp_user || process.env.SMTP_USER || '').trim();
-    const smtpPass = (db.settings?.smtp_pass || process.env.SMTP_PASS || '').trim();
-    const fromName = db.settings?.smtp_from_name || 'CTU Research Data Hub';
+async function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
+  const webhookUrl = (db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || '').trim();
+  const smtpHost = (db.settings?.smtp_host || process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const smtpPort = Number(db.settings?.smtp_port || process.env.SMTP_PORT || 465);
+  const smtpUser = (db.settings?.smtp_user || process.env.SMTP_USER || '').trim();
+  // Tự động loại bỏ khoảng trắng trong Google App Password (VD: "abcd efgh ijkl mnop" -> "abcdefghijklmnop")
+  const smtpPass = (db.settings?.smtp_pass || process.env.SMTP_PASS || '').replace(/\s+/g, '');
+  const fromName = db.settings?.smtp_from_name || 'CTU Research Data Hub (ĐH Cần Thơ)';
 
-    if (!smtpUser || !smtpPass) {
-      resolve({ sent: false, mode: 'unconfigured', detail: 'Chưa cấu hình tài khoản SMTP (Gmail App Password) trong Quản trị Hệ thống' });
-      return;
+  // KÊNH 1: Gửi qua Google Apps Script Web App Bridge (MailApp.sendEmail - Không cần App Password)
+  if (webhookUrl && webhookUrl.startsWith('https://script.google.com/')) {
+    try {
+      const resp = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: to_email,
+          name: to_name || to_email,
+          subject,
+          body: textBody,
+          from_name: fromName
+        }),
+        redirect: 'follow'
+      });
+      if (resp.ok) {
+        return {
+          sent: true,
+          mode: 'google_apps_script',
+          detail: `Đã gửi email thật tới ${to_email} qua Google Apps Script (Gmail Bridge)`
+        };
+      }
+    } catch (err) {
+      // Nếu lỗi webhook thì chuyển sang thử SMTPS bên dưới
+      if (!smtpUser || !smtpPass) {
+        return {
+          sent: false,
+          mode: 'webhook_error',
+          detail: `Lỗi kết nối Google Apps Script Webhook: ${err.message}`
+        };
+      }
     }
+  }
 
+  // KÊNH 2: Gửi trực tiếp qua giao thức SMTPS (SSL/TLS Port 465)
+  if (!smtpUser || !smtpPass) {
+    return {
+      sent: false,
+      mode: 'unconfigured',
+      detail: 'Chưa cấu hình Tài khoản Email gửi đi (Gmail App Password hoặc Google Apps Script URL) trong mục Quản trị Hệ thống -> Cấu hình & Nhật ký'
+    };
+  }
+
+  return new Promise(resolve => {
     let step = 0;
     let finished = false;
     const finish = result => {
@@ -653,8 +694,8 @@ function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
       // Đợi lời chào 220 từ SMTP Server
     });
 
-    socket.setTimeout(8000, () => finish({ sent: false, mode: 'smtp_timeout', detail: 'Quá thời gian kết nối tới máy chủ SMTP' }));
-    socket.on('error', err => finish({ sent: false, mode: 'smtp_error', detail: err.message }));
+    socket.setTimeout(9000, () => finish({ sent: false, mode: 'smtp_timeout', detail: `Quá thời gian kết nối tới ${smtpHost}:${smtpPort} (Nếu đang chạy Local Sandbox, cần bật quyền truy cập mạng)` }));
+    socket.on('error', err => finish({ sent: false, mode: 'smtp_error', detail: `Không thể kết nối SMTP (${err.message})` }));
 
     let buffer = '';
     socket.on('data', chunk => {
@@ -664,7 +705,6 @@ function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
 
       for (const line of lines) {
         if (!line || line.length < 3) continue;
-        // Nếu là dòng tiếp tục (ví dụ 250-...) thì đợi dòng cuối (250 ...)
         if (line[3] === '-') continue;
         const code = parseInt(line.slice(0, 3), 10);
 
@@ -693,16 +733,20 @@ function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
           step = 8;
           const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
           const encodedFromName = `=?UTF-8?B?${Buffer.from(fromName, 'utf8').toString('base64')}?=`;
+          const encodedToName = `=?UTF-8?B?${Buffer.from(to_name || to_email, 'utf8').toString('base64')}?=`;
+          const base64Body = (Buffer.from(textBody, 'utf8').toString('base64').match(/.{1,76}/g) || []).join('\r\n');
+          const msgId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@ctu.edu.vn>`;
           const mimeMsg = [
             `From: ${encodedFromName} <${smtpUser}>`,
-            `To: "${to_name || to_email}" <${to_email}>`,
+            `To: ${encodedToName} <${to_email}>`,
             `Subject: ${encodedSubject}`,
+            `Message-ID: ${msgId}`,
             `MIME-Version: 1.0`,
             `Content-Type: text/plain; charset=UTF-8`,
-            `Content-Transfer-Encoding: 8bit`,
+            `Content-Transfer-Encoding: base64`,
             `Date: ${new Date().toUTCString()}`,
             ``,
-            textBody,
+            base64Body,
             `.`,
             ``
           ].join('\r\n');
@@ -710,9 +754,9 @@ function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
         } else if (step === 8 && code === 250) {
           step = 9;
           socket.write(`QUIT\r\n`);
-          finish({ sent: true, mode: 'smtp_tls', detail: `Đã gửi email thật qua ${smtpHost} từ ${smtpUser}` });
+          finish({ sent: true, mode: 'smtp_tls', detail: `Đã gửi email thật qua ${smtpHost} từ ${smtpUser} tới ${to_email}` });
         } else if (code >= 400) {
-          finish({ sent: false, mode: 'smtp_rejected', detail: `SMTP lỗi (${code}): ${line}` });
+          finish({ sent: false, mode: 'smtp_rejected', detail: `Máy chủ SMTP từ chối (${code}): ${line}. Vui lòng kiểm tra lại Google App Password 16 ký tự!` });
         }
       }
     });
@@ -783,9 +827,12 @@ function sanitizeDbForClient(db) {
   if (clone.settings) {
     clone.settings.smtp_configured = Boolean(
       (clone.settings.smtp_user && clone.settings.smtp_pass) ||
-      (process.env.SMTP_USER && process.env.SMTP_PASS)
+      (process.env.SMTP_USER && process.env.SMTP_PASS) ||
+      clone.settings.email_webhook_url ||
+      process.env.EMAIL_WEBHOOK_URL
     );
     clone.settings.smtp_user_display = clone.settings.smtp_user || process.env.SMTP_USER || '';
+    clone.settings.email_webhook_url = clone.settings.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || '';
     delete clone.settings.smtp_pass;
   }
   return clone;
@@ -1634,27 +1681,70 @@ export function requestHandler(req, res) {
       const db = loadDb();
       db.settings = {
         ...db.settings,
-        signup_bonus: Number(payload.signup_bonus ?? 50),
-        upload_reward: Number(payload.upload_reward ?? 30),
-        download_cost: Number(payload.download_cost ?? 5),
-        author_royalty: Number(payload.author_royalty ?? 2),
-        require_review: Boolean(payload.require_review),
-        restrict_ctu_email: Boolean(payload.restrict_ctu_email),
+        signup_bonus: Number(payload.signup_bonus ?? db.settings?.signup_bonus ?? 50),
+        upload_reward: Number(payload.upload_reward ?? db.settings?.upload_reward ?? 30),
+        download_cost: Number(payload.download_cost ?? db.settings?.download_cost ?? 5),
+        author_royalty: Number(payload.author_royalty ?? db.settings?.author_royalty ?? 2),
+        require_review: payload.require_review !== undefined ? Boolean(payload.require_review) : Boolean(db.settings?.require_review),
+        restrict_ctu_email: payload.restrict_ctu_email !== undefined ? Boolean(payload.restrict_ctu_email) : Boolean(db.settings?.restrict_ctu_email),
         smtp_host: payload.smtp_host !== undefined ? String(payload.smtp_host).trim() : (db.settings?.smtp_host || 'smtp.gmail.com'),
         smtp_port: payload.smtp_port !== undefined ? Number(payload.smtp_port || 465) : (db.settings?.smtp_port || 465),
         smtp_user: payload.smtp_user !== undefined ? String(payload.smtp_user).trim() : (db.settings?.smtp_user || ''),
-        smtp_pass: payload.smtp_pass ? String(payload.smtp_pass).trim() : (db.settings?.smtp_pass || '')
+        smtp_pass: payload.smtp_pass ? String(payload.smtp_pass).replace(/\s+/g, '') : (db.settings?.smtp_pass || ''),
+        email_webhook_url: payload.email_webhook_url !== undefined ? String(payload.email_webhook_url).trim() : (db.settings?.email_webhook_url || '')
       };
       addAuditLog(
         db,
         'Quản trị viên (Admin)',
-        'Cập nhật Cấu hình & Máy chủ SMTP',
-        `Thưởng đăng ký: +${db.settings.signup_bonus} Cr | SMTP Email: ${db.settings.smtp_user || 'Chưa cấu hình'}`,
+        'Cập nhật Cấu hình & Máy chủ Email',
+        `SMTP Email: ${db.settings.smtp_user || 'Chưa đặt'} | Webhook: ${db.settings.email_webhook_url ? 'Đã cấu hình' : 'Không'}`,
         'system'
       );
       saveDb(db);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ db: sanitizeDbForClient(db) }));
+      res.end(JSON.stringify({ ok: true, db: sanitizeDbForClient(db) }));
+    });
+    return;
+  }
+
+  // ==========================================================================
+  // ADMIN API 3B: Kiểm tra Gửi Email Thực tế (Test SMTP / Webhook Delivery)
+  // ==========================================================================
+  if (url.pathname === '/api/admin/test-email' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      const payload = JSON.parse(body || '{}');
+      const db = loadDb();
+      if (payload.smtp_user !== undefined) db.settings.smtp_user = String(payload.smtp_user).trim();
+      if (payload.smtp_pass) db.settings.smtp_pass = String(payload.smtp_pass).replace(/\s+/g, '');
+      if (payload.smtp_host) db.settings.smtp_host = String(payload.smtp_host).trim();
+      if (payload.smtp_port) db.settings.smtp_port = Number(payload.smtp_port || 465);
+      if (payload.email_webhook_url !== undefined) db.settings.email_webhook_url = String(payload.email_webhook_url).trim();
+      saveDb(db);
+
+      const targetEmail = String(payload.test_to_email || db.settings.smtp_user || '').trim();
+      if (!targetEmail) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Vui lòng nhập địa chỉ Email nhận thư thử nghiệm!' }));
+        return;
+      }
+
+      const result = await sendRealSmtpEmail(db, {
+        to_email: targetEmail,
+        to_name: 'Quản trị viên CTU Data Hub',
+        subject: '[CTU Research Data Hub] Thư Kiểm tra Kết nối Gửi Email Tự động (SMTP/Gmail)',
+        textBody: `Xin chào Quản trị viên,\n\nĐây là thư kiểm tra tự động từ hệ thống Cổng Dữ liệu Khoa học Sinh viên ĐH Cần Thơ (CTU Research Data Hub).\n\n✅ Kết nối máy chủ gửi Email tự động đã hoạt động thành công! Từ bây giờ, mọi thành viên đăng ký mới sẽ nhận được mã OTP 6 chữ số trực tiếp trong hộp thư điện tử thật.\n\n---\n© 2026 CTU/CSE - Khoa Tài Chính - Ngân hàng`
+      });
+
+      res.writeHead(result.sent ? 200 : 400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: result.sent,
+        sent: result.sent,
+        mode: result.mode,
+        detail: result.detail,
+        db: sanitizeDbForClient(db)
+      }));
     });
     return;
   }
