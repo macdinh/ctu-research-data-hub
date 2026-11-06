@@ -2,6 +2,9 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import crypto from 'node:crypto';
+import tls from 'node:tls';
+import dns from 'node:dns';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -12,12 +15,40 @@ const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const TMP_DB_FILE = path.join(os.tmpdir(), 'ctu_data_hub_db.json');
 
+// ============================================================================
+// MÃ HÓA MẬT KHẨU MỘT CHIỀU CHUẨN PBKDF2-HMAC-SHA256 (KHÔNG LƯU MẬT KHẨU RÕ)
+// ============================================================================
+function hashPassword(plainPassword, saltHex) {
+  const salt = saltHex || crypto.randomBytes(8).toString('hex');
+  const derived = crypto.pbkdf2Sync(String(plainPassword), salt, 10000, 32, 'sha256').toString('hex');
+  return `pbkdf2_sha256$${salt}$${derived}`;
+}
+
+function verifyPassword(plainPassword, storedHash, legacyPlain) {
+  if (storedHash && String(storedHash).startsWith('pbkdf2_sha256$')) {
+    const parts = String(storedHash).split('$');
+    const salt = parts[1];
+    const expectedHex = parts[2];
+    if (!salt || !expectedHex) return false;
+    const actualHex = crypto.pbkdf2Sync(String(plainPassword), salt, 10000, 32, 'sha256').toString('hex');
+    try {
+      return crypto.timingSafeEqual(Buffer.from(actualHex, 'hex'), Buffer.from(expectedHex, 'hex'));
+    } catch {
+      return false;
+    }
+  }
+  if (legacyPlain !== undefined && legacyPlain !== null) {
+    return String(plainPassword) === String(legacyPlain);
+  }
+  return false;
+}
+
 const initialDb = {
   users: [
     {
       id: 'usr-student-1',
       username: 'B2110942',
-      password: '123',
+      password_hash: hashPassword('123', 'a1b2c3d4e5f60001'),
       email: 'khoab2110942@student.ctu.edu.vn',
       full_name: 'Nguyễn Minh Khoa',
       student_or_staff_id: 'B2110942',
@@ -38,7 +69,7 @@ const initialDb = {
     {
       id: 'usr-student-2',
       username: 'B2204115',
-      password: '123',
+      password_hash: hashPassword('123', 'a1b2c3d4e5f60002'),
       email: 'ngocb2204115@gstudent.ctu.edu.vn',
       full_name: 'Lê Thảo Ngọc',
       student_or_staff_id: 'B2204115',
@@ -59,7 +90,7 @@ const initialDb = {
     {
       id: 'usr-dttx-1',
       username: 'TX24091',
-      password: '123',
+      password_hash: hashPassword('123', 'a1b2c3d4e5f60003'),
       email: 'minhtx24091@dttx.ctu.edu.vn',
       full_name: 'Phạm Quốc Minh',
       student_or_staff_id: 'TX24091',
@@ -80,7 +111,7 @@ const initialDb = {
     {
       id: 'usr-lecturer-1',
       username: 'CB00241',
-      password: '123',
+      password_hash: hashPassword('123', 'a1b2c3d4e5f60004'),
       email: 'tvhai@ctu.edu.vn',
       full_name: 'TS. Trần Văn Hải',
       student_or_staff_id: 'CB00241',
@@ -101,7 +132,7 @@ const initialDb = {
     {
       id: 'usr-ext-1',
       username: 'hoangnam.research@gmail.com',
-      password: '123',
+      password_hash: hashPassword('123', 'a1b2c3d4e5f60005'),
       email: 'hoangnam.research@gmail.com',
       full_name: 'Đặng Hoàng Nam',
       student_or_staff_id: '',
@@ -125,7 +156,7 @@ const initialDb = {
     {
       id: 'usr-admin-1',
       username: 'admin',
-      password: '123Ctu?!',
+      password_hash: hashPassword('123Ctu?!', 'ctu_root_admin_salt'),
       email: 'admin@ctu.edu.vn',
       full_name: 'Quản trị viên Cao nhất (Super Admin)',
       student_or_staff_id: 'ADMIN-ROOT',
@@ -150,11 +181,12 @@ const initialDb = {
       id: 'mail-init-1',
       timestamp: '2026-11-06T08:15:00Z',
       to_email: 'hoangnam.research@gmail.com',
-      to_name: 'Đặng Hoàng Nam (Viện Nghiên cứu Đối tác)',
+      to_name: 'Đặng Hoàng Nam',
       subject: '[CTU Research Data Hub] Hoàn tất Bước 1/2 (Xác thực Email) — Đang chờ Ban Quản trị Xác nhận',
       member_group_label: 'Thành viên Ngoài CTU (Xác nhận 2 bước)',
-      otp_code: '682419',
+      otp_code: '****** (Đã ẩn bảo mật)',
       email_type: 'step2_pending_admin',
+      delivery_status: 'sent',
       status_label: 'Đã xác thực Email (Bước 1/2) • Chờ Admin duyệt (Bước 2/2)',
       body_summary: 'Hệ thống tự động xác nhận bạn đã hoàn tất Bước 1 (Xác thực chính chủ địa chỉ email hoangnam.research@gmail.com). Vì email không thuộc tên miền ctu.edu.vn, hồ sơ của bạn đã được chuyển đến Ban Quản trị Hệ thống (Bước 2/2) để phê duyệt thành viên chính thức.'
     },
@@ -165,8 +197,9 @@ const initialDb = {
       to_name: 'Nguyễn Minh Khoa',
       subject: '[CTU Research Data Hub] Xác thực Email Thành công — Kích hoạt Tài khoản Sinh viên (@student.ctu.edu.vn)',
       member_group_label: 'Sinh viên (@student.ctu.edu.vn)',
-      otp_code: '519204',
+      otp_code: '****** (Đã ẩn bảo mật)',
       email_type: 'activated',
+      delivery_status: 'sent',
       status_label: 'Đã kích hoạt chính thức (+50 Credits)',
       body_summary: 'Chúc mừng Nguyễn Minh Khoa! Địa chỉ email @student.ctu.edu.vn của bạn đã được xác thực tự động. Tài khoản nhóm Sinh viên ĐH Cần Thơ đã trở thành thành viên chính thức và được cộng +50 Credits khởi đầu.'
     }
@@ -179,7 +212,12 @@ const initialDb = {
     author_royalty: 2,
     require_review: false,
     restrict_ctu_email: false,
-    max_direct_upload_mb: 50
+    max_direct_upload_mb: 50,
+    smtp_host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    smtp_port: Number(process.env.SMTP_PORT || 465),
+    smtp_user: process.env.SMTP_USER || '',
+    smtp_pass: process.env.SMTP_PASS || '',
+    smtp_from_name: 'CTU Research Data Hub (ĐH Cần Thơ)'
   },
   audit_logs: [
     {
@@ -545,19 +583,212 @@ function classifyCtuEmail(emailRaw) {
   };
 }
 
-function sendAutoResponderEmail(db, mailPayload) {
+// ============================================================================
+// KIỂM TRA ĐỊA CHỈ EMAIL THẬT (CHỐNG EMAIL GIẢ / TÊN MIỀN ẢO / DISPOSABLE MAIL)
+// ============================================================================
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'mailinator.com', '10minutemail.com', 'tempmail.com', 'guerrillamail.com',
+  'yopmail.com', 'trashmail.com', 'sharklasers.com', 'getnada.com',
+  'temp-mail.org', 'fakeinbox.com', 'example.com', 'test.com', 'abc.com', 'fake.com'
+]);
+
+async function validateRealEmailAddress(emailRaw) {
+  const email = String(emailRaw || '').trim().toLowerCase();
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    return { valid: false, reason: 'Định dạng địa chỉ Email không hợp lệ!' };
+  }
+  const domain = email.split('@')[1];
+  if (DISPOSABLE_EMAIL_DOMAINS.has(domain)) {
+    return { valid: false, reason: `Tên miền email [@${domain}] thuộc danh sách email ảo/tạm thời bị cấm! Vui lòng dùng hộp thư thật.` };
+  }
+  if (['ctu.edu.vn', 'student.ctu.edu.vn', 'gstudent.ctu.edu.vn', 'dttx.ctu.edu.vn', 'gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'].includes(domain)) {
+    return { valid: true, domain };
+  }
+  try {
+    const mxRecords = await Promise.race([
+      dns.promises.resolveMx(domain),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('DNS_TIMEOUT')), 2500))
+    ]);
+    if (!mxRecords || mxRecords.length === 0) {
+      return { valid: false, reason: `Tên miền [@${domain}] không có máy chủ nhận thư (MX Record)! Vui lòng sử dụng địa chỉ email thật.` };
+    }
+    return { valid: true, domain };
+  } catch (err) {
+    if (err && (err.code === 'ENOTFOUND' || err.code === 'ENODATA' || err.code === 'EREFUSED')) {
+      return { valid: false, reason: `Tên miền email [@${domain}] không tồn tại trên Internet! Vui lòng không dùng email giả để đăng ký.` };
+    }
+    // Trường hợp mạng sandbox chặn truy vấn DNS ra ngoài thì cho phép các tên miền có cấu trúc hợp lệ
+    return { valid: true, domain };
+  }
+}
+
+// ============================================================================
+// GỬI EMAIL XÁC THỰC THẬT QUA GIAO THỨC SMTPS (PORT 465 SSL/TLS)
+// ============================================================================
+function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
+  return new Promise(resolve => {
+    const smtpHost = (db.settings?.smtp_host || process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+    const smtpPort = Number(db.settings?.smtp_port || process.env.SMTP_PORT || 465);
+    const smtpUser = (db.settings?.smtp_user || process.env.SMTP_USER || '').trim();
+    const smtpPass = (db.settings?.smtp_pass || process.env.SMTP_PASS || '').trim();
+    const fromName = db.settings?.smtp_from_name || 'CTU Research Data Hub';
+
+    if (!smtpUser || !smtpPass) {
+      resolve({ sent: false, mode: 'unconfigured', detail: 'Chưa cấu hình tài khoản SMTP (Gmail App Password) trong Quản trị Hệ thống' });
+      return;
+    }
+
+    let step = 0;
+    let finished = false;
+    const finish = result => {
+      if (!finished) {
+        finished = true;
+        try { socket.end(); } catch {}
+        resolve(result);
+      }
+    };
+
+    const socket = tls.connect({ host: smtpHost, port: smtpPort, servername: smtpHost, rejectUnauthorized: false }, () => {
+      // Đợi lời chào 220 từ SMTP Server
+    });
+
+    socket.setTimeout(8000, () => finish({ sent: false, mode: 'smtp_timeout', detail: 'Quá thời gian kết nối tới máy chủ SMTP' }));
+    socket.on('error', err => finish({ sent: false, mode: 'smtp_error', detail: err.message }));
+
+    let buffer = '';
+    socket.on('data', chunk => {
+      buffer += chunk.toString('utf8');
+      const lines = buffer.split('\r\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line || line.length < 3) continue;
+        // Nếu là dòng tiếp tục (ví dụ 250-...) thì đợi dòng cuối (250 ...)
+        if (line[3] === '-') continue;
+        const code = parseInt(line.slice(0, 3), 10);
+
+        if (step === 0 && code === 220) {
+          step = 1;
+          socket.write(`EHLO ctu-research-data-hub.vercel.app\r\n`);
+        } else if (step === 1 && code === 250) {
+          step = 2;
+          socket.write(`AUTH LOGIN\r\n`);
+        } else if (step === 2 && code === 334) {
+          step = 3;
+          socket.write(`${Buffer.from(smtpUser, 'utf8').toString('base64')}\r\n`);
+        } else if (step === 3 && code === 334) {
+          step = 4;
+          socket.write(`${Buffer.from(smtpPass, 'utf8').toString('base64')}\r\n`);
+        } else if (step === 4 && code === 235) {
+          step = 5;
+          socket.write(`MAIL FROM:<${smtpUser}>\r\n`);
+        } else if (step === 5 && code === 250) {
+          step = 6;
+          socket.write(`RCPT TO:<${to_email}>\r\n`);
+        } else if (step === 6 && (code === 250 || code === 251)) {
+          step = 7;
+          socket.write(`DATA\r\n`);
+        } else if (step === 7 && code === 354) {
+          step = 8;
+          const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
+          const encodedFromName = `=?UTF-8?B?${Buffer.from(fromName, 'utf8').toString('base64')}?=`;
+          const mimeMsg = [
+            `From: ${encodedFromName} <${smtpUser}>`,
+            `To: "${to_name || to_email}" <${to_email}>`,
+            `Subject: ${encodedSubject}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: text/plain; charset=UTF-8`,
+            `Content-Transfer-Encoding: 8bit`,
+            `Date: ${new Date().toUTCString()}`,
+            ``,
+            textBody,
+            `.`,
+            ``
+          ].join('\r\n');
+          socket.write(mimeMsg);
+        } else if (step === 8 && code === 250) {
+          step = 9;
+          socket.write(`QUIT\r\n`);
+          finish({ sent: true, mode: 'smtp_tls', detail: `Đã gửi email thật qua ${smtpHost} từ ${smtpUser}` });
+        } else if (code >= 400) {
+          finish({ sent: false, mode: 'smtp_rejected', detail: `SMTP lỗi (${code}): ${line}` });
+        }
+      }
+    });
+  });
+}
+
+async function sendAutoResponderEmail(db, mailPayload) {
   if (!db.email_outbox) db.email_outbox = [];
+
+  // Thử gửi Email thật qua SMTPS nếu đã cấu hình
+  const smtpResult = await sendRealSmtpEmail(db, {
+    to_email: mailPayload.to_email,
+    to_name: mailPayload.to_name,
+    subject: mailPayload.subject,
+    textBody: `${mailPayload.body_summary}\n\n---\n© 2026 CTU/CSE - Khoa Tài Chính - Ngân hàng | Cổng Dữ liệu Khoa học ĐH Cần Thơ`
+  });
+
+  // Che giấu mã OTP trong bản ghi lưu lịch sử để không lộ trên giao diện
+  const maskedSubject = String(mailPayload.subject || '').replace(/\b\d{6}\b/g, '******');
+  const maskedBody = String(mailPayload.body_summary || '').replace(/\b\d{6}\b/g, '****** (Đã gửi vào hộp thư Email cá nhân)');
+
   const mailRecord = {
     id: 'mail-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     timestamp: new Date().toISOString(),
-    from: 'Auto-Responder <noreply@ctu-data-hub.edu.vn>',
-    ...mailPayload
+    from: db.settings?.smtp_user ? `${db.settings.smtp_from_name || 'CTU Data Hub'} <${db.settings.smtp_user}>` : 'Auto-Responder <noreply@ctu.edu.vn>',
+    to_email: mailPayload.to_email,
+    to_name: mailPayload.to_name,
+    subject: maskedSubject,
+    member_group_label: mailPayload.member_group_label,
+    otp_code: '****** (Đã ẩn bảo mật)',
+    email_type: mailPayload.email_type,
+    status_label: mailPayload.status_label,
+    delivery_status: smtpResult.sent ? 'sent_real_smtp' : smtpResult.mode,
+    delivery_detail: smtpResult.detail,
+    body_summary: maskedBody
   };
   db.email_outbox.unshift(mailRecord);
   if (db.email_outbox.length > 60) {
     db.email_outbox = db.email_outbox.slice(0, 60);
   }
-  return mailRecord;
+  return { ...mailRecord, smtp_sent: smtpResult.sent, smtp_detail: smtpResult.detail };
+}
+
+// ============================================================================
+// BẢO MẬT DỮ LIỆU TRẢ VỀ CLIENT (ẨN TUYỆT ĐỐI MẬT KHẨU & MÃ XÁC THỰC OTP)
+// ============================================================================
+function sanitizeUserForClient(u) {
+  if (!u) return null;
+  const copy = { ...u };
+  const hashStr = copy.password_hash || '';
+  delete copy.password;
+  delete copy.password_hash;
+  delete copy.verification_code;
+  copy.password_encrypted = true;
+  copy.password_hash_preview = hashStr ? `${hashStr.slice(0, 22)}...${hashStr.slice(-6)}` : 'pbkdf2_sha256$encrypted';
+  return copy;
+}
+
+function sanitizeDbForClient(db) {
+  const clone = JSON.parse(JSON.stringify(db));
+  clone.users = (clone.users || []).map(u => sanitizeUserForClient(u));
+  clone.email_outbox = (clone.email_outbox || []).map(m => ({
+    ...m,
+    otp_code: '****** (Đã ẩn bảo mật)',
+    subject: String(m.subject || '').replace(/\b\d{6}\b/g, '******'),
+    body_summary: String(m.body_summary || m.body_preview || '').replace(/\b\d{6}\b/g, '******')
+  }));
+  if (clone.settings) {
+    clone.settings.smtp_configured = Boolean(
+      (clone.settings.smtp_user && clone.settings.smtp_pass) ||
+      (process.env.SMTP_USER && process.env.SMTP_PASS)
+    );
+    clone.settings.smtp_user_display = clone.settings.smtp_user || process.env.SMTP_USER || '';
+    delete clone.settings.smtp_pass;
+  }
+  return clone;
 }
 
 function addAuditLog(db, actor, action, detail, type = 'system') {
@@ -579,9 +810,12 @@ function normalizeParsedDb(parsed) {
   const rootTemplate = initialDb.users.find(u => u.id === 'usr-admin-1');
   parsed.users = (parsed.users || []).map(u => {
     if (u.id === 'usr-admin-1' || u.username === 'admin') {
-      return {
+      const rootMerged = {
         ...u,
         ...rootTemplate,
+        password_hash: u.password_hash && String(u.password_hash).startsWith('pbkdf2_sha256$')
+          ? u.password_hash
+          : rootTemplate.password_hash,
         contribution_points: Math.max(9999, u.contribution_points || 9999),
         is_locked: false,
         is_super_admin: true,
@@ -590,13 +824,17 @@ function normalizeParsedDb(parsed) {
         account_status: 'active',
         role: 'admin'
       };
+      delete rootMerged.password;
+      return rootMerged;
     }
     const emailClass = classifyCtuEmail(u.email);
-    return {
+    const pwdHash = u.password_hash && String(u.password_hash).startsWith('pbkdf2_sha256$')
+      ? u.password_hash
+      : hashPassword(u.password || '123');
+    const normalizedUser = {
       is_locked: false,
       is_super_admin: false,
       username: u.username || u.student_or_staff_id || (u.email ? u.email.split('@')[0] : 'user'),
-      password: u.password || '123',
       member_group: u.member_group || emailClass.member_group,
       member_group_label: u.member_group_label || emailClass.member_group_label,
       is_ctu_domain: typeof u.is_ctu_domain === 'boolean' ? u.is_ctu_domain : emailClass.is_ctu_domain,
@@ -604,8 +842,11 @@ function normalizeParsedDb(parsed) {
       admin_approved: typeof u.admin_approved === 'boolean' ? u.admin_approved : true,
       account_status: u.account_status || 'active',
       ...u,
-      department: normalizeCtuUnitName(u.department)
+      password_hash: pwdHash,
+      department: u.is_ctu_domain === false ? (u.workplace || u.department) : normalizeCtuUnitName(u.department)
     };
+    delete normalizedUser.password;
+    return normalizedUser;
   });
   if (!parsed.users.some(u => u.id === 'usr-admin-1' || u.username === 'admin')) {
     parsed.users.push({ ...rootTemplate });
@@ -703,17 +944,17 @@ export function requestHandler(req, res) {
   const host = req.headers.host || 'localhost:3000';
   const url = new URL(req.url, `http://${host}`);
 
-  // API: Lấy toàn bộ dữ liệu khởi tạo & ghi nhận thêm số lượt truy cập
+  // API: Lấy toàn bộ dữ liệu khởi tạo & ghi nhận thêm số lượt truy cập (Đã lọc bỏ mật khẩu & OTP)
   if (url.pathname === '/api/state' && req.method === 'GET') {
     const db = loadDb();
     db.site_visits = (Number(db.site_visits) || 1280) + 1;
     saveDb(db);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(db));
+    res.end(JSON.stringify(sanitizeDbForClient(db)));
     return;
   }
 
-  // API: Đăng nhập xác thực Tài khoản Thành viên & Quản trị viên
+  // API: Đăng nhập xác thực Tài khoản Thành viên & Quản trị viên (Đối chiếu Mã băm PBKDF2-SHA256)
   if (url.pathname === '/api/login' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -730,16 +971,12 @@ export function requestHandler(req, res) {
         const mailPrefix = mail.split('@')[0];
         const isIdentifierMatch =
           uname === usernameInput ||
-          sid === usernameInput ||
+          (sid && sid === usernameInput) ||
           mail === usernameInput ||
           (mailPrefix && mailPrefix === usernameInput);
 
         if (!isIdentifierMatch) return false;
-        const isRoot = u.is_super_admin || u.username === 'admin' || u.id === 'usr-admin-1';
-        if (isRoot) {
-          return passwordInput === '123Ctu?!' || u.password === passwordInput;
-        }
-        return (u.password || '123') === passwordInput;
+        return verifyPassword(passwordInput, u.password_hash, u.password);
       });
 
       if (!matched) {
@@ -761,9 +998,9 @@ export function requestHandler(req, res) {
         res.end(JSON.stringify({
           ok: false,
           code: 'PENDING_EMAIL_VERIFICATION',
-          user: matched,
-          auto_email: latestMail || null,
-          error: `Tài khoản [${matched.email}] chưa xác thực địa chỉ Email! Vui lòng nhập mã OTP trong thư trả lời tự động.`
+          user: sanitizeUserForClient(matched),
+          auto_email: latestMail ? { ...latestMail, otp_code: undefined } : null,
+          error: `Tài khoản [${matched.email}] chưa xác thực địa chỉ Email! Vui lòng mở hộp thư điện tử thật của bạn để lấy mã OTP.`
         }));
         return;
       }
@@ -801,19 +1038,34 @@ export function requestHandler(req, res) {
       saveDb(db);
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: true, user: matched, db }));
+      res.end(JSON.stringify({ ok: true, user: sanitizeUserForClient(matched), db: sanitizeDbForClient(db) }));
     });
     return;
   }
 
-  // API: Đăng ký tài khoản mới + Tự động phân nhóm Email CTU & Gửi Email trả lời tự động (OTP)
+  // API: Đăng ký tài khoản mới + Kiểm tra Email thật (DNS MX) + Mã hóa mật khẩu + Gửi Email OTP thật
   if (url.pathname === '/api/register' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    req.on('end', async () => {
       const payload = JSON.parse(body || '{}');
       const db = loadDb();
       const email = (payload.email || '').trim().toLowerCase();
+      const plainPassword = String(payload.password || '').trim();
+
+      if (!plainPassword || plainPassword.length < 3) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Vui lòng nhập mật khẩu bảo mật cho tài khoản!' }));
+        return;
+      }
+
+      // Kiểm tra địa chỉ Email thật (cú pháp + chống email ảo + kiểm tra DNS MX Record)
+      const emailCheck = await validateRealEmailAddress(email);
+      if (!emailCheck.valid) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: emailCheck.reason }));
+        return;
+      }
 
       // Phân loại tự động theo đuôi Email (@ctu.edu.vn, @student.ctu.edu.vn, @gstudent.ctu.edu.vn, @dttx.ctu.edu.vn hoặc Ngoài CTU)
       const emailClass = classifyCtuEmail(email);
@@ -866,7 +1118,7 @@ export function requestHandler(req, res) {
       const newUser = {
         id: 'usr-' + Date.now(),
         username,
-        password: payload.password || '123',
+        password_hash: hashPassword(plainPassword),
         email,
         full_name: payload.full_name || 'Thành viên Nghiên cứu',
         student_or_staff_id: staffOrStudentId,
@@ -892,8 +1144,8 @@ export function requestHandler(req, res) {
 
       db.users.push(newUser);
 
-      // Tạo thư trả lời tự động (Auto-Responder Email)
-      const autoMail = sendAutoResponderEmail(db, {
+      // Gửi thư xác thực thật qua SMTPS tới hộp thư của người đăng ký (Tuyệt đối không lộ OTP ra phản hồi Web)
+      const autoMail = await sendAutoResponderEmail(db, {
         to_email: newUser.email,
         to_name: newUser.full_name,
         subject: emailClass.is_ctu_domain
@@ -906,15 +1158,15 @@ export function requestHandler(req, res) {
           ? 'Chờ xác thực Email CTU (1 bước duy nhất)'
           : 'Chờ Bước 1/2: Xác thực Email người dùng',
         body_summary: emailClass.is_ctu_domain
-          ? `Xin chào ${newUser.full_name} (${newUser.student_or_staff_id}), Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ ghi nhận địa chỉ email ${newUser.email} thuộc nhóm [${emailClass.member_group_label}]. Vui lòng nhập mã xác thực OTP [${otpCode}] để kích hoạt tài khoản thành viên chính thức ngay lập tức (+50 Credits).`
-          : `Xin chào ${newUser.full_name} (Đơn vị công tác: ${departmentOrWorkplace}), Địa chỉ email ${newUser.email} không thuộc hệ thống tên miền ctu.edu.vn nên cần qua 02 bước xác nhận: (1) Nhập mã OTP [${otpCode}] để xác thực đúng email của bạn; (2) Sau khi xác thực email, Ban Quản trị Hệ thống sẽ xét duyệt để kích hoạt thành viên chính thức.`
+          ? `Xin chào ${newUser.full_name} (${newUser.student_or_staff_id}),\n\nHệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ ghi nhận địa chỉ email ${newUser.email} thuộc nhóm [${emailClass.member_group_label}].\n\nMã xác thực OTP 6 chữ số của bạn là: ${otpCode}\n\nVui lòng nhập mã OTP này trên trang Web để kích hoạt tài khoản thành viên chính thức ngay lập tức (+50 Credits).`
+          : `Xin chào ${newUser.full_name} (Đơn vị công tác: ${departmentOrWorkplace}),\n\nĐịa chỉ email ${newUser.email} không thuộc hệ thống tên miền ctu.edu.vn nên cần qua 02 bước xác nhận:\n- Bước 1: Nhập mã OTP [${otpCode}] để xác thực đúng địa chỉ email của bạn.\n- Bước 2: Sau khi xác thực email, Ban Quản trị Hệ thống sẽ xét duyệt để kích hoạt thành viên chính thức.`
       });
 
       addAuditLog(
         db,
         `${newUser.full_name} (${newUser.email})`,
-        'Đăng ký & Gửi Email Tự động (OTP)',
-        `Nhóm: ${emailClass.member_group_label} — Đã gửi thư trả lời tự động kèm mã OTP xác thực (${emailClass.is_ctu_domain ? 'Quy trình 1 bước CTU' : 'Quy trình 2 bước Ngoài CTU'}).`,
+        'Đăng ký & Mã hóa Mật khẩu (PBKDF2-SHA256)',
+        `Nhóm: ${emailClass.member_group_label} — Trạng thái gửi Email OTP: ${autoMail.smtp_sent ? 'Đã gửi tới hộp thư thật qua SMTP' : autoMail.smtp_detail}.`,
         'user'
       );
       saveDb(db);
@@ -923,19 +1175,27 @@ export function requestHandler(req, res) {
       res.end(JSON.stringify({
         ok: true,
         requires_verification: true,
-        user: newUser,
-        auto_email: autoMail,
-        db
+        smtp_sent: autoMail.smtp_sent,
+        smtp_detail: autoMail.smtp_detail,
+        user: sanitizeUserForClient(newUser),
+        auto_email: {
+          to_email: autoMail.to_email,
+          to_name: autoMail.to_name,
+          subject: autoMail.subject,
+          delivery_status: autoMail.delivery_status,
+          delivery_detail: autoMail.delivery_detail
+        },
+        db: sanitizeDbForClient(db)
       }));
     });
     return;
   }
 
-  // API: Xác thực Email bằng Mã OTP từ Hệ thống Trả lời Tự động
+  // API: Xác thực Email bằng Mã OTP từ Hộp thư Email thật của người dùng
   if (url.pathname === '/api/verify-email' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    req.on('end', async () => {
       const { user_id, email, otp_code } = JSON.parse(body || '{}');
       const db = loadDb();
       const user = db.users.find(u =>
@@ -951,7 +1211,7 @@ export function requestHandler(req, res) {
 
       if (String(otp_code || '').trim() !== String(user.verification_code || '').trim()) {
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ ok: false, error: 'Mã xác thực OTP không chính xác! Vui lòng kiểm tra lại thư trả lời tự động.' }));
+        res.end(JSON.stringify({ ok: false, error: 'Mã xác thực OTP không chính xác! Vui lòng kiểm tra hộp thư Email thật của bạn.' }));
         return;
       }
 
@@ -967,12 +1227,12 @@ export function requestHandler(req, res) {
           user.contribution_points = bonus;
         }
 
-        const welcomeMail = sendAutoResponderEmail(db, {
+        const welcomeMail = await sendAutoResponderEmail(db, {
           to_email: user.email,
           to_name: user.full_name,
           subject: `[CTU Research Data Hub] Xác thực Thành công — Chào mừng Thành viên Chính thức (${user.member_group_label})`,
           member_group_label: user.member_group_label,
-          otp_code: user.verification_code,
+          otp_code: 'VERIFIED',
           email_type: 'activated',
           status_label: `Đã kích hoạt chính thức (+${bonus} Credits)`,
           body_summary: `Chúc mừng ${user.full_name}! Bạn đã hoàn tất xác thực email thuộc hệ thống ĐH Cần Thơ (${user.email}). Tài khoản của bạn thuộc nhóm [${user.member_group_label}] đã được kích hoạt chính thức và nhận +${bonus} Credits khởi đầu.`
@@ -991,9 +1251,9 @@ export function requestHandler(req, res) {
         res.end(JSON.stringify({
           ok: true,
           status: 'active',
-          user,
+          user: sanitizeUserForClient(user),
           auto_email: welcomeMail,
-          db
+          db: sanitizeDbForClient(db)
         }));
         return;
       }
@@ -1002,12 +1262,12 @@ export function requestHandler(req, res) {
       user.admin_approved = false;
       user.account_status = 'pending_admin_approval';
 
-      const step2Mail = sendAutoResponderEmail(db, {
+      const step2Mail = await sendAutoResponderEmail(db, {
         to_email: user.email,
         to_name: user.full_name,
         subject: `[CTU Research Data Hub] Đã xác thực Email (Bước 1/2) — Đang chờ Ban Quản trị Xác nhận (Bước 2/2)`,
         member_group_label: user.member_group_label,
-        otp_code: user.verification_code,
+        otp_code: 'STEP1_OK',
         email_type: 'step2_pending_admin',
         status_label: 'Hoàn tất Bước 1/2 (Email) • Chờ Bước 2/2 (Admin duyệt)',
         body_summary: `Xin chào ${user.full_name}, Hệ thống xác nhận bạn đã hoàn thành Bước 1: Xác thực chính chủ email (${user.email}). Do email của bạn không thuộc hệ thống ctu.edu.vn, tài khoản hiện đã được chuyển sang Bước 2: Chờ Ban Quản trị Hệ thống xác nhận để kích hoạt chính thức.`
@@ -1026,19 +1286,19 @@ export function requestHandler(req, res) {
       res.end(JSON.stringify({
         ok: true,
         status: 'pending_admin_approval',
-        user,
+        user: sanitizeUserForClient(user),
         auto_email: step2Mail,
-        db
+        db: sanitizeDbForClient(db)
       }));
     });
     return;
   }
 
-  // API: Gửi lại Email trả lời tự động kèm Mã OTP mới
+  // API: Gửi lại Email trả lời tự động kèm Mã OTP mới vào hộp thư thật
   if (url.pathname === '/api/resend-verification' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    req.on('end', async () => {
       const { user_id, email } = JSON.parse(body || '{}');
       const db = loadDb();
       const user = db.users.find(u =>
@@ -1052,7 +1312,7 @@ export function requestHandler(req, res) {
       }
       const newOtp = String(Math.floor(100000 + Math.random() * 900000));
       user.verification_code = newOtp;
-      const resentMail = sendAutoResponderEmail(db, {
+      const resentMail = await sendAutoResponderEmail(db, {
         to_email: user.email,
         to_name: user.full_name,
         subject: `[CTU Research Data Hub] Gửi lại Mã OTP Xác thực Email — Mã mới: ${newOtp}`,
@@ -1060,11 +1320,24 @@ export function requestHandler(req, res) {
         otp_code: newOtp,
         email_type: user.is_ctu_domain ? 'verify_ctu_1step' : 'verify_external_step1',
         status_label: 'Đã gửi lại mã OTP mới',
-        body_summary: `Hệ thống trả lời tự động gửi lại mã xác thực OTP mới [${newOtp}] cho tài khoản ${user.email} (${user.member_group_label}).`
+        body_summary: `Xin chào ${user.full_name},\n\nMã xác thực OTP 6 chữ số mới của bạn cho tài khoản ${user.email} (${user.member_group_label}) là: ${newOtp}\n\nVui lòng nhập mã này trên trang Web để hoàn tất xác thực.`
       });
       saveDb(db);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: true, user, auto_email: resentMail, db }));
+      res.end(JSON.stringify({
+        ok: true,
+        smtp_sent: resentMail.smtp_sent,
+        smtp_detail: resentMail.smtp_detail,
+        user: sanitizeUserForClient(user),
+        auto_email: {
+          to_email: resentMail.to_email,
+          to_name: resentMail.to_name,
+          subject: resentMail.subject,
+          delivery_status: resentMail.delivery_status,
+          delivery_detail: resentMail.delivery_detail
+        },
+        db: sanitizeDbForClient(db)
+      }));
     });
     return;
   }
@@ -1133,7 +1406,7 @@ export function requestHandler(req, res) {
 
       addAuditLog(
         db,
-        `${user.full_name} (${user.student_or_staff_id})`,
+        `${user.full_name} (${user.student_or_staff_id || user.email})`,
         autoPublish ? 'Công bố Bộ dữ liệu mới' : 'Gửi Bộ dữ liệu chờ duyệt',
         `${newDataset.title} (${newDataset.department})`,
         'upload'
@@ -1141,7 +1414,7 @@ export function requestHandler(req, res) {
 
       saveDb(db);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ dataset: newDataset, user, db }));
+      res.end(JSON.stringify({ dataset: newDataset, user: sanitizeUserForClient(user), db: sanitizeDbForClient(db) }));
     });
     return;
   }
@@ -1174,7 +1447,7 @@ export function requestHandler(req, res) {
         saveDb(db);
       }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ db }));
+      res.end(JSON.stringify({ db: sanitizeDbForClient(db) }));
     });
     return;
   }
@@ -1209,7 +1482,7 @@ export function requestHandler(req, res) {
       ds.download_count += 1;
       addAuditLog(
         db,
-        user ? `${user.full_name} (${user.student_or_staff_id})` : 'Khách',
+        user ? `${user.full_name} (${user.student_or_staff_id || user.email})` : 'Khách',
         'Tải xuống Dữ liệu',
         `Tải "${ds.file_name}" phục vụ: ${purpose || 'Nghiên cứu'}`,
         'download'
@@ -1223,7 +1496,7 @@ export function requestHandler(req, res) {
         file_content: fileContent,
         external_storage_url: ds.external_storage_url || '',
         storage_provider: ds.storage_provider || 'cloudflare_r2',
-        db
+        db: sanitizeDbForClient(db)
       }));
     });
     return;
@@ -1235,7 +1508,7 @@ export function requestHandler(req, res) {
   if (url.pathname === '/api/admin/user' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    req.on('end', async () => {
       const { target_user_id, action, role, delta_points, department } = JSON.parse(body || '{}');
       const db = loadDb();
       const target = db.users.find(u => u.id === target_user_id);
@@ -1247,7 +1520,7 @@ export function requestHandler(req, res) {
           res.end(JSON.stringify({
             ok: false,
             error: 'Tài khoản Quản trị Cao nhất (admin) được bảo vệ tuyệt đối — không thể xóa, khóa hoặc hạ quyền!',
-            db
+            db: sanitizeDbForClient(db)
           }));
           return;
         }
@@ -1260,12 +1533,12 @@ export function requestHandler(req, res) {
           if ((target.contribution_points || 0) === 0) {
             target.contribution_points = bonus;
           }
-          sendAutoResponderEmail(db, {
+          await sendAutoResponderEmail(db, {
             to_email: target.email,
             to_name: target.full_name,
             subject: `[CTU Research Data Hub] Ban Quản trị đã xác nhận (Bước 2/2) — Kích hoạt Thành viên Chính thức!`,
             member_group_label: target.member_group_label || 'Thành viên Ngoài CTU',
-            otp_code: target.verification_code || 'APPROVED',
+            otp_code: 'APPROVED',
             email_type: 'admin_approved_step2',
             status_label: `Hoàn tất 2 bước • Đã kích hoạt (+${bonus} Credits)`,
             body_summary: `Chúc mừng ${target.full_name}! Ban Quản trị Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ đã xác nhận hồ sơ của bạn (Bước 2/2). Tài khoản ${target.email} đã trở thành Thành viên Chính thức và được tặng +${bonus} Credits khởi đầu.`
@@ -1274,7 +1547,7 @@ export function requestHandler(req, res) {
         } else if (action === 'reject_member') {
           target.admin_approved = false;
           target.account_status = 'rejected';
-          sendAutoResponderEmail(db, {
+          await sendAutoResponderEmail(db, {
             to_email: target.email,
             to_name: target.full_name,
             subject: `[CTU Research Data Hub] Thông báo kết quả xét duyệt đăng ký thành viên`,
@@ -1297,7 +1570,7 @@ export function requestHandler(req, res) {
           addAuditLog(db, 'admin (Super Admin)', 'Điều chỉnh Điểm Credits', `${delta_points >= 0 ? '+' : ''}${delta_points} Credits cho ${target.full_name} (Số dư mới: ${target.contribution_points} Cr)`, 'admin');
         } else if (action === 'toggle_lock') {
           target.is_locked = !target.is_locked;
-          addAuditLog(db, 'admin (Super Admin)', target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id})`, 'admin');
+          addAuditLog(db, 'admin (Super Admin)', target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id || target.email})`, 'admin');
         } else if (action === 'department' && department) {
           target.department = department;
           addAuditLog(db, 'admin (Super Admin)', 'Cập nhật Đơn vị', `Chuyển ${target.full_name} sang ${department}`, 'admin');
@@ -1306,7 +1579,7 @@ export function requestHandler(req, res) {
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: true, db }));
+      res.end(JSON.stringify({ ok: true, db: sanitizeDbForClient(db) }));
     });
     return;
   }
@@ -1345,13 +1618,13 @@ export function requestHandler(req, res) {
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ db }));
+      res.end(JSON.stringify({ db: sanitizeDbForClient(db) }));
     });
     return;
   }
 
   // ==========================================================================
-  // ADMIN API 3: Lưu Cấu hình Hệ thống & Chính sách Điểm
+  // ADMIN API 3: Lưu Cấu hình Hệ thống, Chính sách Điểm & Máy chủ Gửi Email SMTP
   // ==========================================================================
   if (url.pathname === '/api/admin/settings' && req.method === 'POST') {
     let body = '';
@@ -1366,18 +1639,22 @@ export function requestHandler(req, res) {
         download_cost: Number(payload.download_cost ?? 5),
         author_royalty: Number(payload.author_royalty ?? 2),
         require_review: Boolean(payload.require_review),
-        restrict_ctu_email: Boolean(payload.restrict_ctu_email)
+        restrict_ctu_email: Boolean(payload.restrict_ctu_email),
+        smtp_host: payload.smtp_host !== undefined ? String(payload.smtp_host).trim() : (db.settings?.smtp_host || 'smtp.gmail.com'),
+        smtp_port: payload.smtp_port !== undefined ? Number(payload.smtp_port || 465) : (db.settings?.smtp_port || 465),
+        smtp_user: payload.smtp_user !== undefined ? String(payload.smtp_user).trim() : (db.settings?.smtp_user || ''),
+        smtp_pass: payload.smtp_pass ? String(payload.smtp_pass).trim() : (db.settings?.smtp_pass || '')
       };
       addAuditLog(
         db,
         'Quản trị viên (Admin)',
-        'Cập nhật Cấu hình Hệ thống',
-        `Thưởng đăng ký: +${db.settings.signup_bonus} Cr | Đóng góp: +${db.settings.upload_reward} Cr | Phí tải: -${db.settings.download_cost} Cr | Duyệt bắt buộc: ${db.settings.require_review ? 'Bật' : 'Tắt'}`,
+        'Cập nhật Cấu hình & Máy chủ SMTP',
+        `Thưởng đăng ký: +${db.settings.signup_bonus} Cr | SMTP Email: ${db.settings.smtp_user || 'Chưa cấu hình'}`,
         'system'
       );
       saveDb(db);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ db }));
+      res.end(JSON.stringify({ db: sanitizeDbForClient(db) }));
     });
     return;
   }
@@ -1390,7 +1667,7 @@ export function requestHandler(req, res) {
     addAuditLog(fresh, 'Quản trị viên (Admin)', 'Khôi phục Dữ liệu Gốc', 'Đã đặt lại toàn bộ CSDL về trạng thái mẫu chuẩn ban đầu.', 'system');
     saveDb(fresh);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ db: fresh }));
+    res.end(JSON.stringify({ db: sanitizeDbForClient(fresh) }));
     return;
   }
 

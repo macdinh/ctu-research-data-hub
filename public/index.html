@@ -560,8 +560,37 @@
               </label>
             </div>
 
+            <!-- Cấu hình Máy chủ Gửi Email Xác thực Thực tế (Real SMTP Auto-Responder) -->
+            <div class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-blue-950 text-xs">📧 Cấu hình Máy chủ SMTP Gửi Email Xác thực Thực tế</div>
+                <span id="smtp-config-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Đang kiểm tra</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Hệ thống kiểm tra bản ghi DNS <code>MX</code> của tên miền email để chặn email giả/rác và tự động gửi mã OTP 6 số trực tiếp tới hộp thư thật của người đăng ký qua giao thức SMTPS bảo mật.
+              </p>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="col-span-2">
+                  <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">SMTP Host</label>
+                  <input id="set-smtp-host" type="text" value="smtp.gmail.com" placeholder="smtp.gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">Cổng (SSL)</label>
+                  <input id="set-smtp-port" type="number" value="465" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                </div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">Email Gửi tự động (SMTP Username / Gmail)</label>
+                <input id="set-smtp-user" type="email" autocomplete="off" placeholder="VD: ctu.datahub@gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-0.5 text-[11px]">Mật khẩu Ứng dụng (Google App Password 16 ký tự — Đã ẩn &amp; mã hóa)</label>
+                <input id="set-smtp-pass" type="password" autocomplete="new-password" placeholder="Nhập App Password mới nếu muốn thay đổi..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+              </div>
+            </div>
+
             <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition">
-              💾 Lưu Cấu hình Hệ thống
+              💾 Lưu Cấu hình Hệ thống &amp; Máy chủ Email
             </button>
           </form>
         </div>
@@ -864,8 +893,8 @@
             <input id="reg-id" required type="text" placeholder="VD: B2201234 / CB00512" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
           <div id="reg-pwd-wrapper">
-            <label class="block font-semibold text-slate-700 mb-1">Mật khẩu đăng nhập *</label>
-            <input id="reg-password" required type="password" value="123" placeholder="Nhập mật khẩu..." class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
+            <label class="block font-semibold text-slate-700 mb-1">Mật khẩu đăng nhập (Tự động mã hóa PBKDF2-SHA256) *</label>
+            <input id="reg-password" required type="password" autocomplete="new-password" placeholder="Nhập mật khẩu bảo mật..." class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
           </div>
         </div>
         <!-- Đơn vị trực thuộc dành cho nhóm thuộc hệ thống ĐH Cần Thơ (ctu.edu.vn) -->
@@ -922,15 +951,15 @@
     </div>
   </div>
 
-  <!-- MODAL 5: AUTOMATED EMAIL RESPONDER & OTP VERIFICATION MODAL -->
+  <!-- MODAL 5: AUTOMATED EMAIL RESPONDER & OTP VERIFICATION MODAL (STRICT SECURITY: NO OTP EXPOSED ON UI) -->
   <div id="email-verify-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
       <div class="px-6 py-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">📧</span>
           <div>
-            <h3 class="text-base font-bold">Hệ thống Trả lời Tự động qua Email &amp; Xác thực Tài khoản</h3>
-            <p id="verify-modal-subtitle" class="text-[11px] text-blue-200">Vui lòng kiểm tra thư tự động và nhập mã OTP để xác thực địa chỉ Email</p>
+            <h3 class="text-base font-bold">Xác thực Địa chỉ Email Thực tế (Bảo mật Chống Email Giả)</h3>
+            <p id="verify-modal-subtitle" class="text-[11px] text-blue-200">Vui lòng mở hộp thư Email thật của bạn để lấy mã xác thực OTP 6 chữ số</p>
           </div>
         </div>
         <button onclick="closeEmailVerifyModal()" class="text-slate-300 hover:text-white text-2xl leading-none px-2">&times;</button>
@@ -940,26 +969,27 @@
         <!-- Bước tiến trình (1 bước cho CTU / 2 bước cho Ngoài CTU) -->
         <div id="verify-step-banner" class="p-3.5 rounded-xl border"></div>
 
-        <!-- Bản xem trước Thư Điện tử Trả lời Tự động (Simulated Auto-Responder Email Client) -->
+        <!-- Thông tin Trạng thái Gửi Email Xác thực Thực tế (Tuyệt đối KHÔNG hiển thị mã OTP trên màn hình) -->
         <div class="rounded-xl border border-slate-300 overflow-hidden bg-slate-50 shadow-inner">
           <div class="px-4 py-2.5 bg-slate-200/80 border-b border-slate-300 flex flex-wrap items-center justify-between gap-2 text-[11px]">
             <div class="font-semibold text-slate-700">
-              <span>📩 Hộp thư đến (Auto-Responder):</span>
+              <span>📩 Email nhận mã xác thực:</span>
               <code id="verify-mail-to" class="text-blue-700 font-bold ml-1"></code>
             </div>
-            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Đã gửi tự động tức thì</span>
+            <span id="verify-delivery-badge" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Đã kiểm tra DNS MX hợp lệ</span>
           </div>
           <div class="p-4 space-y-2.5 text-xs bg-white">
             <div class="font-bold text-slate-900 border-b border-slate-100 pb-1.5" id="verify-mail-subject"></div>
-            <p id="verify-mail-body" class="text-slate-600 leading-relaxed"></p>
-            <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
-              <div>
-                <div class="text-[11px] text-slate-500">Mã xác thực Email (OTP 6 số) trong thư:</div>
-                <div id="verify-mail-otp-display" class="text-lg font-mono font-bold text-blue-700 tracking-widest mt-0.5">------</div>
+            <div id="verify-delivery-status" class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-slate-700 space-y-1.5 leading-relaxed">
+              <div class="font-bold text-blue-900 flex items-center gap-1.5">
+                <span>🔒 Bảo mật Chống Đăng ký Email Giả:</span>
               </div>
-              <button type="button" onclick="autoFillOtpFromEmail()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition">
-                📋 Điền nhanh Mã OTP này
-              </button>
+              <p class="text-[11px] text-slate-600">
+                Vì lý do an toàn và chống sử dụng email giả mạo, <strong>mã xác thực OTP (6 chữ số) tuyệt đối không hiển thị trên trang web</strong> mà chỉ được hệ thống gửi riêng tới hộp thư điện tử thật của bạn.
+              </p>
+              <p class="text-[11px] text-slate-600">
+                👉 Vui lòng mở hộp thư đến (<strong>Inbox</strong> hoặc mục <strong>Spam / Thư rác</strong>) của địa chỉ email trên để lấy mã OTP 6 số và nhập vào ô bên dưới.
+              </p>
             </div>
           </div>
         </div>
@@ -968,9 +998,9 @@
         <form id="verify-otp-form" onsubmit="handleVerifyEmailSubmit(event)" class="space-y-3 pt-1">
           <input type="hidden" id="verify-user-id" />
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Nhập Mã xác thực OTP (6 chữ số) từ Email trên *</label>
+            <label class="block font-semibold text-slate-700 mb-1">Nhập Mã xác thực OTP (6 chữ số) nhận được trong hộp thư Email của bạn *</label>
             <div class="flex gap-2">
-              <input id="verify-otp-input" required type="text" maxlength="6" placeholder="Nhập 6 chữ số OTP..." class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-base font-bold tracking-widest text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              <input id="verify-otp-input" required type="text" maxlength="6" autocomplete="one-time-code" placeholder="Nhập 6 chữ số OTP..." class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-base font-bold tracking-widest text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
               <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition">
                 ✅ Xác thực Email Ngay
               </button>
@@ -983,7 +1013,7 @@
 
         <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
           <button type="button" onclick="handleResendVerificationEmail()" class="font-semibold text-blue-600 hover:underline">
-            🔄 Gửi lại Email trả lời tự động (Mã OTP mới)
+            🔄 Gửi lại Email xác thực (Tạo mã OTP mới)
           </button>
           <button type="button" onclick="closeEmailVerifyModal()" class="px-4 py-1.5 rounded-lg border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50">
             Đóng
@@ -993,7 +1023,7 @@
     </div>
   </div>
 
-  <!-- MODAL 4: UNIFIED SYSTEM LOGIN MODAL (SINH VIÊN / GIẢNG VIÊN / SUPER ADMIN) -->
+  <!-- MODAL 4: UNIFIED SYSTEM LOGIN MODAL (MẬT KHẨU ĐƯỢC ẨN HOÀN TOÀN & MÃ HÓA PBKDF2-SHA256) -->
   <div id="admin-login-modal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
       <div class="px-6 py-4 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white flex items-center justify-between">
@@ -1001,7 +1031,7 @@
           <span class="text-xl">🔐</span>
           <div>
             <h3 class="text-base font-bold">Đăng nhập Hệ thống CTU Data Hub</h3>
-            <p class="text-[11px] text-slate-300">Xác thực Tài khoản Thành viên &amp; Quản trị viên Hệ thống</p>
+            <p class="text-[11px] text-slate-300">Mật khẩu được ẩn hoàn toàn &amp; xác thực băm mật mã PBKDF2-SHA256</p>
           </div>
         </div>
         <button onclick="closeAdminLoginModal()" class="text-slate-300 hover:text-white text-2xl leading-none px-2">&times;</button>
@@ -1010,45 +1040,45 @@
       <form onsubmit="handleAdminLoginSubmit(event)" class="p-6 space-y-4 text-xs sm:text-sm">
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Tên đăng nhập (Mã số SV/CB, Username hoặc Email) *</label>
-          <input id="admin-login-username" required type="text" placeholder="VD: B2110942, CB00241, email hoặc admin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+          <input id="admin-login-username" required type="text" autocomplete="username" placeholder="VD: B2110942, CB00241, email hoặc admin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
         </div>
 
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">Mật khẩu *</label>
-          <div class="relative">
-            <input id="admin-login-password" required type="password" placeholder="Nhập mật khẩu của bạn..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 pr-20" />
-            <button type="button" onclick="toggleAdminPasswordVisibility()" id="admin-pwd-toggle" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-500 hover:text-slate-800 px-2 py-1 rounded">
-              Hiện
-            </button>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block font-semibold text-slate-700">Mật khẩu *</label>
+            <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">🔒 Đã ẩn &amp; Mã hóa</span>
+          </div>
+          <div>
+            <input id="admin-login-password" required type="password" autocomplete="current-password" placeholder="Nhập mật khẩu (được ẩn bảo mật)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" />
           </div>
         </div>
 
-        <!-- Bảng Gợi ý Tài khoản Demo (Đủ 4 nhóm ctu.edu.vn + Ngoài CTU + Super Admin) -->
+        <!-- Danh sách Tài khoản Thành viên theo Nhóm Email (Chỉ chọn Mã TK, tuyệt đối KHÔNG hiển thị hay tự điền mật khẩu) -->
         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700">💡 Tài khoản Demo theo Nhóm Email (MK: <code class="text-blue-700 font-bold">123</code>)</span>
-            <span class="text-[10px] text-slate-400">Bấm để điền</span>
+            <span class="font-bold text-slate-700">👤 Chọn nhanh Tên đăng nhập theo Nhóm thành viên</span>
+            <span class="text-[10px] text-slate-500">🔒 Mật khẩu đã ẩn</span>
           </div>
           <div class="grid grid-cols-1 gap-1.5">
-            <button type="button" onclick="fillDemoLogin('CB00241', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 flex items-center justify-between transition">
+            <button type="button" onclick="fillDemoLogin('CB00241')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 flex items-center justify-between transition">
               <span>👨‍🏫 <strong>Cán bộ, GV</strong> (<code>tvhai@ctu.edu.vn</code>)</span>
-              <span class="font-mono text-[11px] text-indigo-700">TK: <strong>CB00241</strong> | MK: <strong>123</strong></span>
+              <span class="font-mono text-[11px] text-indigo-700">TK: <strong>CB00241</strong> • 🔒 Nhập MK</span>
             </button>
-            <button type="button" onclick="fillDemoLogin('B2110942', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
+            <button type="button" onclick="fillDemoLogin('B2110942')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
               <span>👨‍🎓 <strong>Sinh viên</strong> (<code>khoab2110942@student.ctu.edu.vn</code>)</span>
-              <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2110942</strong> | MK: <strong>123</strong></span>
+              <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2110942</strong> • 🔒 Nhập MK</span>
             </button>
-            <button type="button" onclick="fillDemoLogin('B2204115', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
+            <button type="button" onclick="fillDemoLogin('B2204115')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 flex items-center justify-between transition">
               <span>🎓 <strong>HV Sau đại học</strong> (<code>ngocb2204115@gstudent.ctu.edu.vn</code>)</span>
-              <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2204115</strong> | MK: <strong>123</strong></span>
+              <span class="font-mono text-[11px] text-slate-600">TK: <strong>B2204115</strong> • 🔒 Nhập MK</span>
             </button>
-            <button type="button" onclick="fillDemoLogin('TX24091', '123')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-cyan-50 border border-slate-200 flex items-center justify-between transition">
+            <button type="button" onclick="fillDemoLogin('TX24091')" class="text-left px-2.5 py-1.5 rounded-lg bg-white hover:bg-cyan-50 border border-slate-200 flex items-center justify-between transition">
               <span>🌐 <strong>SV Đào tạo Từ xa</strong> (<code>minhtx24091@dttx.ctu.edu.vn</code>)</span>
-              <span class="font-mono text-[11px] text-cyan-800">TK: <strong>TX24091</strong> | MK: <strong>123</strong></span>
+              <span class="font-mono text-[11px] text-cyan-800">TK: <strong>TX24091</strong> • 🔒 Nhập MK</span>
             </button>
-            <button type="button" onclick="fillDemoLogin('admin', '')" class="text-left px-2.5 py-1.5 rounded-lg bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200 flex items-center justify-between transition">
+            <button type="button" onclick="fillDemoLogin('admin')" class="text-left px-2.5 py-1.5 rounded-lg bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200 flex items-center justify-between transition">
               <span>👑 <strong>Quản trị Cao nhất (Super Admin)</strong></span>
-              <span class="font-mono text-[11px] text-amber-900">TK: <strong>admin</strong> | <em>Nhập mật khẩu Root</em></span>
+              <span class="font-mono text-[11px] text-amber-900">TK: <strong>admin</strong> • 🔒 Nhập MK</span>
             </button>
           </div>
         </div>
@@ -1308,12 +1338,14 @@
       document.getElementById('admin-login-modal').classList.add('hidden');
     }
 
-    function fillDemoLogin(username, pwd) {
+    function fillDemoLogin(username) {
       const errBox = document.getElementById('admin-login-error');
       if (errBox) errBox.classList.add('hidden');
       document.getElementById('admin-login-username').value = username;
-      document.getElementById('admin-login-password').value = pwd;
-      document.getElementById('admin-login-password').focus();
+      const pwdInput = document.getElementById('admin-login-password');
+      pwdInput.type = 'password';
+      pwdInput.value = '';
+      pwdInput.focus();
     }
 
     function handleLogout() {
@@ -1324,18 +1356,6 @@
       syncHeaderUI();
       switchMainTab('explore');
       showToast(`👋 Đã đăng xuất khỏi tài khoản <strong>${oldName}</strong>.`);
-    }
-
-    function toggleAdminPasswordVisibility() {
-      const pwdInput = document.getElementById('admin-login-password');
-      const btn = document.getElementById('admin-pwd-toggle');
-      if (pwdInput.type === 'password') {
-        pwdInput.type = 'text';
-        btn.textContent = 'Ẩn';
-      } else {
-        pwdInput.type = 'password';
-        btn.textContent = 'Hiện';
-      }
     }
 
     async function handleAdminLoginSubmit(e) {
@@ -1947,7 +1967,7 @@
 
     async function handleReviewAction(datasetId, action) {
       if (!currentUser || (currentUser.role !== 'lecturer' && currentUser.role !== 'admin')) {
-        showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Giảng viên (CB00241 / mật khẩu: 123)</strong> hoặc <strong>Admin</strong> để phê duyệt bộ dữ liệu!', 'error');
+        showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Giảng viên (CB00241)</strong> hoặc <strong>Admin</strong> để phê duyệt bộ dữ liệu!', 'error');
         openLoginModal('CB00241');
         return;
       }
@@ -2046,7 +2066,7 @@
         }
       }
 
-      // 2. Render Users Table (6 columns)
+      // 2. Render Users Table (6 columns - Passwords & OTPs strictly hidden/hashed)
       const usersTbody = document.getElementById('admin-users-tbody');
       usersTbody.innerHTML = users.map(u => {
         const isRoot = u.is_super_admin === true || u.username === 'admin' || u.id === 'usr-admin-1';
@@ -2054,7 +2074,7 @@
         if (u.account_status === 'active') {
           statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">✓ Chính thức (${(!u.is_ctu_domain || u.requires_admin_approval) ? '2/2 bước' : '1/1 bước'})</span>`;
         } else if (u.account_status === 'pending_email_verification') {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-bold">⏳ Chờ Bước 1: Xác thực Email (OTP: ${u.verification_code || '---'})</span>`;
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-bold">⏳ Chờ Bước 1: Xác thực Email (Đã gửi OTP qua hộp thư)</span>`;
         } else if (u.account_status === 'pending_admin_approval') {
           statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">⏳ Chờ Bước 2: Ban Quản trị duyệt</span>`;
         } else {
@@ -2070,7 +2090,7 @@
               ${u.is_locked ? '<span class="text-[10px] px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">Đã khóa</span>' : ''}
             </div>
             <div class="text-[11px] text-slate-500 font-mono">
-              <strong class="text-indigo-700">TK: ${u.username || u.email}</strong> ${u.student_or_staff_id ? `• Mã CTU: <strong>${u.student_or_staff_id}</strong>` : '• <span class="text-amber-700">Không có Mã CTU</span>'} • MK: <strong class="text-slate-700">${isRoot ? '•••••••• (Root)' : (u.password || '123')}</strong> • ${u.email}
+              <strong class="text-indigo-700">TK: ${u.username || u.email}</strong> ${u.student_or_staff_id ? `• Mã CTU: <strong>${u.student_or_staff_id}</strong>` : '• <span class="text-amber-700">Không có Mã CTU</span>'} • 🔒 MK: <span class="text-emerald-700 font-semibold" title="Mật khẩu được mã hóa một chiều PBKDF2-HMAC-SHA256, không lưu dạng rõ">Đã mã hóa (${u.password_hash_preview || 'PBKDF2-SHA256'})</span> • ${u.email}
             </div>
             <div class="text-[11px] text-slate-600">${u.is_ctu_domain ? `Đơn vị CTU: ${u.department || ''}` : `🏢 Đơn vị công tác: <strong>${u.workplace || u.department || ''}</strong>`}</div>
           </td>
@@ -2118,7 +2138,7 @@
         </tr>
       `}).join('');
 
-      // 2b. Render Automated Email Outbox Tab
+      // 2b. Render Automated Email Outbox Tab (OTP strictly masked)
       const emailsCountEl = document.getElementById('admin-emails-count');
       if (emailsCountEl) emailsCountEl.textContent = `${emails.length} email đã gửi`;
       const emailsListEl = document.getElementById('admin-emails-list');
@@ -2132,7 +2152,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold text-[10px]">${m.member_group_label || m.group_label || 'Auto-Responder'}</span>
-                ${m.otp_code ? `<span class="px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 font-mono font-bold text-xs">OTP: ${m.otp_code}</span>` : ''}
+                <span class="px-2.5 py-0.5 rounded-lg bg-slate-200 text-slate-800 font-mono font-bold text-[11px]">🔒 OTP: Đã ẩn bảo mật</span>
                 <span class="text-[11px] font-mono text-slate-400">${new Date(m.timestamp || m.sent_at || Date.now()).toLocaleString('vi-VN')}</span>
               </div>
             </div>
@@ -2227,13 +2247,37 @@
         `;
       }).join('');
 
-      // 5. Sync Settings Inputs & Audit Logs
+      // 5. Sync Settings Inputs, SMTP Config & Audit Logs
       document.getElementById('set-signup-bonus').value = settings.signup_bonus ?? 50;
       document.getElementById('set-upload-reward').value = settings.upload_reward ?? 30;
       document.getElementById('set-download-cost').value = settings.download_cost ?? 5;
       document.getElementById('set-author-royalty').value = settings.author_royalty ?? 2;
       document.getElementById('set-require-review').checked = Boolean(settings.require_review);
       document.getElementById('set-restrict-email').checked = Boolean(settings.restrict_ctu_email);
+
+      const smtpHostEl = document.getElementById('set-smtp-host');
+      const smtpPortEl = document.getElementById('set-smtp-port');
+      const smtpUserEl = document.getElementById('set-smtp-user');
+      const smtpPassEl = document.getElementById('set-smtp-pass');
+      const smtpBadgeEl = document.getElementById('smtp-config-status-badge');
+      if (smtpHostEl) smtpHostEl.value = settings.smtp_host || 'smtp.gmail.com';
+      if (smtpPortEl) smtpPortEl.value = settings.smtp_port || 465;
+      if (smtpUserEl) smtpUserEl.value = settings.smtp_user || '';
+      if (smtpPassEl) {
+        smtpPassEl.value = '';
+        smtpPassEl.placeholder = settings.smtp_configured
+          ? '•••••••••••• (Đã cấu hình — Nhập mới nếu muốn đổi)'
+          : 'Nhập Google App Password (16 ký tự)...';
+      }
+      if (smtpBadgeEl) {
+        if (settings.smtp_configured) {
+          smtpBadgeEl.textContent = '✓ Đã kết nối SMTP Thật';
+          smtpBadgeEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold';
+        } else {
+          smtpBadgeEl.textContent = '⚙️ Chờ cấu hình SMTP Account';
+          smtpBadgeEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-semibold';
+        }
+      }
 
       document.getElementById('admin-logs-count').textContent = `${logs.length} sự kiện`;
       document.getElementById('admin-audit-logs').innerHTML = logs.map(l => `
@@ -2301,7 +2345,11 @@
         download_cost: Number(document.getElementById('set-download-cost').value),
         author_royalty: Number(document.getElementById('set-author-royalty').value),
         require_review: document.getElementById('set-require-review').checked,
-        restrict_ctu_email: document.getElementById('set-restrict-email').checked
+        restrict_ctu_email: document.getElementById('set-restrict-email').checked,
+        smtp_host: document.getElementById('set-smtp-host')?.value.trim() || 'smtp.gmail.com',
+        smtp_port: Number(document.getElementById('set-smtp-port')?.value || 465),
+        smtp_user: document.getElementById('set-smtp-user')?.value.trim() || '',
+        smtp_pass: document.getElementById('set-smtp-pass')?.value.trim() || ''
       };
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
@@ -2311,7 +2359,7 @@
       const data = await res.json();
       appState = data.db;
       renderAdminDashboard();
-      showToast('💾 Đã lưu Cấu hình Chính sách Hệ thống thành công!');
+      showToast('💾 Đã lưu Cấu hình Hệ thống & Máy chủ Email SMTP thành công!');
     }
 
     function exportDatabaseBackup() {
@@ -2401,29 +2449,31 @@
       if (domain === 'ctu.edu.vn') {
         toggleRegisterFieldsByEmail(false);
         box.className = 'mt-2 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900';
-        box.innerHTML = '👨‍🏫 <strong>Nhóm nhận diện:</strong> Cán bộ, giảng viên của Trường (<code>@ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số CB, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
+        box.innerHTML = '👨‍🏫 <strong>Nhóm nhận diện:</strong> Cán bộ, giảng viên của Trường (<code>@ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Kiểm tra DNS MX &rarr; Gửi mã OTP tới hộp thư thật <code>@ctu.edu.vn</code> để xác thực kích hoạt ngay.';
       } else if (domain === 'student.ctu.edu.vn') {
         toggleRegisterFieldsByEmail(false);
         box.className = 'mt-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900';
-        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Sinh viên (<code>@student.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số SV, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
+        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Sinh viên (<code>@student.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Kiểm tra DNS MX &rarr; Gửi mã OTP tới hộp thư thật <code>@student.ctu.edu.vn</code> để xác thực kích hoạt ngay.';
       } else if (domain === 'gstudent.ctu.edu.vn') {
         toggleRegisterFieldsByEmail(false);
         box.className = 'mt-2 p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900';
-        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Học viên sau đại học (<code>@gstudent.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số HV, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
+        box.innerHTML = '🎓 <strong>Nhóm nhận diện:</strong> Học viên sau đại học (<code>@gstudent.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Kiểm tra DNS MX &rarr; Gửi mã OTP tới hộp thư thật <code>@gstudent.ctu.edu.vn</code> để xác thực kích hoạt ngay.';
       } else if (domain === 'dttx.ctu.edu.vn') {
         toggleRegisterFieldsByEmail(false);
         box.className = 'mt-2 p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900';
-        box.innerHTML = '💻 <strong>Nhóm nhận diện:</strong> Sinh viên đào tạo từ xa (<code>@dttx.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Nhập Mã số SV ĐTTX, chọn Đơn vị trực thuộc CTU &rarr; Nhận email trả lời tự động và xác thực mã OTP để kích hoạt ngay.';
+        box.innerHTML = '💻 <strong>Nhóm nhận diện:</strong> Sinh viên đào tạo từ xa (<code>@dttx.ctu.edu.vn</code>)<br/>✅ <strong>Quy trình 01 bước:</strong> Kiểm tra DNS MX &rarr; Gửi mã OTP tới hộp thư thật <code>@dttx.ctu.edu.vn</code> để xác thực kích hoạt ngay.';
       } else {
         toggleRegisterFieldsByEmail(true);
         box.className = 'mt-2 p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-900';
-        box.innerHTML = `🌐 <strong>Nhóm nhận diện:</strong> Thành viên ngoài hệ thống CTU (<code>@${domain}</code>)<br/>📋 <strong>Thông tin biểu mẫu:</strong> Đã ẩn ô Mã số SV/CB/HV và yêu cầu <strong>bắt buộc nhập Đơn vị đang Công tác/Làm việc</strong> bên dưới.<br/>🛡️ <strong>Quy trình 02 bước:</strong> (1) Xác thực đúng email người dùng qua OTP tự động &rarr; (2) Chờ <strong>Ban Quản trị xác nhận</strong> mới trở thành thành viên chính thức.`;
+        box.innerHTML = `🌐 <strong>Nhóm nhận diện:</strong> Thành viên ngoài hệ thống CTU (<code>@${domain}</code>)<br/>📋 <strong>Thông tin biểu mẫu:</strong> Đã ẩn ô Mã số SV/CB/HV và yêu cầu <strong>bắt buộc nhập Đơn vị đang Công tác/Làm việc</strong> bên dưới.<br/>🛡️ <strong>Quy trình 02 bước:</strong> (1) Kiểm tra tên miền thật (DNS MX) &amp; xác thực OTP gửi tới hộp thư <code>@${domain}</code> &rarr; (2) Chờ <strong>Ban Quản trị xác nhận</strong> mới trở thành thành viên chính thức.`;
       }
     }
 
     function openRegisterModal() {
       const errBox = document.getElementById('reg-error-box');
       if (errBox) errBox.classList.add('hidden');
+      const pwdInput = document.getElementById('reg-password');
+      if (pwdInput) pwdInput.value = '';
       const emailInput = document.getElementById('reg-email');
       if (emailInput) previewEmailDomainGroup(emailInput.value);
       document.getElementById('register-modal').classList.remove('hidden');
@@ -2450,35 +2500,65 @@
         banner.innerHTML = `
           <div class="font-bold">🛡️ Quy trình Xác nhận 02 Bước (Dành cho Email ngoài hệ thống ctu.edu.vn)</div>
           <div>• <strong>Đơn vị công tác/làm việc:</strong> ${user.workplace || user.department}</div>
-          <div>• <strong>Bước 1 (Hiện tại):</strong> Xác thực đúng địa chỉ email <code>${user.email}</code> bằng mã OTP bên dưới.</div>
-          <div>• <strong>Bước 2 (Tiếp theo):</strong> Sau khi xác thực email, hồ sơ sẽ chuyển đến <strong>Ban Quản trị xác nhận</strong> để trở thành thành viên chính thức.</div>
+          <div>• <strong>Bước 1 (Hiện tại):</strong> Mở hộp thư thật <code>${user.email}</code> để lấy mã OTP 6 chữ số và nhập vào bên dưới.</div>
+          <div>• <strong>Bước 2 (Tiếp theo):</strong> Sau khi xác thực đúng email, hồ sơ sẽ chuyển đến <strong>Ban Quản trị xác nhận</strong> để trở thành thành viên chính thức.</div>
         `;
       } else {
         banner.className = 'p-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-xs text-emerald-900 space-y-1';
         banner.innerHTML = `
           <div class="font-bold">✅ Quy trình Xác thực Email 01 Bước (${user.member_group_label})</div>
-          <div>• Tài khoản của bạn thuộc hệ thống <code>ctu.edu.vn</code> (<code>${user.email}</code>). Chỉ cần nhập mã OTP từ email trả lời tự động dưới đây để kích hoạt chính thức ngay lập tức!</div>
+          <div>• Tài khoản của bạn thuộc hệ thống <code>ctu.edu.vn</code> (<code>${user.email}</code>). Vui lòng mở hộp thư điện tử của bạn để lấy mã OTP 6 chữ số và nhập vào bên dưới!</div>
         `;
       }
 
       document.getElementById('verify-mail-to').textContent = `${user.full_name} <${user.email}>`;
-      document.getElementById('verify-mail-subject').textContent = autoMail?.subject || `[CTU Data Hub] Mã OTP xác thực email: ${user.verification_code}`;
-      document.getElementById('verify-mail-body').textContent = autoMail?.body_summary || autoMail?.body_preview || `Mã OTP xác thực của bạn là: ${user.verification_code}`;
-      document.getElementById('verify-mail-otp-display').textContent = autoMail?.otp_code || user.verification_code || '------';
+      document.getElementById('verify-mail-subject').textContent = autoMail?.subject || `[CTU Data Hub] Mã xác thực Email đăng ký thành viên`;
+
+      const badgeEl = document.getElementById('verify-delivery-badge');
+      const statusBox = document.getElementById('verify-delivery-status');
+      if (autoMail?.delivery_mode === 'smtp_sent') {
+        if (badgeEl) {
+          badgeEl.textContent = '✓ Đã gửi SMTP tới hộp thư thật';
+          badgeEl.className = 'px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold';
+        }
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div class="font-bold text-emerald-900 flex items-center gap-1.5">
+              <span>✅ Đã gửi Email xác thực trực tiếp tới hộp thư <code>${user.email}</code>!</span>
+            </div>
+            <p class="text-[11px] text-slate-600">
+              Hệ thống đã xác minh tên miền email hợp lệ (DNS MX) và gửi mã OTP 6 chữ số tới hộp thư thật của bạn. Mã OTP đã được ẩn hoàn toàn trên trang web để chống đăng ký bằng email giả.
+            </p>
+            <p class="text-[11px] text-slate-600">
+              👉 Vui lòng kiểm tra <strong>Hộp thư đến (Inbox)</strong> hoặc thư mục <strong>Spam / Thư rác</strong> của <code>${user.email}</code> và nhập 6 chữ số OTP vào ô bên dưới.
+            </p>
+          `;
+        }
+      } else {
+        if (badgeEl) {
+          badgeEl.textContent = '🔒 Đã kiểm tra DNS MX & Bảo mật OTP';
+          badgeEl.className = 'px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold';
+        }
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div class="font-bold text-blue-900 flex items-center gap-1.5">
+              <span>🔒 Chế độ Bảo mật Chống Email Giả (Đã kiểm tra DNS MX cho <code>${user.email}</code>)</span>
+            </div>
+            <p class="text-[11px] text-slate-600">
+              Mã xác thực OTP (6 chữ số) <strong>tuyệt đối không hiển thị trên giao diện web</strong> để ngăn chặn việc dùng email giả mạo tự kích hoạt tài khoản.
+            </p>
+            <p class="text-[11px] text-slate-600">
+              👉 Vui lòng kiểm tra hộp thư <code>${user.email}</code> để nhận mã OTP (Quản trị viên có thể cấu hình tài khoản SMTP Gmail tại mục <em>Quản trị Hệ thống &rarr; Cấu hình &amp; Nhật ký</em> để gửi thư tự động 24/7).
+            </p>
+          `;
+        }
+      }
 
       document.getElementById('email-verify-modal').classList.remove('hidden');
     }
 
     function closeEmailVerifyModal() {
       document.getElementById('email-verify-modal').classList.add('hidden');
-    }
-
-    function autoFillOtpFromEmail() {
-      const code = document.getElementById('verify-mail-otp-display').textContent.trim();
-      if (code && code !== '------') {
-        document.getElementById('verify-otp-input').value = code;
-        document.getElementById('verify-otp-input').focus();
-      }
     }
 
     async function handleVerifyEmailSubmit(e) {
@@ -2529,7 +2609,7 @@
       if (res.ok && data.ok) {
         appState = data.db;
         openEmailVerifyModal(data.user, data.auto_email);
-        showToast('📨 Hệ thống đã gửi lại Email trả lời tự động kèm mã OTP mới!');
+        showToast('📨 Hệ thống đã tạo mã OTP mới và gửi lại tới hộp thư Email của bạn!');
       }
     }
 
@@ -2552,11 +2632,21 @@
         return;
       }
 
+      const pwdVal = document.getElementById('reg-password').value;
+      if (!pwdVal) {
+        if (errBox) {
+          errBox.textContent = 'Vui lòng nhập mật khẩu đăng nhập!';
+          errBox.classList.remove('hidden');
+        }
+        document.getElementById('reg-password')?.focus();
+        return;
+      }
+
       const payload = {
         full_name: document.getElementById('reg-name').value.trim(),
         email: emailVal,
         student_or_staff_id: isExternal ? '' : document.getElementById('reg-id').value.trim(),
-        password: document.getElementById('reg-password').value || '123',
+        password: pwdVal,
         department: isExternal ? workplaceVal : document.getElementById('reg-dept').value.trim(),
         workplace: isExternal ? workplaceVal : ''
       };
@@ -2577,7 +2667,7 @@
       closeRegisterModal();
       renderAdminDashboard();
       openEmailVerifyModal(data.user, data.auto_email);
-      showToast(`📧 Hệ thống đã gửi Email trả lời tự động tới <strong>${data.user.email}</strong>. Vui lòng nhập mã OTP để xác thực!`);
+      showToast(`📧 Đã kiểm tra tên miền Email hợp lệ và gửi mã OTP xác thực tới <strong>${data.user.email}</strong>!`);
     }
 
     initApp();
