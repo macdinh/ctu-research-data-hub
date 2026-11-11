@@ -217,7 +217,7 @@ const initialDb = {
     smtp_port: Number(process.env.SMTP_PORT || 465),
     smtp_user: process.env.SMTP_USER || '',
     smtp_pass: process.env.SMTP_PASS || '',
-    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || '',
+    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-/exec',
     smtp_from_name: 'CTU Research Data Hub (ĐH Cần Thơ)'
   },
   audit_logs: [
@@ -627,8 +627,19 @@ async function validateRealEmailAddress(emailRaw) {
 // ============================================================================
 // GỬI EMAIL XÁC THỰC THẬT QUA GOOGLE APPS SCRIPT WEBHOOK HOẶC SMTPS (PORT 465)
 // ============================================================================
+function normalizeGasWebhookUrl(raw) {
+  const val = String(raw || '').trim();
+  if (!val) return '';
+  if (val.startsWith('AKfycb')) {
+    return `https://script.google.com/macros/s/${val}/exec`;
+  }
+  return val;
+}
+
 async function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
-  const webhookUrl = (db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || '').trim();
+  const webhookUrl = normalizeGasWebhookUrl(
+    db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
+  );
   const smtpHost = (db.settings?.smtp_host || process.env.SMTP_HOST || 'smtp.gmail.com').trim();
   const smtpPort = Number(db.settings?.smtp_port || process.env.SMTP_PORT || 465);
   const smtpUser = (db.settings?.smtp_user || process.env.SMTP_USER || '').trim();
@@ -904,7 +915,13 @@ function normalizeParsedDb(parsed) {
     ...ds,
     department: normalizeCtuUnitName(ds.department)
   }));
-  parsed.settings = { ...initialDb.settings, ...(parsed.settings || {}) };
+  parsed.settings = {
+    ...initialDb.settings,
+    ...(parsed.settings || {}),
+    email_webhook_url: normalizeGasWebhookUrl(
+      parsed.settings?.email_webhook_url || initialDb.settings.email_webhook_url
+    )
+  };
   parsed.audit_logs = parsed.audit_logs?.length ? parsed.audit_logs : [...initialDb.audit_logs];
   parsed.email_outbox = parsed.email_outbox?.length ? parsed.email_outbox : [...initialDb.email_outbox];
   return parsed;
