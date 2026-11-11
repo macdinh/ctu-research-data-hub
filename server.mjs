@@ -217,7 +217,7 @@ const initialDb = {
     smtp_port: Number(process.env.SMTP_PORT || 465),
     smtp_user: process.env.SMTP_USER || '',
     smtp_pass: process.env.SMTP_PASS || '',
-    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-/exec',
+    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbxCrlR-Pecm-GMdvY3vfCwQXIitQ3FlvBM-h8BK-biJEpDmPePULfP80nzCPrGihI9R/exec',
     smtp_from_name: 'CTU Research Data Hub (ĐH Cần Thơ)'
   },
   audit_logs: [
@@ -652,7 +652,7 @@ async function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
     try {
       const resp = await fetch(webhookUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           to: to_email,
           name: to_name || to_email,
@@ -662,11 +662,21 @@ async function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
         }),
         redirect: 'follow'
       });
-      if (resp.ok) {
+      const respText = await resp.text();
+      if (resp.ok && !respText.includes('accounts.google.com') && !respText.includes('Exception:')) {
         return {
           sent: true,
           mode: 'google_apps_script',
-          detail: `Đã gửi email thật tới ${to_email} qua Google Apps Script (Gmail Bridge)`
+          detail: `Đã gửi email thật tới ${to_email} qua Google Apps Script (ID: ...${webhookUrl.slice(-16)})`
+        };
+      }
+      if (!smtpUser || !smtpPass) {
+        return {
+          sent: false,
+          mode: 'webhook_auth_error',
+          detail: respText.includes('accounts.google.com')
+            ? 'Google Apps Script yêu cầu quyền truy cập "Bất kỳ ai (Anyone)" khi Deploy Web App'
+            : `Phản hồi từ Google Apps Script (${resp.status}): ${respText.slice(0, 140)}`
         };
       }
     } catch (err) {
@@ -915,11 +925,13 @@ function normalizeParsedDb(parsed) {
     ...ds,
     department: normalizeCtuUnitName(ds.department)
   }));
+  const existingWebhook = parsed.settings?.email_webhook_url || '';
+  const shouldUseDefaultWebhook = !existingWebhook || existingWebhook.includes('AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-');
   parsed.settings = {
     ...initialDb.settings,
     ...(parsed.settings || {}),
     email_webhook_url: normalizeGasWebhookUrl(
-      parsed.settings?.email_webhook_url || initialDb.settings.email_webhook_url
+      shouldUseDefaultWebhook ? initialDb.settings.email_webhook_url : existingWebhook
     )
   };
   parsed.audit_logs = parsed.audit_logs?.length ? parsed.audit_logs : [...initialDb.audit_logs];
