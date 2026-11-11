@@ -16,9 +16,9 @@
       "full_name": "Nguyễn Minh Khoa",
       "student_or_staff_id": "B2110942",
       "department": "Trường Công nghệ Thông tin và Truyền thông",
-      "role": "student",
-      "contribution_points": 65,
-      "uploads_count": 2,
+      "role": "graduate",
+      "contribution_points": 95,
+      "uploads_count": 3,
       "downloads_count": 4,
       "is_verified_edu": true,
       "assistant_role": "none",
@@ -49,13 +49,10 @@
       "uploads_count": 3,
       "downloads_count": 2,
       "is_verified_edu": true,
-      "assistant_role": "dataset_reviewer",
-      "assistant_permissions": [
-        "review_datasets",
-        "approve_external_members"
-      ],
+      "assistant_role": "none",
+      "assistant_permissions": [],
       "assistant_scope_department": "Trường Nông nghiệp",
-      "assistant_note": "Trợ lý kiểm duyệt định dạng dữ liệu CSV & hỗ trợ xác minh thành viên ngoài CTU",
+      "assistant_note": "",
       "delegated_by": "admin (Super Admin)",
       "delegated_at": "2026-11-06T09:30:00Z"
     },
@@ -108,47 +105,12 @@
       "uploads_count": 5,
       "downloads_count": 12,
       "is_verified_edu": true,
-      "assistant_role": "unit_coordinator",
-      "assistant_permissions": [
-        "review_datasets",
-        "manage_datasets",
-        "view_logs_analytics"
-      ],
-      "assistant_scope_department": "Trường Công nghệ Thông tin và Truyền thông",
-      "assistant_note": "Điều phối viên kiểm duyệt bộ dữ liệu khoa học & thống kê Trường CNTT&TT",
-      "delegated_by": "admin (Super Admin)",
-      "delegated_at": "2026-11-11T06:16:40.999Z"
-    },
-    {
-      "is_locked": false,
-      "is_super_admin": false,
-      "username": "hoangnam.research@gmail.com",
-      "member_group": "external_member",
-      "member_group_label": "Thành viên Ngoài CTU (Xác nhận 2 bước)",
-      "is_ctu_domain": false,
-      "email_verified": true,
-      "admin_approved": false,
-      "account_status": "pending_admin_approval",
-      "id": "usr-ext-1",
-      "password_hash": "pbkdf2_sha256$a1b2c3d4e5f60005$ed4dca58074f54380e08bf7397f65941dcabc37427137646309e138e9cda3049",
-      "email": "hoangnam.research@gmail.com",
-      "full_name": "Đặng Hoàng Nam",
-      "student_or_staff_id": "",
-      "department": "Viện Lúa Đồng bằng sông Cửu Long (CLRRI) — Nghiên cứu viên",
-      "workplace": "Viện Lúa Đồng bằng sông Cửu Long (CLRRI) — Nghiên cứu viên",
-      "role": "external",
-      "requires_admin_approval": true,
-      "verification_code": "682419",
-      "contribution_points": 0,
-      "uploads_count": 0,
-      "downloads_count": 0,
-      "is_verified_edu": false,
       "assistant_role": "none",
       "assistant_permissions": [],
-      "assistant_scope_department": "Viện Lúa Đồng bằng sông Cửu Long (CLRRI) — Nghiên cứu viên",
+      "assistant_scope_department": "Trường Công nghệ Thông tin và Truyền thông",
       "assistant_note": "",
-      "delegated_by": "",
-      "delegated_at": ""
+      "delegated_by": "admin (Super Admin)",
+      "delegated_at": "2026-11-06T09:00:00Z"
     },
     {
       "id": "usr-admin-1",
@@ -180,23 +142,100 @@
         "view_logs_analytics"
       ],
       "assistant_scope_department": "Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)"
+    },
+    {
+      "is_locked": false,
+      "is_super_admin": false,
+      "username": "dangtuyen@hotmail.com",
+      "member_group": "external_member",
+      "member_group_label": "Thành viên Ngoài CTU (Xác nhận 2 bước)",
+      "is_ctu_domain": false,
+      "email_verified": true,
+      "admin_approved": true,
+      "account_status": "active",
+      "id": "usr-1794370286447",
+      "password_hash": "pbkdf2_sha256$d78fa98064654fcb$7747f96202eefe28f48bca0fd51ef9ea5a1ea1450b9dea1f3620938b5ad73d9b",
+      "email": "dangtuyen@hotmail.com",
+      "full_name": "Trần Đăng Tuyên",
+      "student_or_staff_id": "",
+      "department": "TTV6",
+      "workplace": "TTV6",
+      "role": "external",
+      "requires_admin_approval": true,
+      "verification_code": "857438",
+      "contribution_points": 50,
+      "uploads_count": 0,
+      "downloads_count": 0,
+      "is_verified_edu": false,
+      "created_at": "2026-11-11T04:11:26.452Z",
+      "assistant_role": "none",
+      "assistant_permissions": [],
+      "assistant_scope_department": "Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)",
+      "assistant_note": "",
+      "delegated_by": "",
+      "delegated_at": ""
     }
   ],
   "email_outbox": [
     {
-      "id": "mail-1794377803423-281",
-      "timestamp": "2026-11-11T06:16:43.423Z",
+      "id": "mail-1794378326431-135",
+      "timestamp": "2026-11-11T06:25:26.431Z",
       "from": "Auto-Responder <noreply@ctu.edu.vn>",
-      "to_email": "tvhai@ctu.edu.vn",
-      "to_name": "TS. Trần Văn Hải",
-      "subject": "[CTU Research Data Hub] Thông báo Bổ nhiệm & Phân quyền Thành viên Trợ giúp Quản trị",
-      "member_group_label": "Điều phối viên Đơn vị (Khoa/Trường/Viện)",
+      "to_email": "dangtuyen@hotmail.com",
+      "to_name": "Trần Đăng Tuyên",
+      "subject": "[CTU Research Data Hub] Ban Quản trị đã xác nhận (Bước 2/2) — Kích hoạt Thành viên Chính thức!",
+      "member_group_label": "Thành viên Ngoài CTU (Xác nhận 2 bước)",
       "otp_code": "****** (Đã ẩn bảo mật)",
-      "email_type": "assistant_delegated",
-      "status_label": "Đã cấp 3 quyền trợ giúp (Trường Công nghệ Thông tin và Truyền thông)",
+      "email_type": "admin_approved_step2",
+      "status_label": "Hoàn tất 2 bước • Đã kích hoạt (+50 Credits)",
       "delivery_status": "sent_real_smtp",
-      "delivery_detail": "Đã gửi email thật tới tvhai@ctu.edu.vn qua Google Apps Script (ID: ...Gp9uj1fZev-/exec)",
-      "body_summary": "Xin chào TS. Trần Văn Hải,\nBan Quản trị Hệ thống (admin (Super Admin)) vừa bổ nhiệm và phân quyền cho tài khoản tvhai@ctu.edu.vn làm [Điều phối viên Đơn vị (Khoa/Trường/Viện)].\n• Phạm vi phụ trách: Trường Công nghệ Thông tin và Truyền thông\n• Các quyền được cấp (3 quyền): Duyệt & Phê duyệt Bộ dữ liệu, Quản lý Kho Dữ liệu & Phí tải, Xem Thống kê Đơn vị, Hộp thư & Nhật ký\n• Ghi chú nhiệm vụ: Điều phối viên kiểm duyệt bộ dữ liệu khoa học & thống kê Trường CNTT&TT"
+      "delivery_detail": "Đã gửi email thật tới dangtuyen@hotmail.com qua Google Apps Script (ID: ...Gp9uj1fZev-/exec)",
+      "body_summary": "Chúc mừng Trần Đăng Tuyên! Ban Quản trị Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ đã xác nhận hồ sơ của bạn (Bước 2/2). Tài khoản dangtuyen@hotmail.com đã trở thành Thành viên Chính thức và được tặng +50 Credits khởi đầu."
+    },
+    {
+      "id": "mail-1794378301549-636",
+      "timestamp": "2026-11-11T06:25:01.549Z",
+      "from": "Auto-Responder <noreply@ctu.edu.vn>",
+      "to_email": "hoangnam.research@gmail.com",
+      "to_name": "Đặng Hoàng Nam",
+      "subject": "[CTU Research Data Hub] Thông báo kết quả xét duyệt đăng ký thành viên",
+      "member_group_label": "Thành viên Ngoài CTU (Xác nhận 2 bước)",
+      "otp_code": "****** (Đã ẩn bảo mật)",
+      "email_type": "admin_rejected",
+      "status_label": "Từ chối phê duyệt (Bước 2/2)",
+      "delivery_status": "sent_real_smtp",
+      "delivery_detail": "Đã gửi email thật tới hoangnam.research@gmail.com qua Google Apps Script (ID: ...Gp9uj1fZev-/exec)",
+      "body_summary": "Xin chào Đặng Hoàng Nam, Rất tiếc yêu cầu đăng ký tài khoản ngoài hệ thống ctu.edu.vn (hoangnam.research@gmail.com) chưa được Ban Quản trị phê duyệt."
+    },
+    {
+      "id": "mail-1794378300270-404",
+      "timestamp": "2026-11-11T06:25:00.270Z",
+      "from": "Auto-Responder <noreply@ctu.edu.vn>",
+      "to_email": "hoangnam.research@gmail.com",
+      "to_name": "Đặng Hoàng Nam",
+      "subject": "[CTU Research Data Hub] Thông báo kết quả xét duyệt đăng ký thành viên",
+      "member_group_label": "Thành viên Ngoài CTU (Xác nhận 2 bước)",
+      "otp_code": "****** (Đã ẩn bảo mật)",
+      "email_type": "admin_rejected",
+      "status_label": "Từ chối phê duyệt (Bước 2/2)",
+      "delivery_status": "sent_real_smtp",
+      "delivery_detail": "Đã gửi email thật tới hoangnam.research@gmail.com qua Google Apps Script (ID: ...Gp9uj1fZev-/exec)",
+      "body_summary": "Xin chào Đặng Hoàng Nam, Rất tiếc yêu cầu đăng ký tài khoản ngoài hệ thống ctu.edu.vn (hoangnam.research@gmail.com) chưa được Ban Quản trị phê duyệt."
+    },
+    {
+      "id": "mail-1794370287694-755",
+      "timestamp": "2026-11-11T04:11:27.694Z",
+      "from": "Auto-Responder <noreply@ctu.edu.vn>",
+      "to_email": "dangtuyen@hotmail.com",
+      "to_name": "Trần Đăng Tuyên",
+      "subject": "[CTU Research Data Hub] [Bước 1/2] Xác thực Email Đăng ký Thành viên Ngoài CTU — Mã OTP: ******",
+      "member_group_label": "Thành viên Ngoài CTU (Xác nhận 2 bước)",
+      "otp_code": "****** (Đã ẩn bảo mật)",
+      "email_type": "verify_external_step1",
+      "status_label": "Chờ Bước 1/2: Xác thực Email người dùng",
+      "delivery_status": "sent_real_smtp",
+      "delivery_detail": "Đã gửi email thật tới dangtuyen@hotmail.com qua Google Apps Script (ID: ...Gp9uj1fZev-/exec)",
+      "body_summary": "Xin chào Trần Đăng Tuyên (Đơn vị công tác: TTV6),\n\nĐịa chỉ email dangtuyen@hotmail.com không thuộc hệ thống tên miền ctu.edu.vn nên cần qua 02 bước xác nhận:\n- Bước 1: Nhập mã OTP [****** (Đã gửi vào hộp thư Email cá nhân)] để xác thực đúng địa chỉ email của bạn.\n- Bước 2: Sau khi xác thực email, Ban Quản trị Hệ thống sẽ xét duyệt để kích hoạt thành viên chính thức."
     },
     {
       "id": "mail-init-1",
@@ -225,7 +264,7 @@
       "body_summary": "Chúc mừng Nguyễn Minh Khoa! Địa chỉ email @student.ctu.edu.vn của bạn đã được xác thực tự động. Tài khoản nhóm Sinh viên ĐH Cần Thơ đã trở thành thành viên chính thức và được cộng +50 Credits khởi đầu."
     }
   ],
-  "site_visits": 1280,
+  "site_visits": 1286,
   "settings": {
     "signup_bonus": 50,
     "upload_reward": 30,
@@ -244,20 +283,108 @@
   },
   "audit_logs": [
     {
-      "id": "log-1794377803423-46",
-      "timestamp": "2026-11-11T06:16:43.423Z",
-      "actor": "admin (Super Admin)",
-      "action": "Phân quyền Thành viên Trợ giúp",
-      "detail": "Bổ nhiệm TS. Trần Văn Hải (CB00241) làm [Điều phối viên Đơn vị (Khoa/Trường/Viện)] • Phạm vi: Trường Công nghệ Thông tin và Truyền thông • Quyền (3): Duyệt & Phê duyệt Bộ dữ liệu, Quản lý Kho Dữ liệu & Phí tải, Xem Thống kê Đơn vị, Hộp thư & Nhật ký",
+      "id": "log-1794378429072-73",
+      "timestamp": "2026-11-11T06:27:09.072Z",
+      "actor": "Quản trị viên Cao nhất (Super Admin) (admin)",
+      "action": "Đăng nhập Quản trị Tối cao",
+      "detail": "Xác thực thành công tài khoản Quản trị viên Cao nhất (Super Admin).",
       "type": "admin"
     },
     {
-      "id": "log-1794369823013-39",
-      "timestamp": "2026-11-11T04:03:43.013Z",
-      "actor": "Quản trị viên (Admin)",
-      "action": "Đồng bộ CSDL lên Google Drive",
-      "detail": "Đã đồng bộ CSDL lên Cloud 24/7 & Google Drive thành công!",
-      "type": "system"
+      "id": "log-1794378403810-51",
+      "timestamp": "2026-11-11T06:26:43.810Z",
+      "actor": "Quản trị viên Cao nhất (Super Admin) (admin)",
+      "action": "Thu hồi Quyền Trợ giúp Quản trị",
+      "detail": "Đã thu hồi toàn bộ quyền trợ giúp của Trần Đăng Tuyên (dangtuyen@hotmail.com).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378396343-70",
+      "timestamp": "2026-11-11T06:26:36.343Z",
+      "actor": "Quản trị viên Cao nhất (Super Admin) (admin)",
+      "action": "Thu hồi Quyền Trợ giúp Quản trị",
+      "detail": "Đã hủy phân công trợ giúp của Lê Thảo Ngọc (B2204115).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378394557-52",
+      "timestamp": "2026-11-11T06:26:34.557Z",
+      "actor": "Quản trị viên Cao nhất (Super Admin) (admin)",
+      "action": "Thu hồi Quyền Trợ giúp Quản trị",
+      "detail": "Đã hủy phân công trợ giúp của TS. Trần Văn Hải (CB00241).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378381012-26",
+      "timestamp": "2026-11-11T06:26:21.012Z",
+      "actor": "Quản trị viên Cao nhất (Super Admin) (admin)",
+      "action": "Thu hồi Quyền Trợ giúp Quản trị",
+      "detail": "Đã hủy phân công trợ giúp của Nguyễn Minh Khoa (B2110942).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378326431-56",
+      "timestamp": "2026-11-11T06:25:26.431Z",
+      "actor": "admin (Super Admin)",
+      "action": "Phê duyệt Thành viên Ngoài CTU (Bước 2/2)",
+      "detail": "Đã xác nhận tài khoản Trần Đăng Tuyên (dangtuyen@hotmail.com) trở thành thành viên chính thức (+50 Credits).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378307303-82",
+      "timestamp": "2026-11-11T06:25:07.303Z",
+      "actor": "admin (Super Admin)",
+      "action": "Xóa Tài khoản",
+      "detail": "Đã xóa tài khoản Đặng Hoàng Nam (hoangnam.research@gmail.com)",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378301550-14",
+      "timestamp": "2026-11-11T06:25:01.550Z",
+      "actor": "admin (Super Admin)",
+      "action": "Từ chối Hồ sơ Thành viên Ngoài CTU",
+      "detail": "Đã từ chối tài khoản Đặng Hoàng Nam (hoangnam.research@gmail.com).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378300270-7",
+      "timestamp": "2026-11-11T06:25:00.270Z",
+      "actor": "admin (Super Admin)",
+      "action": "Từ chối Hồ sơ Thành viên Ngoài CTU",
+      "detail": "Đã từ chối tài khoản Đặng Hoàng Nam (hoangnam.research@gmail.com).",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378276833-63",
+      "timestamp": "2026-11-11T06:24:36.833Z",
+      "actor": "admin (Super Admin)",
+      "action": "Phân quyền Tài khoản",
+      "detail": "Đổi vai trò của Nguyễn Minh Khoa từ [admin] sang [graduate]",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794378261596-96",
+      "timestamp": "2026-11-11T06:24:21.596Z",
+      "actor": "admin (Super Admin)",
+      "action": "Phân quyền Tài khoản",
+      "detail": "Đổi vai trò của Nguyễn Minh Khoa từ [student] sang [admin]",
+      "type": "admin"
+    },
+    {
+      "id": "log-1794370287694-56",
+      "timestamp": "2026-11-11T04:11:27.694Z",
+      "actor": "Trần Đăng Tuyên (dangtuyen@hotmail.com)",
+      "action": "Đăng ký & Mã hóa Mật khẩu (PBKDF2-SHA256)",
+      "detail": "Nhóm: Thành viên Ngoài CTU (Xác nhận 2 bước) — Trạng thái gửi Email OTP: Đã gửi tới hộp thư thật qua SMTP.",
+      "type": "user"
+    },
+    {
+      "id": "log-1794370222968-85",
+      "timestamp": "2026-11-11T04:10:22.968Z",
+      "actor": "Quản trị viên Cao nhất (Super Admin)",
+      "action": "Phê duyệt Bộ dữ liệu",
+      "detail": "Khảo sát Hành vi Sử dụng Công cụ AI Tạo sinh trong Học tập của 1.200 Sinh viên Đại học (DOI: 10.5281/ctudata.2026.005)",
+      "type": "review"
     },
     {
       "id": "log-1794369815566-41",
@@ -807,7 +934,7 @@
       "geographic_coverage": "Cần Thơ",
       "license": "CC-BY-4.0",
       "doi": "10.5281/ctudata.2026.005",
-      "status": "pending_review",
+      "status": "published",
       "total_size_bytes": 1540000,
       "view_count": 18,
       "download_count": 0,
@@ -926,5 +1053,5 @@
       }
     }
   ],
-  "last_saved_at": "2026-11-11T06:16:43.423Z"
+  "last_saved_at": "2026-11-11T06:27:09.072Z"
 }

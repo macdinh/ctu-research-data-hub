@@ -989,26 +989,14 @@ function normalizeParsedDb(parsed) {
 }
 
 // ============================================================================
-// ĐỒNG BỘ CƠ SỞ DỮ LIỆU & FILE LÊN CLOUD VĨNH VIỄN 24/7 (CLOUD REST + NTFY + GOOGLE DRIVE)
+// ĐỒNG BỘ CƠ SỞ DỮ LIỆU & FILE LÊN CLOUD VĨNH VIỄN 24/7 (CLOUD NTFY + GOOGLE DRIVE)
 // ============================================================================
-let hasRestoredCloudOnBoot = false;
+let lastSyncedNtfyId = '';
+let lastCloudCheckMs = 0;
+let pendingCloudSyncPromise = null;
 const DEFAULT_CLOUD_POINTER_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a1c8b7346703e4';
 const DEFAULT_CLOUD_NTFY_DB_URL = 'https://ntfy.sh/ctu_research_data_hub_db_9f8e7d6c5b4a3_v1';
 const DEFAULT_CLOUD_NTFY_FILES_URL = 'https://ntfy.sh/ctu_research_data_hub_files_9f8e7d6c5b4a3';
-const DEFAULT_CLOUD_REST_PAGES = [
-  'ff808181a09d98f701a1c8bd86ae03ed',
-  'ff808181a09d98f701a1c8bd873d03ee',
-  'ff808181a09d98f701a1c8bd87cd03ef',
-  'ff808181a09d98f701a1c8bd885203f0',
-  'ff808181a09d98f701a1c8bd88cc03f1',
-  'ff808181a09d98f701a1c8bd894a03f2',
-  'ff808181a09d98f701a1c8bd89cb03f3',
-  'ff808181a09d98f701a1c8bd8b6103f4',
-  'ff808181a09d98f701a1c8bd8bec03f5',
-  'ff808181a09d98f701a1c8bd8e6f03f6',
-  'ff808181a09d98f701a1c8bd8ef503f7',
-  'ff808181a09d98f701a1c8bd904403f8'
-];
 
 async function syncDbToGoogleDrive(db) {
   let cloudSynced = false;
@@ -1018,7 +1006,7 @@ async function syncDbToGoogleDrive(db) {
     const rawJson = JSON.stringify(db);
     const b64 = zlib.brotliCompressSync(Buffer.from(rawJson, 'utf8')).toString('base64');
 
-    // 1A. Lưu Snapshot tức thì lên Cloud NTFY Storage (Hỗ trợ tới 15MB / 1 request)
+    // 1. Lưu Snapshot tức thì lên Cloud NTFY Storage (1 request duy nhất, hỗ trợ tới 15MB)
     try {
       const ntfyRes = await fetch(DEFAULT_CLOUD_NTFY_DB_URL, {
         method: 'PUT',
@@ -1027,61 +1015,12 @@ async function syncDbToGoogleDrive(db) {
       });
       if (ntfyRes.ok) {
         const ntfyJson = await ntfyRes.json();
+        if (ntfyJson?.id) {
+          lastSyncedNtfyId = ntfyJson.id;
+          lastCloudCheckMs = Date.now();
+        }
         snapshotUrl = ntfyJson?.attachment?.url || '';
         if (snapshotUrl) cloudSynced = true;
-      }
-    } catch {
-      // ignore
-    }
-
-    // 1B. Lưu phân trang vĩnh viễn lên Cloud REST Object Store (api.restful-api.dev)
-    try {
-      const chunkSize = 900;
-      const chunks = [];
-      for (let i = 0; i < b64.length; i += chunkSize) {
-        chunks.push(b64.slice(i, i + chunkSize));
-      }
-      const activePageIds = [];
-      for (let idx = 0; idx < chunks.length; idx++) {
-        const existingId = DEFAULT_CLOUD_REST_PAGES[idx];
-        if (existingId) {
-          const putPage = await fetch(`https://api.restful-api.dev/objects/${existingId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: `ctu_db_page_${idx}`, data: { v: chunks[idx] } })
-          });
-          if (putPage.ok) activePageIds.push(existingId);
-        } else {
-          const postPage = await fetch('https://api.restful-api.dev/objects', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: `ctu_db_page_${idx}`, data: { v: chunks[idx] } })
-          });
-          if (postPage.ok) {
-            const pj = await postPage.json();
-            if (pj?.id) {
-              DEFAULT_CLOUD_REST_PAGES.push(pj.id);
-              activePageIds.push(pj.id);
-            }
-          }
-        }
-      }
-
-      // Cập nhật Master Pointer Object
-      const ptrRes = await fetch(DEFAULT_CLOUD_POINTER_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'ctu_research_data_hub_db',
-          data: {
-            snapshot_url: snapshotUrl,
-            page_count: String(activePageIds.length),
-            updated_at: new Date().toISOString()
-          }
-        })
-      });
-      if (ptrRes.ok) {
-        cloudSynced = true;
       }
     } catch {
       // ignore
@@ -1116,54 +1055,50 @@ async function syncDbToGoogleDrive(db) {
   }
 
   if (cloudSynced) {
-    return { synced: true, detail: 'Đã lưu & đồng bộ CSDL vĩnh viễn lên Máy chủ Đám mây 24/7 (Hoạt động độc lập ngay cả khi tắt Localhost)!' };
+    return { synced: true, detail: 'Đã lưu & đồng bộ CSDL vĩnh viễn lên Máy chủ Đám mây 24/7 (Đồng bộ tức thời giữa Localhost & Vercel)!' };
   }
   return { synced: false, reason: 'Không thể kết nối tới Máy chủ Đám mây' };
 }
 
-async function pullDbFromGoogleDrive(currentDb) {
-  // 1. Ưu tiên khôi phục từ Cloud Master Pointer 24/7 (Snapshot + Multi-Page REST Store)
-  try {
-    const ptrResp = await fetch(DEFAULT_CLOUD_POINTER_URL, { method: 'GET' });
-    if (ptrResp.ok) {
-      const ptrObj = await ptrResp.json();
-      const snapshotUrl = ptrObj?.data?.snapshot_url;
-      if (snapshotUrl) {
-        try {
-          const snapRes = await fetch(snapshotUrl);
-          if (snapRes.ok) {
-            const b64 = (await snapRes.text()).trim();
-            const jsonStr = zlib.brotliDecompressSync(Buffer.from(b64, 'base64')).toString('utf8');
-            const parsed = JSON.parse(jsonStr);
-            if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.datasets)) {
-              const normalized = normalizeParsedDb(parsed);
-              saveDb(normalized, { syncCloud: false });
-              return normalized;
-            }
-          }
-        } catch {
-          // fallback sang đọc từ Multi-Page REST Store
-        }
-      }
+async function pullDbFromGoogleDrive(currentDb, { force = false } = {}) {
+  if (!force && lastSyncedNtfyId && Date.now() - lastCloudCheckMs < 1500) {
+    return currentDb || null;
+  }
+  lastCloudCheckMs = Date.now();
 
-      // Khôi phục từ các trang lưu trữ vĩnh viễn trên api.restful-api.dev
-      const pageCount = Number(ptrObj?.data?.page_count || DEFAULT_CLOUD_REST_PAGES.length);
-      const idsToFetch = DEFAULT_CLOUD_REST_PAGES.slice(0, pageCount);
-      if (idsToFetch.length > 0) {
-        const query = idsToFetch.map(id => `id=${encodeURIComponent(id)}`).join('&');
-        const pagesRes = await fetch(`https://api.restful-api.dev/objects?${query}`);
-        if (pagesRes.ok) {
-          const pagesArr = await pagesRes.json();
-          const mapById = new Map((pagesArr || []).map(item => [item.id, item?.data?.v || '']));
-          const combinedB64 = idsToFetch.map(id => mapById.get(id) || '').join('');
-          if (combinedB64) {
-            const jsonStr = zlib.brotliDecompressSync(Buffer.from(combinedB64, 'base64')).toString('utf8');
-            const parsed = JSON.parse(jsonStr);
-            if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.datasets)) {
-              const normalized = normalizeParsedDb(parsed);
-              saveDb(normalized, { syncCloud: false });
-              return normalized;
+  // 1. Ưu tiên đọc trực tiếp Snapshot mới nhất từ dòng sự kiện Cloud NTFY 24/7
+  try {
+    const pollRes = await fetch(`${DEFAULT_CLOUD_NTFY_DB_URL}/json?poll=1`, { method: 'GET' });
+    if (pollRes.ok) {
+      const pollText = await pollRes.text();
+      const lines = pollText
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map(line => {
+          try { return JSON.parse(line); } catch { return null; }
+        })
+        .filter(item => item && item.event === 'message' && item.attachment?.url);
+
+      if (lines.length > 0) {
+        const latestMsg = lines[lines.length - 1];
+        if ( !force && latestMsg.id && latestMsg.id === lastSyncedNtfyId && currentDb ) {
+          return currentDb;
+        }
+        const snapRes = await fetch(latestMsg.attachment.url);
+        if (snapRes.ok) {
+          const b64 = (await snapRes.text()).trim();
+          const jsonStr = zlib.brotliDecompressSync(Buffer.from(b64, 'base64')).toString('utf8');
+          const parsed = JSON.parse(jsonStr);
+          if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.datasets)) {
+            lastSyncedNtfyId = latestMsg.id || '';
+            const normalized = normalizeParsedDb(parsed);
+            // Giữ lại số lượt truy cập cao nhất giữa bản local và bản cloud
+            if (currentDb?.site_visits && Number(currentDb.site_visits) > Number(normalized.site_visits || 0)) {
+              normalized.site_visits = Number(currentDb.site_visits);
             }
+            saveDb(normalized, { syncCloud: false });
+            return normalized;
           }
         }
       }
@@ -1276,8 +1211,9 @@ function saveDb(db, options = { syncCloud: true }) {
     }
   }
   if (options?.syncCloud !== false) {
-    syncDbToGoogleDrive(db).catch(() => {});
+    pendingCloudSyncPromise = syncDbToGoogleDrive(db).catch(() => {});
   }
+  return pendingCloudSyncPromise;
 }
 
 function generateDownloadContent(ds) {
@@ -1326,15 +1262,38 @@ export async function requestHandler(req, res) {
   const host = req.headers.host || 'localhost:3000';
   const url = new URL(req.url, `http://${host}`);
 
-  // API: Lấy toàn bộ dữ liệu khởi tạo & ghi nhận thêm số lượt truy cập (Tự động khôi phục từ Google Drive nếu máy chủ vừa khởi động lại)
+  // Đảm bảo mọi thao tác ghi CSDL đều hoàn tất đồng bộ lên Cloud 24/7 trước khi đóng kết nối (Đặc biệt quan trọng trên Vercel Serverless)
+  const origEnd = res.end.bind(res);
+  res.end = function (...args) {
+    if (pendingCloudSyncPromise) {
+      const syncTask = pendingCloudSyncPromise;
+      pendingCloudSyncPromise = null;
+      syncTask.finally(() => origEnd(...args));
+      return res;
+    }
+    return origEnd(...args);
+  };
+
+  // Đảm bảo trước khi xử lý bất kỳ lệnh POST /api/* nào, máy chủ luôn tải bản CSDL mới nhất từ Cloud 24/7
+  if (req.method === 'POST' && url.pathname.startsWith('/api/')) {
+    const cloudPreload = pullDbFromGoogleDrive(loadDb()).catch(() => {});
+    const origOn = req.on.bind(req);
+    req.on = function (event, listener) {
+      if (event === 'end') {
+        return origOn('end', (...args) => {
+          cloudPreload.finally(() => listener(...args));
+        });
+      }
+      return origOn(event, listener);
+    };
+  }
+
+  // API: Lấy toàn bộ dữ liệu khởi tạo & luôn đồng bộ bản mới nhất giữa Localhost và Vercel qua Cloud 24/7
   if (url.pathname === '/api/state' && req.method === 'GET') {
     (async () => {
       let db = loadDb();
-      if (!hasRestoredCloudOnBoot) {
-        hasRestoredCloudOnBoot = true;
-        const cloudDb = await pullDbFromGoogleDrive(db);
-        if (cloudDb) db = cloudDb;
-      }
+      const cloudDb = await pullDbFromGoogleDrive(db);
+      if (cloudDb) db = cloudDb;
       db.site_visits = (Number(db.site_visits) || 1280) + 1;
       saveDb(db, { syncCloud: false });
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
