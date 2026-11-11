@@ -168,8 +168,8 @@
               <div class="text-[11px] text-slate-300 mt-0.5">Bộ dữ liệu chuẩn</div>
             </div>
             <div class="bg-white/10 backdrop-blur rounded-xl p-3.5 border border-white/10 text-center">
-              <div id="stat-total-downloads" class="text-2xl font-bold text-emerald-400">670</div>
-              <div class="text-[11px] text-slate-300 mt-0.5">Lượt tải nghiên cứu</div>
+              <div id="stat-total-downloads" class="text-2xl font-bold text-emerald-400">670 / 87</div>
+              <div id="stat-total-downloads-sub" class="text-[11px] text-slate-300 mt-0.5">Lượt tải / Trích dẫn</div>
             </div>
             <div class="bg-white/10 backdrop-blur rounded-xl p-3.5 border border-white/10 text-center">
               <div class="text-2xl font-bold text-amber-400">+30</div>
@@ -356,8 +356,8 @@
           </div>
           <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
             <div class="text-xs text-slate-300">Tổng Lượt tải &amp; Trích dẫn</div>
-            <div id="admin-kpi-activity" class="text-2xl font-bold text-amber-400 mt-1">670</div>
-            <div id="admin-kpi-citations-sub" class="text-[11px] text-slate-300 mt-0.5">87 trích dẫn học thuật</div>
+            <div id="admin-kpi-activity" class="text-2xl font-bold text-amber-400 mt-1">670 / 87</div>
+            <div id="admin-kpi-citations-sub" class="text-[11px] text-slate-300 mt-0.5">⬇️ 670 lượt tải • 📚 87 trích dẫn (757 tương tác)</div>
           </div>
         </div>
       </div>
@@ -699,11 +699,12 @@
                 <th class="py-3 px-3 font-bold">Định dạng &amp; Lưu trữ</th>
                 <th class="py-3 px-3 font-bold">Trạng thái</th>
                 <th class="py-3 px-3 font-bold text-center">Phí tải (Cr)</th>
-                <th class="py-3 px-3 font-bold text-right">Lượt tải</th>
+                <th class="py-3 px-3 font-bold text-right">Lượt tải / Trích dẫn</th>
                 <th class="py-3 px-3.5 font-bold text-right">Hành động</th>
               </tr>
             </thead>
             <tbody id="admin-datasets-tbody" class="divide-y divide-slate-100"></tbody>
+            <tfoot id="admin-datasets-tfoot" class="bg-slate-100/90 border-t-2 border-slate-300 font-bold text-slate-900"></tfoot>
           </table>
         </div>
       </div>
@@ -976,7 +977,7 @@
           <button onclick="closeDatasetModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100">
             Đóng
           </button>
-          <a id="modal-external-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="hidden px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition items-center gap-1.5">
+          <a id="modal-external-link-btn" onclick="handleExternalStorageDownload(event)" href="#" target="_blank" rel="noopener noreferrer" class="hidden px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition items-center gap-1.5">
             <span>☁️ Mở Kho Lưu Trữ Gốc (Google Drive / Zenodo)</span>
           </a>
           <button onclick="handleDownloadDataset()" id="modal-download-btn" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-2">
@@ -1595,10 +1596,15 @@
 
       const published = appState.datasets.filter(d => d.status === 'published');
       const pending = appState.datasets.filter(d => d.status === 'pending_review');
-      const totalDownloads = published.reduce((acc, d) => acc + (d.download_count || 0), 0);
+      const totalDownloads = published.reduce((acc, d) => acc + (Number(d.download_count) || 0), 0);
+      const totalCitations = published.reduce((acc, d) => acc + (Number(d.citation_count) || 0), 0);
 
       document.getElementById('stat-total-datasets').textContent = published.length;
-      document.getElementById('stat-total-downloads').textContent = totalDownloads.toLocaleString('vi-VN');
+      document.getElementById('stat-total-downloads').textContent = `${totalDownloads.toLocaleString('vi-VN')} / ${totalCitations.toLocaleString('vi-VN')}`;
+      const dlSubEl = document.getElementById('stat-total-downloads-sub');
+      if (dlSubEl) {
+        dlSubEl.textContent = `⬇️ ${totalDownloads.toLocaleString('vi-VN')} tải • 📚 ${totalCitations.toLocaleString('vi-VN')} trích dẫn`;
+      }
       document.getElementById('pending-badge').textContent = pending.length;
 
       const visitEl = document.getElementById('footer-visit-count');
@@ -1796,7 +1802,8 @@
               </div>
               <div class="flex items-center gap-3 font-medium">
                 <span>📦 ${formatBytes(ds.total_size_bytes)}</span>
-                <span class="text-blue-700 font-semibold">⬇️ ${ds.download_count}</span>
+                <span class="text-blue-700 font-semibold" title="Số lượt tải xuống">⬇️ ${ds.download_count || 0}</span>
+                <span class="text-amber-700 font-semibold" title="Số lượt trích dẫn học thuật">📚 ${ds.citation_count || 0}</span>
               </div>
             </div>
           </article>
@@ -2044,10 +2051,34 @@
       }
     }
 
-    function copyCitation() {
+    async function copyCitation() {
       const text = document.getElementById('modal-citation-text').textContent;
-      navigator.clipboard.writeText(text);
-      showToast('Đã sao chép trích dẫn chuẩn vào Clipboard!');
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {}
+      if (selectedDataset) {
+        try {
+          const res = await fetch('/api/datasets/cite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              dataset_id: selectedDataset.id,
+              user_id: currentUser?.id || null,
+              format: currentCitationFormat
+            })
+          });
+          const data = await res.json();
+          if (data.db) {
+            appState = data.db;
+            selectedDataset = appState.datasets.find(d => d.id === selectedDataset.id) || selectedDataset;
+            document.getElementById('modal-stats').textContent = `${selectedDataset.download_count || 0} lượt tải • ${selectedDataset.citation_count || 0} trích dẫn`;
+            syncHeaderUI();
+            renderDatasets();
+            renderAdminDashboard();
+          }
+        } catch {}
+      }
+      showToast(`📚 Đã sao chép trích dẫn chuẩn (${currentCitationFormat.toUpperCase()}) & ghi nhận +1 lượt trích dẫn học thuật!`);
     }
 
     async function handleDownloadDataset() {
@@ -2067,13 +2098,18 @@
         })
       });
       const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        showToast(data.error || 'Không thể tải xuống bộ dữ liệu!', 'error');
+        return;
+      }
       if (data.db) {
         appState = data.db;
         currentUser = appState.users.find(u => u.id === currentUser.id) || currentUser;
         selectedDataset = appState.datasets.find(d => d.id === selectedDataset.id);
         syncHeaderUI();
         renderDatasets();
-        document.getElementById('modal-stats').textContent = `${selectedDataset.download_count} lượt tải • ${selectedDataset.citation_count} trích dẫn`;
+        renderAdminDashboard();
+        document.getElementById('modal-stats').textContent = `${selectedDataset.download_count || 0} lượt tải • ${selectedDataset.citation_count || 0} trích dẫn`;
       }
 
       // Trigger real browser file download
@@ -2087,7 +2123,38 @@
       a.remove();
       URL.revokeObjectURL(url);
 
-      showToast(`Đã tải xuống <strong>${data.file_name}</strong>! Tác giả bộ dữ liệu được thưởng +2 Credits.`);
+      showToast(`Đã tải xuống <strong>${data.file_name}</strong> (+1 Lượt tải)! Tác giả bộ dữ liệu được thưởng +2 Credits.`);
+    }
+
+    async function handleExternalStorageDownload(e) {
+      if (!selectedDataset) return;
+      if (!currentUser) {
+        e.preventDefault();
+        showToast('🔐 Vui lòng đăng nhập tài khoản để mở & tải dữ liệu từ Kho lưu trữ gốc!', 'error');
+        openLoginModal();
+        return;
+      }
+      try {
+        const res = await fetch('/api/datasets/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataset_id: selectedDataset.id,
+            user_id: currentUser.id,
+            purpose: document.getElementById('download-purpose')?.value || 'Mở kho lưu trữ Cloud'
+          })
+        });
+        const data = await res.json();
+        if (data.db) {
+          appState = data.db;
+          currentUser = appState.users.find(u => u.id === currentUser.id) || currentUser;
+          selectedDataset = appState.datasets.find(d => d.id === selectedDataset.id) || selectedDataset;
+          syncHeaderUI();
+          renderDatasets();
+          renderAdminDashboard();
+          document.getElementById('modal-stats').textContent = `${selectedDataset.download_count || 0} lượt tải • ${selectedDataset.citation_count || 0} trích dẫn`;
+        }
+      } catch {}
     }
 
     // SMART FILE PARSER IN BROWSER FOR CSV / GEOJSON / IPYNB
@@ -2568,10 +2635,11 @@
       const totalBytes = datasets.reduce((sum, d) => sum + (d.total_size_bytes || 0), 0);
       document.getElementById('admin-kpi-storage').textContent = formatBytes(totalBytes);
 
-      const totalDl = datasets.reduce((sum, d) => sum + (d.download_count || 0), 0);
-      const totalCit = datasets.reduce((sum, d) => sum + (d.citation_count || 0), 0);
-      document.getElementById('admin-kpi-activity').textContent = totalDl.toLocaleString('vi-VN');
-      document.getElementById('admin-kpi-citations-sub').textContent = `${totalCit} trích dẫn học thuật`;
+      const totalDl = datasets.reduce((sum, d) => sum + (Number(d.download_count) || 0), 0);
+      const totalCit = datasets.reduce((sum, d) => sum + (Number(d.citation_count) || 0), 0);
+      const totalInteractions = totalDl + totalCit;
+      document.getElementById('admin-kpi-activity').textContent = `${totalDl.toLocaleString('vi-VN')} / ${totalCit.toLocaleString('vi-VN')}`;
+      document.getElementById('admin-kpi-citations-sub').textContent = `⬇️ ${totalDl.toLocaleString('vi-VN')} lượt tải • 📚 ${totalCit.toLocaleString('vi-VN')} trích dẫn (Tổng: ${totalInteractions.toLocaleString('vi-VN')})`;
 
       // 1b. Render Pending External Members (Step 2/2 Admin Approval Queue)
       const pendingExtUsers = users.filter(u => u.account_status === 'pending_admin_approval');
@@ -2747,8 +2815,10 @@
             <td class="py-3 px-3 text-center">
               <input type="number" min="0" max="100" value="${ds.credit_cost ?? 5}" onchange="handleAdminDatasetAction('${ds.id}', 'cost', { credit_cost: Number(this.value) })" class="w-16 text-center font-mono font-bold text-slate-800 border border-slate-300 rounded-lg py-1" />
             </td>
-            <td class="py-3 px-3 text-right font-mono font-semibold text-blue-700">
-              ${ds.download_count || 0}
+            <td class="py-3 px-3 text-right font-mono font-semibold whitespace-nowrap">
+              <span class="text-blue-700" title="Số lượt tải xuống">⬇️ ${ds.download_count || 0}</span>
+              <span class="text-slate-300 mx-1">•</span>
+              <span class="text-amber-700" title="Số lượt trích dẫn học thuật">📚 ${ds.citation_count || 0}</span>
             </td>
             <td class="py-3 px-3.5 text-right whitespace-nowrap space-x-1">
               <button onclick="openDatasetModal('${ds.id}')" class="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px]">Xem</button>
@@ -2758,21 +2828,41 @@
         `;
       }).join('');
 
+      const dsTfoot = document.getElementById('admin-datasets-tfoot');
+      if (dsTfoot) {
+        dsTfoot.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-3 px-3.5 text-right text-slate-700">
+              Tổng cộng toàn bộ (${datasets.length} bộ dữ liệu • ${formatBytes(totalBytes)}):
+            </td>
+            <td class="py-3 px-3 text-right font-mono whitespace-nowrap">
+              <span class="text-blue-700">⬇️ ${totalDl.toLocaleString('vi-VN')} tải</span>
+              <span class="text-slate-400 mx-1">•</span>
+              <span class="text-amber-700">📚 ${totalCit.toLocaleString('vi-VN')} trích dẫn</span>
+            </td>
+            <td class="py-3 px-3.5 text-right font-mono text-emerald-700">
+              = ${(totalDl + totalCit).toLocaleString('vi-VN')} lượt
+            </td>
+          </tr>
+        `;
+      }
+
       // 4. Render CTU Unit Breakdown & Cloud Storage Breakdown
       const unitMap = {};
       datasets.forEach(d => {
         const u = d.department || 'Đơn vị khác';
-        if (!unitMap[u]) unitMap[u] = { count: 0, downloads: 0, bytes: 0 };
+        if (!unitMap[u]) unitMap[u] = { count: 0, downloads: 0, citations: 0, bytes: 0 };
         unitMap[u].count += 1;
-        unitMap[u].downloads += (d.download_count || 0);
-        unitMap[u].bytes += (d.total_size_bytes || 0);
+        unitMap[u].downloads += (Number(d.download_count) || 0);
+        unitMap[u].citations += (Number(d.citation_count) || 0);
+        unitMap[u].bytes += (Number(d.total_size_bytes) || 0);
       });
       const unitEntries = Object.entries(unitMap).sort((a, b) => b[1].count - a[1].count);
       document.getElementById('admin-units-breakdown').innerHTML = unitEntries.map(([unitName, info]) => `
         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
           <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span class="font-bold text-slate-900">${unitName}</span>
-            <span class="font-mono text-slate-600"><strong>${info.count}</strong> bộ dữ liệu • <strong>${info.downloads}</strong> lượt tải • ${formatBytes(info.bytes)}</span>
+            <span class="font-mono text-slate-600"><strong>${info.count}</strong> bộ dữ liệu • ⬇️ <strong>${info.downloads}</strong> tải • 📚 <strong>${info.citations}</strong> trích dẫn • ${formatBytes(info.bytes)}</span>
           </div>
           <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
             <div style="width: ${Math.min(100, info.count * 25)}%" class="bg-blue-600 h-full"></div>

@@ -1858,7 +1858,7 @@ export async function requestHandler(req, res) {
     return;
   }
 
-  // API: Sinh viên tải dữ liệu (Trừ điểm người tải, cộng điểm cho tác giả & trả về file)
+  // API: Sinh viên tải dữ liệu (Kiểm tra đủ điểm, trừ điểm người tải, cộng điểm cho tác giả & tăng bộ đếm lượt tải)
   if (url.pathname === '/api/datasets/download' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -1869,28 +1869,41 @@ export async function requestHandler(req, res) {
       const user = db.users.find(u => u.id === user_id);
 
       if (!ds) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Không tìm thấy bộ dữ liệu' }));
+        res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Không tìm thấy bộ dữ liệu' }));
         return;
       }
 
       const cost = Number(ds.credit_cost ?? db.settings?.download_cost ?? 5);
       const royalty = Number(db.settings?.author_royalty ?? 2);
+      const isOwnerOrRoot = user && (user.id === ds.owner_id || user.is_super_admin || user.username === 'admin');
 
-      if (user && user.id !== ds.owner_id) {
-        user.contribution_points = Math.max(0, user.contribution_points - cost);
-        user.downloads_count += 1;
-        const owner = db.users.find(u => u.id === ds.owner_id);
-        if (owner) {
-          owner.contribution_points += royalty;
+      if (user && !isOwnerOrRoot && cost > 0 && (Number(user.contribution_points) || 0) < cost) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: `Số dư của bạn (${user.contribution_points || 0} Credits) không đủ để tải bộ dữ liệu này (Cần ${cost} Credits). Hãy đóng góp dữ liệu mới để nhận +30 Credits!`,
+          db: sanitizeDbForClient(db)
+        }));
+        return;
+      }
+
+      if (user) {
+        user.downloads_count = (Number(user.downloads_count) || 0) + 1;
+        if (!isOwnerOrRoot) {
+          user.contribution_points = Math.max(0, (Number(user.contribution_points) || 0) - cost);
+          const owner = db.users.find(u => u.id === ds.owner_id);
+          if (owner) {
+            owner.contribution_points = (Number(owner.contribution_points) || 0) + royalty;
+          }
         }
       }
-      ds.download_count += 1;
+      ds.download_count = (Number(ds.download_count) || 0) + 1;
       addAuditLog(
         db,
         user ? `${user.full_name} (${user.student_or_staff_id || user.email})` : 'Khách',
-        'Tải xuống Dữ liệu',
-        `Tải "${ds.file_name}" phục vụ: ${purpose || 'Nghiên cứu'}`,
+        'Tải xuống Dữ liệu (+1 Lượt tải)',
+        `Tải "${ds.file_name}" (Tổng: ${ds.download_count} lượt tải) • Mục đích: ${purpose || 'Nghiên cứu'}`,
         'download'
       );
       saveDb(db);
@@ -1898,10 +1911,48 @@ export async function requestHandler(req, res) {
       const fileContent = generateDownloadContent(ds);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({
+        ok: true,
         file_name: ds.file_name,
         file_content: fileContent,
         external_storage_url: ds.external_storage_url || '',
         storage_provider: ds.storage_provider || 'cloudflare_r2',
+        db: sanitizeDbForClient(db)
+      }));
+    });
+    return;
+  }
+
+  // API: Ghi nhận Lượt Trích dẫn Học thuật (Khi người dùng sao chép mã trích dẫn APA / IEEE / BibTeX)
+  if (url.pathname === '/api/datasets/cite' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      const { dataset_id, user_id, format } = JSON.parse(body || '{}');
+      const db = loadDb();
+      const ds = db.datasets.find(d => d.id === dataset_id);
+      const user = db.users.find(u => u.id === user_id);
+
+      if (!ds) {
+        res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Không tìm thấy bộ dữ liệu' }));
+        return;
+      }
+
+      ds.citation_count = (Number(ds.citation_count) || 0) + 1;
+      const fmtUpper = String(format || 'APA').toUpperCase();
+      addAuditLog(
+        db,
+        user ? `${user.full_name} (${user.student_or_staff_id || user.email})` : 'Nhà nghiên cứu / Khách',
+        `Trích dẫn Học thuật (+1 Trích dẫn ${fmtUpper})`,
+        `Sao chép trích dẫn chuẩn ${fmtUpper} của "${ds.title}" (DOI: ${ds.doi} • Tổng: ${ds.citation_count} trích dẫn)`,
+        'citation'
+      );
+      saveDb(db);
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: true,
+        citation_count: ds.citation_count,
         db: sanitizeDbForClient(db)
       }));
     });
