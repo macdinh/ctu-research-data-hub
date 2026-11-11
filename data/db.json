@@ -20,7 +20,13 @@
       "contribution_points": 65,
       "uploads_count": 2,
       "downloads_count": 4,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "assistant_role": "none",
+      "assistant_permissions": [],
+      "assistant_scope_department": "Trường Công nghệ Thông tin và Truyền thông",
+      "assistant_note": "",
+      "delegated_by": "",
+      "delegated_at": ""
     },
     {
       "is_locked": false,
@@ -42,7 +48,16 @@
       "contribution_points": 95,
       "uploads_count": 3,
       "downloads_count": 2,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "assistant_role": "dataset_reviewer",
+      "assistant_permissions": [
+        "review_datasets",
+        "approve_external_members"
+      ],
+      "assistant_scope_department": "Trường Nông nghiệp",
+      "assistant_note": "Trợ lý kiểm duyệt định dạng dữ liệu CSV & hỗ trợ xác minh thành viên ngoài CTU",
+      "delegated_by": "admin (Super Admin)",
+      "delegated_at": "2026-11-06T09:30:00Z"
     },
     {
       "is_locked": false,
@@ -64,7 +79,13 @@
       "contribution_points": 50,
       "uploads_count": 1,
       "downloads_count": 1,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "assistant_role": "none",
+      "assistant_permissions": [],
+      "assistant_scope_department": "Trường Kinh tế",
+      "assistant_note": "",
+      "delegated_by": "",
+      "delegated_at": ""
     },
     {
       "is_locked": false,
@@ -86,7 +107,17 @@
       "contribution_points": 250,
       "uploads_count": 5,
       "downloads_count": 12,
-      "is_verified_edu": true
+      "is_verified_edu": true,
+      "assistant_role": "unit_coordinator",
+      "assistant_permissions": [
+        "review_datasets",
+        "manage_datasets",
+        "view_logs_analytics"
+      ],
+      "assistant_scope_department": "Trường Công nghệ Thông tin và Truyền thông",
+      "assistant_note": "Điều phối viên kiểm duyệt bộ dữ liệu khoa học & thống kê Trường CNTT&TT",
+      "delegated_by": "admin (Super Admin)",
+      "delegated_at": "2026-11-11T06:16:40.999Z"
     },
     {
       "is_locked": false,
@@ -111,7 +142,13 @@
       "contribution_points": 0,
       "uploads_count": 0,
       "downloads_count": 0,
-      "is_verified_edu": false
+      "is_verified_edu": false,
+      "assistant_role": "none",
+      "assistant_permissions": [],
+      "assistant_scope_department": "Viện Lúa Đồng bằng sông Cửu Long (CLRRI) — Nghiên cứu viên",
+      "assistant_note": "",
+      "delegated_by": "",
+      "delegated_at": ""
     },
     {
       "id": "usr-admin-1",
@@ -133,10 +170,34 @@
       "uploads_count": 8,
       "downloads_count": 15,
       "is_verified_edu": true,
-      "is_locked": false
+      "is_locked": false,
+      "assistant_role": "super_admin",
+      "assistant_permissions": [
+        "review_datasets",
+        "manage_datasets",
+        "approve_external_members",
+        "manage_users_credits",
+        "view_logs_analytics"
+      ],
+      "assistant_scope_department": "Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)"
     }
   ],
   "email_outbox": [
+    {
+      "id": "mail-1794377803423-281",
+      "timestamp": "2026-11-11T06:16:43.423Z",
+      "from": "Auto-Responder <noreply@ctu.edu.vn>",
+      "to_email": "tvhai@ctu.edu.vn",
+      "to_name": "TS. Trần Văn Hải",
+      "subject": "[CTU Research Data Hub] Thông báo Bổ nhiệm & Phân quyền Thành viên Trợ giúp Quản trị",
+      "member_group_label": "Điều phối viên Đơn vị (Khoa/Trường/Viện)",
+      "otp_code": "****** (Đã ẩn bảo mật)",
+      "email_type": "assistant_delegated",
+      "status_label": "Đã cấp 3 quyền trợ giúp (Trường Công nghệ Thông tin và Truyền thông)",
+      "delivery_status": "sent_real_smtp",
+      "delivery_detail": "Đã gửi email thật tới tvhai@ctu.edu.vn qua Google Apps Script (ID: ...Gp9uj1fZev-/exec)",
+      "body_summary": "Xin chào TS. Trần Văn Hải,\nBan Quản trị Hệ thống (admin (Super Admin)) vừa bổ nhiệm và phân quyền cho tài khoản tvhai@ctu.edu.vn làm [Điều phối viên Đơn vị (Khoa/Trường/Viện)].\n• Phạm vi phụ trách: Trường Công nghệ Thông tin và Truyền thông\n• Các quyền được cấp (3 quyền): Duyệt & Phê duyệt Bộ dữ liệu, Quản lý Kho Dữ liệu & Phí tải, Xem Thống kê Đơn vị, Hộp thư & Nhật ký\n• Ghi chú nhiệm vụ: Điều phối viên kiểm duyệt bộ dữ liệu khoa học & thống kê Trường CNTT&TT"
+    },
     {
       "id": "mail-init-1",
       "timestamp": "2026-11-06T08:15:00Z",
@@ -182,6 +243,14 @@
     "smtp_from_name": "CTU Research Data Hub (ĐH Cần Thơ)"
   },
   "audit_logs": [
+    {
+      "id": "log-1794377803423-46",
+      "timestamp": "2026-11-11T06:16:43.423Z",
+      "actor": "admin (Super Admin)",
+      "action": "Phân quyền Thành viên Trợ giúp",
+      "detail": "Bổ nhiệm TS. Trần Văn Hải (CB00241) làm [Điều phối viên Đơn vị (Khoa/Trường/Viện)] • Phạm vi: Trường Công nghệ Thông tin và Truyền thông • Quyền (3): Duyệt & Phê duyệt Bộ dữ liệu, Quản lý Kho Dữ liệu & Phí tải, Xem Thống kê Đơn vị, Hộp thư & Nhật ký",
+      "type": "admin"
+    },
     {
       "id": "log-1794369823013-39",
       "timestamp": "2026-11-11T04:03:43.013Z",
@@ -857,5 +926,5 @@
       }
     }
   ],
-  "last_saved_at": "2026-11-11T04:03:43.013Z"
+  "last_saved_at": "2026-11-11T06:16:43.423Z"
 }

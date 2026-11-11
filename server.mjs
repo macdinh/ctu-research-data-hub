@@ -88,7 +88,13 @@ const initialDb = {
       uploads_count: 3,
       downloads_count: 2,
       is_verified_edu: true,
-      is_locked: false
+      is_locked: false,
+      assistant_role: 'dataset_reviewer',
+      assistant_permissions: ['review_datasets', 'approve_external_members'],
+      assistant_scope_department: 'Trường Nông nghiệp',
+      assistant_note: 'Trợ lý kiểm duyệt định dạng dữ liệu CSV & hỗ trợ xác minh thành viên ngoài CTU',
+      delegated_by: 'admin (Super Admin)',
+      delegated_at: '2026-11-06T09:30:00Z'
     },
     {
       id: 'usr-dttx-1',
@@ -130,7 +136,13 @@ const initialDb = {
       uploads_count: 5,
       downloads_count: 12,
       is_verified_edu: true,
-      is_locked: false
+      is_locked: false,
+      assistant_role: 'unit_coordinator',
+      assistant_permissions: ['review_datasets', 'manage_datasets', 'view_logs_analytics'],
+      assistant_scope_department: 'Trường Công nghệ Thông tin và Truyền thông',
+      assistant_note: 'Điều phối viên kiểm duyệt bộ dữ liệu khoa học & theo dõi thống kê Trường CNTT&TT',
+      delegated_by: 'admin (Super Admin)',
+      delegated_at: '2026-11-06T09:00:00Z'
     },
     {
       id: 'usr-ext-1',
@@ -864,6 +876,32 @@ function addAuditLog(db, actor, action, detail, type = 'system') {
   }
 }
 
+const ALL_ASSISTANT_PERMISSIONS = [
+  'review_datasets',
+  'manage_datasets',
+  'approve_external_members',
+  'manage_users_credits',
+  'view_logs_analytics'
+];
+
+const ASSISTANT_ROLE_LABELS = {
+  super_admin: 'Quản trị Tối cao (Root Super Admin)',
+  co_admin: 'Phó Quản trị viên (Trợ lý Toàn quyền)',
+  unit_coordinator: 'Điều phối viên Đơn vị (Khoa/Trường/Viện)',
+  dataset_reviewer: 'Trợ lý Kiểm duyệt Dữ liệu Khoa học',
+  member_moderator: 'Trợ lý Quản lý Thành viên & Credits',
+  custom_assistant: 'Thành viên Trợ giúp Tùy chỉnh',
+  none: 'Thành viên thông thường'
+};
+
+const ASSISTANT_PERMISSION_LABELS = {
+  review_datasets: 'Duyệt & Phê duyệt Bộ dữ liệu',
+  manage_datasets: 'Quản lý Kho Dữ liệu & Phí tải',
+  approve_external_members: 'Xét duyệt Thành viên Ngoài CTU (Bước 2/2)',
+  manage_users_credits: 'Quản lý Thành viên & Cấp phát Credits',
+  view_logs_analytics: 'Xem Thống kê Đơn vị, Hộp thư & Nhật ký'
+};
+
 function normalizeParsedDb(parsed) {
   const rootTemplate = initialDb.users.find(u => u.id === 'usr-admin-1');
   parsed.users = (parsed.users || []).map(u => {
@@ -880,15 +918,29 @@ function normalizeParsedDb(parsed) {
         email_verified: true,
         admin_approved: true,
         account_status: 'active',
-        role: 'admin'
+        role: 'admin',
+        assistant_role: 'super_admin',
+        assistant_permissions: [...ALL_ASSISTANT_PERMISSIONS],
+        assistant_scope_department: 'Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)'
       };
       delete rootMerged.password;
       return rootMerged;
     }
+    const seedTemplate = initialDb.users.find(initU => initU.id === u.id);
     const emailClass = classifyCtuEmail(u.email);
     const pwdHash = u.password_hash && String(u.password_hash).startsWith('pbkdf2_sha256$')
       ? u.password_hash
       : hashPassword(u.password || '123');
+    const perms = Array.isArray(u.assistant_permissions)
+      ? u.assistant_permissions.filter(p => ALL_ASSISTANT_PERMISSIONS.includes(p))
+      : (u.role === 'admin'
+          ? [...ALL_ASSISTANT_PERMISSIONS]
+          : (Array.isArray(seedTemplate?.assistant_permissions) ? [...seedTemplate.assistant_permissions] : []));
+    const assistantRole = u.assistant_role || (
+      u.role === 'admin'
+        ? 'co_admin'
+        : (perms.length > 0 ? (seedTemplate?.assistant_role || 'custom_assistant') : 'none')
+    );
     const normalizedUser = {
       is_locked: false,
       is_super_admin: false,
@@ -901,7 +953,13 @@ function normalizeParsedDb(parsed) {
       account_status: u.account_status || 'active',
       ...u,
       password_hash: pwdHash,
-      department: u.is_ctu_domain === false ? (u.workplace || u.department) : normalizeCtuUnitName(u.department)
+      department: u.is_ctu_domain === false ? (u.workplace || u.department) : normalizeCtuUnitName(u.department),
+      assistant_role: perms.length === 0 ? 'none' : assistantRole,
+      assistant_permissions: perms,
+      assistant_scope_department: u.assistant_scope_department || seedTemplate?.assistant_scope_department || (u.department ? normalizeCtuUnitName(u.department) : 'Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)'),
+      assistant_note: u.assistant_note ?? seedTemplate?.assistant_note ?? '',
+      delegated_by: u.delegated_by || seedTemplate?.delegated_by || (perms.length > 0 ? 'admin (Super Admin)' : ''),
+      delegated_at: u.delegated_at || seedTemplate?.delegated_at || ''
     };
     delete normalizedUser.password;
     return normalizedUser;
@@ -1851,29 +1909,147 @@ export async function requestHandler(req, res) {
   }
 
   // ==========================================================================
-  // ADMIN API 1: Quản lý Người dùng (Phân quyền, Cộng/Trừ Credits, Khóa, Xóa)
+  // ADMIN API 1: Quản lý Người dùng & Phân quyền Thành viên Trợ giúp
   // ==========================================================================
   if (url.pathname === '/api/admin/user' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', async () => {
-      const { target_user_id, action, role, delta_points, department } = JSON.parse(body || '{}');
+      const payload = JSON.parse(body || '{}');
+      const {
+        target_user_id,
+        action,
+        role,
+        delta_points,
+        department,
+        assistant_role,
+        assistant_permissions,
+        assistant_scope_department,
+        assistant_note,
+        perm_key,
+        actor_name
+      } = payload;
       const db = loadDb();
       const target = db.users.find(u => u.id === target_user_id);
+      const actorLabel = actor_name || 'admin (Super Admin)';
 
       if (target) {
         const isRootAdmin = target.is_super_admin === true || target.username === 'admin' || target.id === 'usr-admin-1';
-        if (isRootAdmin && (action === 'delete' || action === 'toggle_lock' || (action === 'role' && role !== 'admin'))) {
+        if (
+          isRootAdmin &&
+          (action === 'delete' ||
+            action === 'toggle_lock' ||
+            (action === 'role' && role !== 'admin') ||
+            action === 'set_assistant_permissions' ||
+            action === 'toggle_single_permission' ||
+            action === 'revoke_assistant_permissions')
+        ) {
           res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({
             ok: false,
-            error: 'Tài khoản Quản trị Cao nhất (admin) được bảo vệ tuyệt đối — không thể xóa, khóa hoặc hạ quyền!',
+            error: 'Tài khoản Quản trị Cao nhất (admin) được bảo vệ tuyệt đối — không thể xóa, khóa hoặc thay đổi quyền tối cao!',
             db: sanitizeDbForClient(db)
           }));
           return;
         }
 
-        if (action === 'approve_member') {
+        if (action === 'set_assistant_permissions') {
+          const validPerms = Array.isArray(assistant_permissions)
+            ? assistant_permissions.filter(p => ALL_ASSISTANT_PERMISSIONS.includes(p))
+            : [];
+          target.assistant_permissions = validPerms;
+          target.assistant_role = validPerms.length === 0
+            ? 'none'
+            : (assistant_role && assistant_role !== 'none' ? assistant_role : 'custom_assistant');
+          target.assistant_scope_department = assistant_scope_department || target.department || 'Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)';
+          target.assistant_note = String(assistant_note || '').trim();
+          target.delegated_by = validPerms.length > 0 ? actorLabel : '';
+          target.delegated_at = validPerms.length > 0 ? new Date().toISOString() : '';
+
+          if (target.assistant_role === 'co_admin') {
+            target.role = 'admin';
+          } else if (target.role === 'admin' && !isRootAdmin) {
+            target.role = classifyCtuEmail(target.email).default_role;
+          }
+
+          const roleTitle = ASSISTANT_ROLE_LABELS[target.assistant_role] || 'Thành viên Trợ giúp';
+          const permTitles = validPerms.map(p => ASSISTANT_PERMISSION_LABELS[p] || p).join(', ');
+
+          if (validPerms.length > 0) {
+            await sendAutoResponderEmail(db, {
+              to_email: target.email,
+              to_name: target.full_name,
+              subject: `[CTU Research Data Hub] Thông báo Bổ nhiệm & Phân quyền Thành viên Trợ giúp Quản trị`,
+              member_group_label: roleTitle,
+              otp_code: 'DELEGATED',
+              email_type: 'assistant_delegated',
+              status_label: `Đã cấp ${validPerms.length} quyền trợ giúp (${target.assistant_scope_department})`,
+              body_summary: `Xin chào ${target.full_name},\nBan Quản trị Hệ thống (${actorLabel}) vừa bổ nhiệm và phân quyền cho tài khoản ${target.email} làm [${roleTitle}].\n• Phạm vi phụ trách: ${target.assistant_scope_department}\n• Các quyền được cấp (${validPerms.length} quyền): ${permTitles}\n• Ghi chú nhiệm vụ: ${target.assistant_note || 'Hỗ trợ công tác kiểm duyệt và điều phối dữ liệu khoa học.'}`
+            });
+            addAuditLog(
+              db,
+              actorLabel,
+              'Phân quyền Thành viên Trợ giúp',
+              `Bổ nhiệm ${target.full_name} (${target.username || target.email}) làm [${roleTitle}] • Phạm vi: ${target.assistant_scope_department} • Quyền (${validPerms.length}): ${permTitles}`,
+              'admin'
+            );
+          } else {
+            addAuditLog(
+              db,
+              actorLabel,
+              'Thu hồi Quyền Trợ giúp Quản trị',
+              `Đã thu hồi toàn bộ quyền trợ giúp của ${target.full_name} (${target.username || target.email}).`,
+              'admin'
+            );
+          }
+        } else if (action === 'toggle_single_permission' && perm_key && ALL_ASSISTANT_PERMISSIONS.includes(perm_key)) {
+          const currentPerms = new Set(Array.isArray(target.assistant_permissions) ? target.assistant_permissions : []);
+          const wasEnabled = currentPerms.has(perm_key);
+          if (wasEnabled) {
+            currentPerms.delete(perm_key);
+          } else {
+            currentPerms.add(perm_key);
+          }
+          const nextPerms = Array.from(currentPerms);
+          target.assistant_permissions = nextPerms;
+          if (nextPerms.length === 0) {
+            target.assistant_role = 'none';
+            target.delegated_by = '';
+            target.delegated_at = '';
+            if (target.role === 'admin' && !isRootAdmin) {
+              target.role = classifyCtuEmail(target.email).default_role;
+            }
+          } else {
+            if (!target.assistant_role || target.assistant_role === 'none') {
+              target.assistant_role = 'custom_assistant';
+            }
+            target.delegated_by = actorLabel;
+            target.delegated_at = new Date().toISOString();
+          }
+          addAuditLog(
+            db,
+            actorLabel,
+            wasEnabled ? 'Tắt Quyền Trợ giúp' : 'Bật Quyền Trợ giúp',
+            `${wasEnabled ? 'Thu hồi' : 'Cấp'} quyền [${ASSISTANT_PERMISSION_LABELS[perm_key]}] cho ${target.full_name} (Tổng: ${nextPerms.length} quyền)`,
+            'admin'
+          );
+        } else if (action === 'revoke_assistant_permissions') {
+          target.assistant_role = 'none';
+          target.assistant_permissions = [];
+          target.assistant_note = '';
+          target.delegated_by = '';
+          target.delegated_at = '';
+          if (target.role === 'admin' && !isRootAdmin) {
+            target.role = classifyCtuEmail(target.email).default_role;
+          }
+          addAuditLog(
+            db,
+            actorLabel,
+            'Thu hồi Quyền Trợ giúp Quản trị',
+            `Đã hủy phân công trợ giúp của ${target.full_name} (${target.username || target.email}).`,
+            'admin'
+          );
+        } else if (action === 'approve_member') {
           const bonus = Number(db.settings?.signup_bonus ?? 50);
           target.email_verified = true;
           target.admin_approved = true;
@@ -1891,7 +2067,7 @@ export async function requestHandler(req, res) {
             status_label: `Hoàn tất 2 bước • Đã kích hoạt (+${bonus} Credits)`,
             body_summary: `Chúc mừng ${target.full_name}! Ban Quản trị Hệ thống Cổng Dữ liệu Khoa học ĐH Cần Thơ đã xác nhận hồ sơ của bạn (Bước 2/2). Tài khoản ${target.email} đã trở thành Thành viên Chính thức và được tặng +${bonus} Credits khởi đầu.`
           });
-          addAuditLog(db, 'admin (Super Admin)', 'Phê duyệt Thành viên Ngoài CTU (Bước 2/2)', `Đã xác nhận tài khoản ${target.full_name} (${target.email}) trở thành thành viên chính thức (+${bonus} Credits).`, 'admin');
+          addAuditLog(db, actorLabel, 'Phê duyệt Thành viên Ngoài CTU (Bước 2/2)', `Đã xác nhận tài khoản ${target.full_name} (${target.email}) trở thành thành viên chính thức (+${bonus} Credits).`, 'admin');
         } else if (action === 'reject_member') {
           target.admin_approved = false;
           target.account_status = 'rejected';
@@ -1905,23 +2081,29 @@ export async function requestHandler(req, res) {
             status_label: 'Từ chối phê duyệt (Bước 2/2)',
             body_summary: `Xin chào ${target.full_name}, Rất tiếc yêu cầu đăng ký tài khoản ngoài hệ thống ctu.edu.vn (${target.email}) chưa được Ban Quản trị phê duyệt.`
           });
-          addAuditLog(db, 'admin (Super Admin)', 'Từ chối Hồ sơ Thành viên Ngoài CTU', `Đã từ chối tài khoản ${target.full_name} (${target.email}).`, 'admin');
+          addAuditLog(db, actorLabel, 'Từ chối Hồ sơ Thành viên Ngoài CTU', `Đã từ chối tài khoản ${target.full_name} (${target.email}).`, 'admin');
         } else if (action === 'delete') {
           db.users = db.users.filter(u => u.id !== target_user_id);
-          addAuditLog(db, 'admin (Super Admin)', 'Xóa Tài khoản', `Đã xóa tài khoản ${target.full_name} (${target.email})`, 'admin');
+          addAuditLog(db, actorLabel, 'Xóa Tài khoản', `Đã xóa tài khoản ${target.full_name} (${target.email})`, 'admin');
         } else if (action === 'role' && role) {
           const oldRole = target.role;
           target.role = role;
-          addAuditLog(db, 'admin (Super Admin)', 'Phân quyền Tài khoản', `Đổi vai trò của ${target.full_name} từ [${oldRole}] sang [${role}]`, 'admin');
+          if (role === 'admin') {
+            target.assistant_role = 'co_admin';
+            target.assistant_permissions = [...ALL_ASSISTANT_PERMISSIONS];
+            target.delegated_by = actorLabel;
+            target.delegated_at = new Date().toISOString();
+          }
+          addAuditLog(db, actorLabel, 'Phân quyền Tài khoản', `Đổi vai trò của ${target.full_name} từ [${oldRole}] sang [${role}]`, 'admin');
         } else if (action === 'points' && typeof delta_points === 'number') {
           target.contribution_points = Math.max(0, target.contribution_points + delta_points);
-          addAuditLog(db, 'admin (Super Admin)', 'Điều chỉnh Điểm Credits', `${delta_points >= 0 ? '+' : ''}${delta_points} Credits cho ${target.full_name} (Số dư mới: ${target.contribution_points} Cr)`, 'admin');
+          addAuditLog(db, actorLabel, 'Điều chỉnh Điểm Credits', `${delta_points >= 0 ? '+' : ''}${delta_points} Credits cho ${target.full_name} (Số dư mới: ${target.contribution_points} Cr)`, 'admin');
         } else if (action === 'toggle_lock') {
           target.is_locked = !target.is_locked;
-          addAuditLog(db, 'admin (Super Admin)', target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id || target.email})`, 'admin');
+          addAuditLog(db, actorLabel, target.is_locked ? 'Khóa Tài khoản' : 'Mở khóa Tài khoản', `Tài khoản ${target.full_name} (${target.student_or_staff_id || target.email})`, 'admin');
         } else if (action === 'department' && department) {
           target.department = department;
-          addAuditLog(db, 'admin (Super Admin)', 'Cập nhật Đơn vị', `Chuyển ${target.full_name} sang ${department}`, 'admin');
+          addAuditLog(db, actorLabel, 'Cập nhật Đơn vị', `Chuyển ${target.full_name} sang ${department}`, 'admin');
         }
         saveDb(db);
       }

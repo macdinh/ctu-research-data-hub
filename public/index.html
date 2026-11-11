@@ -316,19 +316,22 @@
       <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-md">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="space-y-1.5">
-            <div class="inline-flex items-center gap-2 text-xs font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/30 px-3 py-0.5 rounded-full">
+            <div id="admin-banner-role-badge" class="inline-flex items-center gap-2 text-xs font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/30 px-3 py-0.5 rounded-full">
               <span>👑 Quản Trị Viên Cao Nhất Hệ Thống (Root Super Admin: admin)</span>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold">Bảng Điều Khiển Quản Trị Hệ Thống Tối Cao</h2>
-            <p class="text-xs sm:text-sm text-slate-300">
+            <h2 id="admin-banner-title" class="text-xl sm:text-2xl font-bold">Bảng Điều Khiển Quản Trị Hệ Thống &amp; Phân Quyền Trợ Giúp</h2>
+            <p id="admin-banner-subtitle" class="text-xs sm:text-sm text-slate-300">
               Tài khoản Quản trị Cao nhất: <code class="text-amber-300 font-bold">admin</code> (Mã định danh: <code class="text-emerald-300">ADMIN-ROOT</code> • Quyền hạn tối cao &amp; Bảo vệ tuyệt đối).
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="switchAdminSubTab('permissions')" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+              <span>🛡️ Phân quyền Thành viên Trợ giúp</span>
+            </button>
             <button onclick="exportDatabaseBackup()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition flex items-center gap-1.5">
               <span>📥 Xuất Sao lưu CSDL (.JSON)</span>
             </button>
-            <button onclick="handleAdminResetDemo()" class="px-3.5 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-xs font-semibold text-white transition flex items-center gap-1.5">
+            <button id="admin-reset-demo-btn" onclick="handleAdminResetDemo()" class="px-3.5 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-xs font-semibold text-white transition flex items-center gap-1.5">
               <span>🔄 Khôi phục Dữ liệu Gốc</span>
             </button>
           </div>
@@ -337,9 +340,9 @@
         <!-- 4 Admin KPI Summary Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mt-5 pt-5 border-t border-white/10">
           <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <div class="text-xs text-slate-300">Tổng số Tài khoản</div>
-            <div id="admin-kpi-users" class="text-2xl font-bold text-white mt-1">4</div>
-            <div id="admin-kpi-users-sub" class="text-[11px] text-emerald-300 mt-0.5">2 SV • 1 GV • 1 Admin</div>
+            <div class="text-xs text-slate-300">Tổng số Tài khoản &amp; Trợ giúp</div>
+            <div id="admin-kpi-users" class="text-2xl font-bold text-white mt-1">6</div>
+            <div id="admin-kpi-users-sub" class="text-[11px] text-emerald-300 mt-0.5">5 Chính thức • 2 Trợ lý Quản trị</div>
           </div>
           <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
             <div class="text-xs text-slate-300">Tổng Kho Dữ liệu</div>
@@ -349,7 +352,7 @@
           <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
             <div class="text-xs text-slate-300">Dung lượng Lưu trữ Cloud</div>
             <div id="admin-kpi-storage" class="text-2xl font-bold text-cyan-300 mt-1">642 MB</div>
-            <div class="text-[11px] text-slate-300 mt-0.5">R2 + Supabase + Google Drive EDU</div>
+            <div class="text-[11px] text-slate-300 mt-0.5">Cloud 24/7 + Google Drive EDU</div>
           </div>
           <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
             <div class="text-xs text-slate-300">Tổng Lượt tải &amp; Trích dẫn</div>
@@ -365,17 +368,21 @@
           <span>👥 1. Quản lý Thành viên &amp; Duyệt 2 Bước</span>
           <span id="admin-pending-ext-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-white font-bold">1</span>
         </button>
-        <button onclick="switchAdminSubTab('emails')" id="admin-subbtn-emails" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          📧 2. Hộp thư Trả lời Tự động (Email OTP)
+        <button onclick="switchAdminSubTab('permissions')" id="admin-subbtn-permissions" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <span>🛡️ 2. Phân quyền Thành viên Trợ giúp</span>
+          <span id="admin-assistants-count-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-600 text-white font-bold">2</span>
         </button>
-        <button onclick="switchAdminSubTab('datasets')" id="admin-subbtn-datasets" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          🗄️ 3. Quản lý Toàn bộ Kho Dữ liệu
+        <button onclick="switchAdminSubTab('emails')" id="admin-subbtn-emails" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <span>📧 3. Hộp thư Trả lời Tự động (Email OTP)</span>
         </button>
-        <button onclick="switchAdminSubTab('units')" id="admin-subbtn-units" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          🏛️ 4. Thống kê theo Đơn vị ĐH Cần Thơ
+        <button onclick="switchAdminSubTab('datasets')" id="admin-subbtn-datasets" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <span>🗄️ 4. Quản lý Toàn bộ Kho Dữ liệu</span>
         </button>
-        <button onclick="switchAdminSubTab('settings')" id="admin-subbtn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
-          ⚙️ 5. Cấu hình Chính sách &amp; Nhật ký
+        <button onclick="switchAdminSubTab('units')" id="admin-subbtn-units" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <span>🏛️ 5. Thống kê theo Đơn vị ĐH Cần Thơ</span>
+        </button>
+        <button onclick="switchAdminSubTab('settings')" id="admin-subbtn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <span>⚙️ 6. Cấu hình Chính sách &amp; Nhật ký</span>
         </button>
       </div>
 
@@ -444,6 +451,216 @@
             </thead>
             <tbody id="admin-users-tbody" class="divide-y divide-slate-100"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ADMIN SUB-TAB 1B: ASSISTANT PERMISSION DELEGATION & RBAC MATRIX (PHÂN QUYỀN THÀNH VIÊN TRỢ GIÚP) -->
+      <div id="admin-subtab-permissions" class="hidden space-y-5">
+        <!-- Preset Role Templates Overview -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>🛡️ Trung tâm Ủy quyền &amp; Phân quyền Thành viên Trợ giúp Quản trị (RBAC Delegation)</span>
+              </h3>
+              <p class="text-xs text-slate-500">
+                Cho phép Quản trị viên Tối cao (<code>admin</code>) phân công các Giảng viên, Học viên hoặc Sinh viên nòng cốt hỗ trợ kiểm duyệt dữ liệu, xét duyệt hồ sơ thành viên ngoài CTU và điều phối đơn vị.
+              </p>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold">
+              👑 Tài khoản Root Admin luôn được bảo vệ tuyệt đối
+            </span>
+          </div>
+
+          <!-- 4 Preset Helper Role Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div onclick="applyAssistantRolePreset('dataset_reviewer')" class="cursor-pointer p-3.5 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 space-y-1.5 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-emerald-900">📋 1. Trợ lý Kiểm duyệt Dữ liệu</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 font-bold">2 quyền</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Duyệt/từ chối bộ dữ liệu chờ công bố và hỗ trợ xác minh hồ sơ thành viên ngoài CTU (Bước 2/2).
+              </p>
+            </div>
+
+            <div onclick="applyAssistantRolePreset('member_moderator')" class="cursor-pointer p-3.5 rounded-xl bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 space-y-1.5 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-blue-900">👥 2. Trợ lý Quản lý Thành viên</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 font-bold">2 quyền</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Xét duyệt thành viên ngoài CTU (Bước 2/2), hỗ trợ thưởng/trừ điểm Credits và khóa tài khoản vi phạm.
+              </p>
+            </div>
+
+            <div onclick="applyAssistantRolePreset('unit_coordinator')" class="cursor-pointer p-3.5 rounded-xl bg-indigo-50/70 hover:bg-indigo-100/70 border border-indigo-200 space-y-1.5 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-indigo-900">🏛️ 3. Điều phối viên Đơn vị</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200/80 text-indigo-900 font-bold">3 quyền</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Phụ trách kiểm duyệt dữ liệu, quản lý kho dữ liệu và theo dõi thống kê đóng góp của Trường/Khoa/Viện.
+              </p>
+            </div>
+
+            <div onclick="applyAssistantRolePreset('co_admin')" class="cursor-pointer p-3.5 rounded-xl bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200 space-y-1.5 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-purple-900">🛡️ 4. Phó Quản trị viên (Sub-Admin)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-200/80 text-purple-900 font-bold">Đầy đủ 5 quyền</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                Được ủy quyền toàn bộ 5 nghiệp vụ quản trị thường nhật (vẫn không thể can thiệp vào Root Admin).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Bổ nhiệm / Cấp quyền Chi tiết + Bảng Ma trận Quyền hạn -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left Column: Delegation Assignment Form -->
+          <div class="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div>
+              <h4 class="text-sm font-bold text-slate-900">⚙️ Thiết lập &amp; Cấp Quyền Cho Thành Viên Trợ Giúp</h4>
+              <p class="text-xs text-slate-500">Chọn một thành viên và tích chọn các quyền nghiệp vụ muốn ủy quyền.</p>
+            </div>
+
+            <form onsubmit="handleSaveAssistantDelegation(event)" class="space-y-3.5 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">1. Chọn Thành viên được ủy quyền *</label>
+                <select id="delegate-user-select" onchange="loadUserIntoDelegationForm(this.value)" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-semibold text-slate-900"></select>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">2. Nhóm Chức danh Trợ giúp</label>
+                  <select id="delegate-role-select" onchange="applyAssistantRolePreset(this.value)" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-semibold text-indigo-800">
+                    <option value="unit_coordinator">🏛️ Điều phối viên Đơn vị (3 quyền)</option>
+                    <option value="dataset_reviewer">📋 Trợ lý Kiểm duyệt Dữ liệu (2 quyền)</option>
+                    <option value="member_moderator">👥 Trợ lý Quản lý Thành viên (2 quyền)</option>
+                    <option value="co_admin">🛡️ Phó Quản trị viên — Sub-Admin (5 quyền)</option>
+                    <option value="custom_assistant">⚙️ Trợ lý Tùy chỉnh (Tự chọn quyền)</option>
+                    <option value="none">✕ Thành viên thường (Thu hồi quyền)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">3. Phạm vi Đơn vị Phụ trách</label>
+                  <select id="delegate-scope-select" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium text-slate-800">
+                    <option value="Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)">🌐 Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)</option>
+                    <option value="Trường Kinh tế">Trường Kinh tế (Khoa Tài Chính - Ngân hàng...)</option>
+                    <option value="Trường Công nghệ Thông tin và Truyền thông">Trường Công nghệ Thông tin và Truyền thông</option>
+                    <option value="Trường Bách khoa">Trường Bách khoa</option>
+                    <option value="Trường Nông nghiệp">Trường Nông nghiệp</option>
+                    <option value="Trường Thủy sản">Trường Thủy sản</option>
+                    <option value="Trường Sư phạm">Trường Sư phạm</option>
+                    <option value="Khoa Môi trường và Tài nguyên Thiên nhiên">Khoa Môi trường và Tài nguyên Thiên nhiên</option>
+                    <option value="Khoa Khoa học Tự nhiên">Khoa Khoa học Tự nhiên</option>
+                    <option value="Khoa Khoa học Xã hội và Nhân văn">Khoa Khoa học Xã hội và Nhân văn</option>
+                    <option value="Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)">Viện Nghiên cứu Biến đổi Khí hậu (DRAGON-Mekong)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 5 Granular Permission Checkboxes -->
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                <div class="font-bold text-slate-800 text-xs flex items-center justify-between">
+                  <span>4. Danh mục 05 Quyền Nghiệp vụ Chi tiết:</span>
+                  <button type="button" onclick="toggleAllDelegateCheckboxes(true)" class="text-[11px] text-blue-600 hover:underline font-semibold">Chọn tất cả</button>
+                </div>
+
+                <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input id="perm-chk-review_datasets" type="checkbox" value="review_datasets" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                  <div>
+                    <div class="font-bold text-slate-900">📋 Quyền 1: Duyệt &amp; Phê duyệt Bộ dữ liệu (<code>review_datasets</code>)</div>
+                    <div class="text-[11px] text-slate-500">Được phép duyệt hoặc từ chối bộ dữ liệu trong Hàng đợi Kiểm duyệt (+30 Cr cho tác giả).</div>
+                  </div>
+                </label>
+
+                <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input id="perm-chk-manage_datasets" type="checkbox" value="manage_datasets" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                  <div>
+                    <div class="font-bold text-slate-900">🗄️ Quyền 2: Quản lý Kho Dữ liệu &amp; Phí tải (<code>manage_datasets</code>)</div>
+                    <div class="text-[11px] text-slate-500">Chuyển trạng thái Công bố / Chờ duyệt / Ẩn và điều chỉnh phí tải Credits của từng Dataset.</div>
+                  </div>
+                </label>
+
+                <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input id="perm-chk-approve_external_members" type="checkbox" value="approve_external_members" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                  <div>
+                    <div class="font-bold text-slate-900">🛡️ Quyền 3: Xét duyệt Thành viên Ngoài CTU Bước 2/2 (<code>approve_external_members</code>)</div>
+                    <div class="text-[11px] text-slate-500">Xác nhận hoặc từ chối các tài khoản đăng ký bằng email ngoài tên miền <code>ctu.edu.vn</code>.</div>
+                  </div>
+                </label>
+
+                <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input id="perm-chk-manage_users_credits" type="checkbox" value="manage_users_credits" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                  <div>
+                    <div class="font-bold text-slate-900">👥 Quyền 4: Quản lý Thành viên &amp; Cấp phát Credits (<code>manage_users_credits</code>)</div>
+                    <div class="text-[11px] text-slate-500">Thưởng/trừ điểm Credits và khóa/mở khóa các tài khoản thành viên vi phạm quy chế.</div>
+                  </div>
+                </label>
+
+                <label class="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input id="perm-chk-view_logs_analytics" type="checkbox" value="view_logs_analytics" class="mt-0.5 w-4 h-4 text-blue-600 rounded" />
+                  <div>
+                    <div class="font-bold text-slate-900">📊 Quyền 5: Xem Thống kê Đơn vị, Hộp thư &amp; Nhật ký (<code>view_logs_analytics</code>)</div>
+                    <div class="text-[11px] text-slate-500">Truy cập báo cáo đóng góp theo Trường/Khoa/Viện, hộp thư tự động và nhật ký hệ thống.</div>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">5. Ghi chú Phân công Nhiệm vụ</label>
+                <input id="delegate-note-input" type="text" placeholder="VD: Phụ trách duyệt dữ liệu sinh viên Khoa Tài chính - Ngân hàng..." class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800" />
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 pt-1">
+                <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm transition">
+                  💾 Lưu &amp; Cấp Quyền Trợ Giúp
+                </button>
+                <button type="button" onclick="handleRevokeSelectedAssistant()" class="py-2.5 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold transition">
+                  ✕ Thu hồi Quyền
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Column: Interactive RBAC Permission Matrix Table -->
+          <div class="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 class="text-sm font-bold text-slate-900">📋 Bảng Ma trận Phân quyền Ban Quản trị &amp; Thành viên Trợ giúp</h4>
+                  <p class="text-xs text-slate-500">Bạn có thể bật/tắt trực tiếp từng ô quyền hạn bên dưới — hệ thống tự động lưu lên Cloud 24/7.</p>
+                </div>
+                <span id="admin-assistants-summary-pill" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-800 border border-indigo-200 text-xs font-bold">
+                  3 thành viên trong Ban Quản trị &amp; Trợ giúp
+                </span>
+              </div>
+
+              <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                      <th class="py-2.5 px-3 font-bold">Thành viên &amp; Chức danh Trợ giúp</th>
+                      <th class="py-2.5 px-2 font-bold text-center" title="Duyệt & Phê duyệt Bộ dữ liệu">📋 Duyệt bài</th>
+                      <th class="py-2.5 px-2 font-bold text-center" title="Quản lý Kho Dữ liệu & Phí tải">🗄️ Kho DL</th>
+                      <th class="py-2.5 px-2 font-bold text-center" title="Xét duyệt Thành viên Ngoài CTU Bước 2/2">🛡️ Duyệt TV</th>
+                      <th class="py-2.5 px-2 font-bold text-center" title="Quản lý Thành viên & Cấp phát Credits">👥 Credits</th>
+                      <th class="py-2.5 px-2 font-bold text-center" title="Xem Thống kê Đơn vị & Nhật ký Hệ thống">📊 Nhật ký</th>
+                      <th class="py-2.5 px-3 font-bold text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-assistants-matrix-tbody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
+              💡 <strong>Hướng dẫn vận hành:</strong> Khi một thành viên được cấp bất kỳ quyền trợ giúp nào ở trên, tài khoản của họ sẽ xuất hiện huy hiệu <strong>🛡️ Trợ lý Quản trị</strong> và được phép mở tab <strong>Quản trị Hệ thống</strong> để thực hiện đúng các chức năng đã được ủy quyền.
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1282,6 +1499,48 @@
       renderAdminDashboard();
     }
 
+    const ASSISTANT_ROLE_META = {
+      super_admin: { label: '👑 Quản trị Tối cao (Root)', badgeClass: 'bg-amber-100 text-amber-900 border-amber-300' },
+      co_admin: { label: '🛡️ Phó Quản trị viên (Sub-Admin)', badgeClass: 'bg-purple-100 text-purple-900 border-purple-300' },
+      unit_coordinator: { label: '🏛️ Điều phối viên Đơn vị', badgeClass: 'bg-indigo-100 text-indigo-900 border-indigo-300' },
+      dataset_reviewer: { label: '📋 Trợ lý Kiểm duyệt Dữ liệu', badgeClass: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
+      member_moderator: { label: '👥 Trợ lý Quản lý Thành viên', badgeClass: 'bg-blue-100 text-blue-900 border-blue-300' },
+      custom_assistant: { label: '⚙️ Trợ lý Quản trị Tùy chỉnh', badgeClass: 'bg-cyan-100 text-cyan-900 border-cyan-300' },
+      none: { label: 'Thành viên thường', badgeClass: 'bg-slate-100 text-slate-600 border-slate-200' }
+    };
+
+    const ASSISTANT_PERM_META = {
+      review_datasets: { short: '📋 Duyệt bài', full: 'Duyệt & Phê duyệt Bộ dữ liệu' },
+      manage_datasets: { short: '🗄️ Kho DL', full: 'Quản lý Kho Dữ liệu & Phí tải' },
+      approve_external_members: { short: '🛡️ Duyệt TV', full: 'Xét duyệt Thành viên Ngoài CTU (Bước 2/2)' },
+      manage_users_credits: { short: '👥 Credits', full: 'Quản lý Thành viên & Cấp phát Credits' },
+      view_logs_analytics: { short: '📊 Nhật ký', full: 'Xem Thống kê Đơn vị, Hộp thư & Nhật ký' }
+    };
+
+    const ALL_PERM_KEYS = [
+      'review_datasets',
+      'manage_datasets',
+      'approve_external_members',
+      'manage_users_credits',
+      'view_logs_analytics'
+    ];
+
+    function isRootAdminUser(u) {
+      return Boolean(u && (u.is_super_admin || u.username === 'admin' || u.id === 'usr-admin-1'));
+    }
+
+    function hasAssistantAccess(u) {
+      if (!u) return false;
+      if (isRootAdminUser(u) || u.role === 'admin') return true;
+      return Array.isArray(u.assistant_permissions) && u.assistant_permissions.length > 0;
+    }
+
+    function hasAdminPermission(u, permKey) {
+      if (!u) return false;
+      if (isRootAdminUser(u) || u.role === 'admin') return true;
+      return Array.isArray(u.assistant_permissions) && u.assistant_permissions.includes(permKey);
+    }
+
     function getRoleLabel(role, isSuper = false) {
       if (isSuper) return '👑 Super Admin';
       if (role === 'admin') return 'Admin';
@@ -1305,12 +1564,17 @@
         document.getElementById('current-user-points').textContent = currentUser.contribution_points;
 
         const roleBadge = document.getElementById('current-user-role-badge');
-        if (currentUser.is_super_admin || currentUser.username === 'admin') {
+        const hasAssist = Array.isArray(currentUser.assistant_permissions) && currentUser.assistant_permissions.length > 0;
+        if (isRootAdminUser(currentUser)) {
           roleBadge.textContent = '👑 Quản trị Cao nhất';
           roleBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold';
-        } else if (currentUser.role === 'admin') {
-          roleBadge.textContent = 'Quản trị viên';
-          roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold';
+        } else if (currentUser.role === 'admin' || currentUser.assistant_role === 'co_admin') {
+          roleBadge.textContent = '🛡️ Phó Quản trị viên';
+          roleBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-300 font-bold';
+        } else if (hasAssist) {
+          const rMeta = ASSISTANT_ROLE_META[currentUser.assistant_role] || ASSISTANT_ROLE_META.custom_assistant;
+          roleBadge.textContent = `${rMeta.label} (${currentUser.assistant_permissions.length} quyền)`;
+          roleBadge.className = `text-[10px] px-2 py-0.5 rounded-full border font-bold ${rMeta.badgeClass}`;
         } else if (currentUser.member_group === 'ctu_staff' || currentUser.role === 'lecturer') {
           roleBadge.textContent = 'Cán bộ, GV (@ctu.edu.vn)';
           roleBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold';
@@ -1417,8 +1681,9 @@
 
       appState = data.db;
       currentUser = data.user;
-      const isRoot = Boolean(currentUser.is_super_admin || currentUser.username === 'admin' || currentUser.role === 'admin');
-      isSuperAdminAuthenticated = isRoot;
+      const isRoot = isRootAdminUser(currentUser);
+      const canAccessAdmin = hasAssistantAccess(currentUser);
+      isSuperAdminAuthenticated = canAccessAdmin;
       localStorage.setItem('ctu_hub_session_user_id', currentUser.id);
 
       closeAdminLoginModal();
@@ -1429,6 +1694,9 @@
       if (isRoot) {
         switchMainTab('admin');
         showToast('👑 Đã đăng nhập thành công tài khoản <strong>Quản trị viên Cao nhất (admin)</strong>!');
+      } else if (canAccessAdmin) {
+        const rMeta = ASSISTANT_ROLE_META[currentUser.assistant_role] || ASSISTANT_ROLE_META.custom_assistant;
+        showToast(`🛡️ Xin chào <strong>${currentUser.full_name}</strong> (${rMeta.label} — Được cấp ${currentUser.assistant_permissions?.length || 0} quyền trợ giúp Quản trị)!`);
       } else {
         showToast(`🎓 Xin chào <strong>${currentUser.full_name}</strong> (${currentUser.member_group_label || currentUser.role} — ${currentUser.contribution_points} Credits)!`);
       }
@@ -1436,9 +1704,9 @@
 
     function switchMainTab(tab) {
       if (tab === 'admin') {
-        const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.is_super_admin || currentUser.username === 'admin');
-        if (!isAdmin) {
-          showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Quản trị viên (admin)</strong> để truy cập Quản trị Hệ thống!', 'error');
+        const canAccessAdmin = hasAssistantAccess(currentUser);
+        if (!canAccessAdmin) {
+          showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Quản trị viên (admin)</strong> hoặc <strong>Thành viên Trợ giúp được ủy quyền</strong> để truy cập Quản trị Hệ thống!', 'error');
           openLoginModal('admin');
           return;
         }
@@ -2001,8 +2269,13 @@
     }
 
     async function handleReviewAction(datasetId, action) {
-      if (!currentUser || (currentUser.role !== 'lecturer' && currentUser.role !== 'admin')) {
-        showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Giảng viên (CB00241)</strong> hoặc <strong>Admin</strong> để phê duyệt bộ dữ liệu!', 'error');
+      const canReview = currentUser && (
+        currentUser.role === 'lecturer' ||
+        currentUser.role === 'admin' ||
+        hasAdminPermission(currentUser, 'review_datasets')
+      );
+      if (!canReview) {
+        showToast('🔒 Vui lòng đăng nhập tài khoản <strong>Giảng viên (CB00241)</strong>, <strong>Trợ lý Kiểm duyệt</strong> hoặc <strong>Admin</strong> để phê duyệt bộ dữ liệu!', 'error');
         openLoginModal('CB00241');
         return;
       }
@@ -2022,10 +2295,12 @@
     }
 
     // ========================================================================
-    // SYSTEM ADMINISTRATION PORTAL FUNCTIONS
+    // SYSTEM ADMINISTRATION PORTAL & ASSISTANT PERMISSION DELEGATION FUNCTIONS
     // ========================================================================
+    let selectedDelegateUserId = '';
+
     function switchAdminSubTab(sub) {
-      ['users', 'emails', 'datasets', 'units', 'settings'].forEach(s => {
+      ['users', 'permissions', 'emails', 'datasets', 'units', 'settings'].forEach(s => {
         const subEl = document.getElementById(`admin-subtab-${s}`);
         const btn = document.getElementById(`admin-subbtn-${s}`);
         if (subEl) subEl.classList.toggle('hidden', s !== sub);
@@ -2039,6 +2314,203 @@
       });
     }
 
+    function openUserDelegationConfig(userId) {
+      selectedDelegateUserId = userId;
+      switchAdminSubTab('permissions');
+      loadUserIntoDelegationForm(userId);
+    }
+
+    function applyAssistantRolePreset(roleKey) {
+      const roleSelect = document.getElementById('delegate-role-select');
+      if (roleSelect) roleSelect.value = roleKey;
+
+      const presetMap = {
+        dataset_reviewer: ['review_datasets', 'approve_external_members'],
+        member_moderator: ['approve_external_members', 'manage_users_credits'],
+        unit_coordinator: ['review_datasets', 'manage_datasets', 'view_logs_analytics'],
+        co_admin: [...ALL_PERM_KEYS],
+        none: []
+      };
+
+      if (presetMap[roleKey]) {
+        const activeSet = new Set(presetMap[roleKey]);
+        ALL_PERM_KEYS.forEach(pk => {
+          const chk = document.getElementById(`perm-chk-${pk}`);
+          if (chk) chk.checked = activeSet.has(pk);
+        });
+      }
+    }
+
+    function toggleAllDelegateCheckboxes(checked) {
+      ALL_PERM_KEYS.forEach(pk => {
+        const chk = document.getElementById(`perm-chk-${pk}`);
+        if (chk) chk.checked = Boolean(checked);
+      });
+      const roleSelect = document.getElementById('delegate-role-select');
+      if (roleSelect) roleSelect.value = checked ? 'co_admin' : 'none';
+    }
+
+    function loadUserIntoDelegationForm(userId) {
+      const users = (appState.users || []).filter(u => !isRootAdminUser(u));
+      if (users.length === 0) return;
+      const target = users.find(u => u.id === userId) || users[0];
+      selectedDelegateUserId = target.id;
+
+      const userSelect = document.getElementById('delegate-user-select');
+      if (userSelect) userSelect.value = target.id;
+
+      const perms = Array.isArray(target.assistant_permissions) ? target.assistant_permissions : [];
+      const roleSelect = document.getElementById('delegate-role-select');
+      if (roleSelect) {
+        roleSelect.value = perms.length === 0 ? 'none' : (target.assistant_role || 'custom_assistant');
+      }
+
+      const scopeSelect = document.getElementById('delegate-scope-select');
+      if (scopeSelect) {
+        const desiredScope = target.assistant_scope_department || target.department || 'Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)';
+        const hasOption = Array.from(scopeSelect.options).some(o => o.value === desiredScope);
+        scopeSelect.value = hasOption ? desiredScope : 'Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)';
+      }
+
+      const noteInput = document.getElementById('delegate-note-input');
+      if (noteInput) {
+        noteInput.value = target.assistant_note || '';
+      }
+
+      const permSet = new Set(perms);
+      ALL_PERM_KEYS.forEach(pk => {
+        const chk = document.getElementById(`perm-chk-${pk}`);
+        if (chk) chk.checked = permSet.has(pk);
+      });
+    }
+
+    async function handleSaveAssistantDelegation(e) {
+      e.preventDefault();
+      if (!currentUser || (!isRootAdminUser(currentUser) && currentUser.role !== 'admin')) {
+        showToast('🔒 Chỉ Quản trị viên Tối cao (admin) mới có quyền bổ nhiệm & phân quyền Thành viên Trợ giúp!', 'error');
+        return;
+      }
+      const targetUserId = document.getElementById('delegate-user-select')?.value;
+      if (!targetUserId) return;
+
+      const selectedPerms = ALL_PERM_KEYS.filter(pk => document.getElementById(`perm-chk-${pk}`)?.checked);
+      const roleVal = document.getElementById('delegate-role-select')?.value || 'custom_assistant';
+      const scopeVal = document.getElementById('delegate-scope-select')?.value || 'Toàn trường (Tất cả Đơn vị ĐH Cần Thơ)';
+      const noteVal = document.getElementById('delegate-note-input')?.value.trim() || '';
+
+      await handleAdminUserAction(targetUserId, 'set_assistant_permissions', {
+        assistant_role: selectedPerms.length === 0 ? 'none' : (roleVal === 'none' ? 'custom_assistant' : roleVal),
+        assistant_permissions: selectedPerms,
+        assistant_scope_department: scopeVal,
+        assistant_note: noteVal
+      });
+    }
+
+    async function handleRevokeSelectedAssistant() {
+      const targetUserId = document.getElementById('delegate-user-select')?.value;
+      if (!targetUserId) return;
+      await handleRevokeAssistantById(targetUserId);
+    }
+
+    async function handleRevokeAssistantById(userId) {
+      if (!currentUser || (!isRootAdminUser(currentUser) && currentUser.role !== 'admin')) {
+        showToast('🔒 Chỉ Quản trị viên Tối cao (admin) mới có quyền thu hồi quyền Thành viên Trợ giúp!', 'error');
+        return;
+      }
+      await handleAdminUserAction(userId, 'revoke_assistant_permissions');
+    }
+
+    async function toggleSingleAssistantPermission(userId, permKey) {
+      if (!currentUser || (!isRootAdminUser(currentUser) && currentUser.role !== 'admin')) {
+        showToast('🔒 Chỉ Quản trị viên Tối cao (admin) mới có quyền thay đổi Ma trận Phân quyền!', 'error');
+        renderAdminDashboard();
+        return;
+      }
+      await handleAdminUserAction(userId, 'toggle_single_permission', { perm_key: permKey });
+    }
+
+    function renderAssistantDelegationTab() {
+      const users = appState.users || [];
+      const nonRootUsers = users.filter(u => !isRootAdminUser(u));
+      const activeAssistants = nonRootUsers.filter(u => Array.isArray(u.assistant_permissions) && u.assistant_permissions.length > 0);
+
+      const badgeEl = document.getElementById('admin-assistants-count-badge');
+      if (badgeEl) badgeEl.textContent = activeAssistants.length;
+
+      const summaryPill = document.getElementById('admin-assistants-summary-pill');
+      if (summaryPill) {
+        summaryPill.textContent = `1 Root Admin + ${activeAssistants.length} Thành viên Trợ giúp đang hoạt động`;
+      }
+
+      const userSelect = document.getElementById('delegate-user-select');
+      if (userSelect) {
+        const currentSelected = selectedDelegateUserId || userSelect.value || (nonRootUsers[0]?.id || '');
+        userSelect.innerHTML = nonRootUsers.map(u => {
+          const pCount = Array.isArray(u.assistant_permissions) ? u.assistant_permissions.length : 0;
+          const rMeta = ASSISTANT_ROLE_META[u.assistant_role] || ASSISTANT_ROLE_META.none;
+          const tag = pCount > 0 ? `[Đang có ${pCount} quyền — ${rMeta.label}]` : '[Thành viên thường]';
+          return `<option value="${u.id}" ${u.id === currentSelected ? 'selected' : ''}>${u.full_name} (${u.username || u.email}) — ${tag}</option>`;
+        }).join('');
+        loadUserIntoDelegationForm(userSelect.value);
+      }
+
+      const matrixTbody = document.getElementById('admin-assistants-matrix-tbody');
+      if (matrixTbody) {
+        const sortedForMatrix = [...users].sort((a, b) => {
+          if (isRootAdminUser(a)) return -1;
+          if (isRootAdminUser(b)) return 1;
+          const pa = Array.isArray(a.assistant_permissions) ? a.assistant_permissions.length : 0;
+          const pb = Array.isArray(b.assistant_permissions) ? b.assistant_permissions.length : 0;
+          return pb - pa;
+        });
+
+        matrixTbody.innerHTML = sortedForMatrix.map(u => {
+          const isRoot = isRootAdminUser(u);
+          const perms = isRoot ? ALL_PERM_KEYS : (Array.isArray(u.assistant_permissions) ? u.assistant_permissions : []);
+          const permSet = new Set(perms);
+          const rMeta = isRoot
+            ? ASSISTANT_ROLE_META.super_admin
+            : (perms.length > 0 ? (ASSISTANT_ROLE_META[u.assistant_role] || ASSISTANT_ROLE_META.custom_assistant) : ASSISTANT_ROLE_META.none);
+
+          return `
+            <tr class="hover:bg-slate-50 ${isRoot ? 'bg-amber-50/50' : (perms.length > 0 ? 'bg-indigo-50/20' : '')}">
+              <td class="py-2.5 px-3">
+                <div class="font-bold text-slate-900 flex flex-wrap items-center gap-1.5">
+                  <span>${u.full_name}</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full border font-bold ${rMeta.badgeClass}">${rMeta.label}</span>
+                </div>
+                <div class="text-[11px] text-slate-500 font-mono">
+                  TK: <strong>${u.username || u.email}</strong> • Phạm vi: <strong class="text-slate-700 font-sans">${u.assistant_scope_department || u.department || 'Toàn trường'}</strong>
+                </div>
+                ${u.assistant_note ? `<div class="text-[11px] text-indigo-700 italic mt-0.5">📌 ${u.assistant_note}</div>` : ''}
+              </td>
+              ${ALL_PERM_KEYS.map(pk => `
+                <td class="py-2.5 px-2 text-center">
+                  <input
+                    type="checkbox"
+                    ${permSet.has(pk) ? 'checked' : ''}
+                    ${isRoot ? 'disabled' : `onchange="toggleSingleAssistantPermission('${u.id}', '${pk}')"`}
+                    class="w-4 h-4 rounded ${isRoot ? 'text-amber-600 cursor-not-allowed' : 'text-indigo-600 cursor-pointer'}"
+                    title="${ASSISTANT_PERM_META[pk].full}"
+                  />
+                </td>
+              `).join('')}
+              <td class="py-2.5 px-3 text-right whitespace-nowrap space-x-1">
+                ${isRoot ? `
+                  <span class="text-[10px] px-2 py-1 rounded bg-slate-900 text-amber-300 font-bold">🛡️ Tối cao</span>
+                ` : `
+                  <button type="button" onclick="loadUserIntoDelegationForm('${u.id}')" class="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-[11px]">Sửa</button>
+                  ${perms.length > 0 ? `
+                    <button type="button" onclick="handleRevokeAssistantById('${u.id}')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px]">Thu hồi</button>
+                  ` : ''}
+                `}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
     function renderAdminDashboard() {
       const users = appState.users || [];
       const datasets = appState.datasets || [];
@@ -2046,12 +2518,46 @@
       const logs = appState.audit_logs || [];
       const emails = appState.email_outbox || [];
 
+      // 0. Update Admin Banner based on whether currentUser is Root Admin or Assistant Member
+      const bannerBadge = document.getElementById('admin-banner-role-badge');
+      const bannerTitle = document.getElementById('admin-banner-title');
+      const bannerSub = document.getElementById('admin-banner-subtitle');
+      const resetBtn = document.getElementById('admin-reset-demo-btn');
+      if (currentUser && !isRootAdminUser(currentUser)) {
+        const rMeta = ASSISTANT_ROLE_META[currentUser.assistant_role] || ASSISTANT_ROLE_META.custom_assistant;
+        const permNames = (currentUser.assistant_permissions || []).map(p => ASSISTANT_PERM_META[p]?.short || p).join(' • ');
+        if (bannerBadge) {
+          bannerBadge.innerHTML = `<span>${rMeta.label} — Được ủy quyền bởi Super Admin</span>`;
+        }
+        if (bannerTitle) {
+          bannerTitle.textContent = `Không gian Quản trị dành cho Thành viên Trợ giúp (${currentUser.full_name})`;
+        }
+        if (bannerSub) {
+          bannerSub.innerHTML = `Phạm vi phụ trách: <strong class="text-amber-300">${currentUser.assistant_scope_department || currentUser.department}</strong> • Quyền hạn được cấp: <code class="text-emerald-300 font-bold">${permNames || 'Xem tổng quan'}</code>`;
+        }
+        if (resetBtn) resetBtn.classList.add('hidden');
+      } else {
+        if (bannerBadge) {
+          bannerBadge.innerHTML = `<span>👑 Quản Trị Viên Cao Nhất Hệ Thống (Root Super Admin: admin)</span>`;
+        }
+        if (bannerTitle) {
+          bannerTitle.textContent = 'Bảng Điều Khiển Quản Trị Hệ Thống & Phân Quyền Trợ Giúp';
+        }
+        if (bannerSub) {
+          bannerSub.innerHTML = `Tài khoản Quản trị Cao nhất: <code class="text-amber-300 font-bold">admin</code> (Mã định danh: <code class="text-emerald-300">ADMIN-ROOT</code> • Quyền hạn tối cao &amp; Bảo vệ tuyệt đối).`;
+        }
+        if (resetBtn) resetBtn.classList.remove('hidden');
+      }
+
       // 1. Update KPI Cards
       const activeUsers = users.filter(u => u.account_status === 'active').length;
-      const pendingStep1 = users.filter(u => u.account_status === 'pending_email_verification').length;
+      const assistantCount = users.filter(u => !isRootAdminUser(u) && Array.isArray(u.assistant_permissions) && u.assistant_permissions.length > 0).length;
       const pendingStep2 = users.filter(u => u.account_status === 'pending_admin_approval').length;
       document.getElementById('admin-kpi-users').textContent = users.length;
-      document.getElementById('admin-kpi-users-sub').textContent = `${activeUsers} Chính thức • ${pendingStep1} Chờ Email • ${pendingStep2} Chờ Admin duyệt`;
+      document.getElementById('admin-kpi-users-sub').textContent = `${activeUsers} Chính thức • ${assistantCount} Trợ lý Quản trị • ${pendingStep2} Chờ duyệt`;
+
+      // Render Assistant Delegation Tab & Matrix
+      renderAssistantDelegationTab();
 
       const pubCount = datasets.filter(d => d.status === 'published').length;
       const pendCount = datasets.filter(d => d.status === 'pending_review').length;
@@ -2142,14 +2648,23 @@
                 👑 Quản trị Tối cao (Super Admin)
               </span>
             ` : `
-              <select onchange="handleAdminUserAction('${u.id}', 'role', { role: this.value })" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800">
-                <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Cán bộ, Giảng viên (@ctu.edu.vn)</option>
-                <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên (@student.ctu.edu.vn)</option>
-                <option value="graduate" ${u.role === 'graduate' ? 'selected' : ''}>Học viên SĐH (@gstudent.ctu.edu.vn)</option>
-                <option value="distance_student" ${u.role === 'distance_student' ? 'selected' : ''}>SV ĐTTX (@dttx.ctu.edu.vn)</option>
-                <option value="external" ${u.role === 'external' ? 'selected' : ''}>Thành viên ngoài CTU</option>
-                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Quản trị viên (Admin)</option>
-              </select>
+              <div class="space-y-1">
+                <select onchange="handleAdminUserAction('${u.id}', 'role', { role: this.value })" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800">
+                  <option value="lecturer" ${u.role === 'lecturer' ? 'selected' : ''}>Cán bộ, Giảng viên (@ctu.edu.vn)</option>
+                  <option value="student" ${u.role === 'student' ? 'selected' : ''}>Sinh viên (@student.ctu.edu.vn)</option>
+                  <option value="graduate" ${u.role === 'graduate' ? 'selected' : ''}>Học viên SĐH (@gstudent.ctu.edu.vn)</option>
+                  <option value="distance_student" ${u.role === 'distance_student' ? 'selected' : ''}>SV ĐTTX (@dttx.ctu.edu.vn)</option>
+                  <option value="external" ${u.role === 'external' ? 'selected' : ''}>Thành viên ngoài CTU</option>
+                  <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Phó Quản trị viên (Admin)</option>
+                </select>
+                ${(Array.isArray(u.assistant_permissions) && u.assistant_permissions.length > 0) ? `
+                  <div class="flex flex-wrap gap-1">
+                    <span class="text-[10px] px-2 py-0.5 rounded-full border font-bold ${(ASSISTANT_ROLE_META[u.assistant_role] || ASSISTANT_ROLE_META.custom_assistant).badgeClass}">
+                      ${(ASSISTANT_ROLE_META[u.assistant_role] || ASSISTANT_ROLE_META.custom_assistant).label} (${u.assistant_permissions.length} quyền)
+                    </span>
+                  </div>
+                ` : `<div class="text-[10px] text-slate-400">Chưa cấp quyền trợ giúp</div>`}
+              </div>
             `}
           </td>
           <td class="py-3 px-3 text-right font-mono font-bold text-amber-600 text-sm">
@@ -2158,6 +2673,9 @@
           <td class="py-3 px-3.5 text-right whitespace-nowrap space-x-1">
             ${!isRoot && u.account_status !== 'active' ? `
               <button onclick="handleAdminUserAction('${u.id}', 'approve_member')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm" title="Xác nhận chính thức">✓ Duyệt Chính thức</button>
+            ` : ''}
+            ${!isRoot ? `
+              <button onclick="openUserDelegationConfig('${u.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-[11px]" title="Thiết lập quyền trợ giúp quản trị cho thành viên này">🛡️ Phân quyền</button>
             ` : ''}
             <button onclick="handleAdminUserAction('${u.id}', 'points', { delta_points: 20 })" class="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-[11px]" title="Thưởng +20 Credits">+20 Cr</button>
             ${isRoot ? `
@@ -2330,10 +2848,28 @@
     }
 
     async function handleAdminUserAction(targetUserId, action, extra = {}) {
+      if (currentUser && !isRootAdminUser(currentUser) && currentUser.role !== 'admin') {
+        if ((action === 'approve_member' || action === 'reject_member') && !hasAdminPermission(currentUser, 'approve_external_members')) {
+          showToast('🔒 Tài khoản Trợ giúp của bạn chưa được cấp quyền [Xét duyệt Thành viên Ngoài CTU Bước 2/2]!', 'error');
+          return;
+        }
+        if ((action === 'points' || action === 'toggle_lock') && !hasAdminPermission(currentUser, 'manage_users_credits')) {
+          showToast('🔒 Tài khoản Trợ giúp của bạn chưa được cấp quyền [Quản lý Thành viên & Cấp phát Credits]!', 'error');
+          return;
+        }
+        if (action === 'delete' || action === 'role') {
+          showToast('🔒 Chỉ Quản trị viên Tối cao (admin) mới được phép xóa tài khoản hoặc đổi nhóm vai trò gốc!', 'error');
+          renderAdminDashboard();
+          return;
+        }
+      }
+      const actor_name = currentUser
+        ? `${currentUser.full_name} (${currentUser.username || currentUser.email})`
+        : 'admin (Super Admin)';
       const res = await fetch('/api/admin/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_user_id: targetUserId, action, ...extra })
+        body: JSON.stringify({ target_user_id: targetUserId, action, actor_name, ...extra })
       });
       const data = await res.json();
       if (!res.ok || data.ok === false) {
@@ -2351,12 +2887,25 @@
         showToast('✅ Ban Quản trị đã xác nhận Bước 2/2! Thành viên đã chính thức được kích hoạt và gửi Email thông báo tự động.');
       } else if (action === 'reject_member') {
         showToast('✕ Đã từ chối hồ sơ đăng ký thành viên.');
+      } else if (action === 'set_assistant_permissions') {
+        showToast('🛡️ Đã lưu cấu hình phân quyền Thành viên Trợ giúp & gửi thông báo tự động!');
+      } else if (action === 'toggle_single_permission') {
+        showToast('⚡ Đã cập nhật Ma trận Phân quyền Thành viên Trợ giúp!');
+      } else if (action === 'revoke_assistant_permissions') {
+        showToast('✕ Đã thu hồi toàn bộ quyền trợ giúp của thành viên.');
       } else {
         showToast('Đã cập nhật thông tin tài khoản người dùng!');
       }
     }
 
     async function handleAdminDatasetAction(datasetId, action, extra = {}) {
+      if (currentUser && !isRootAdminUser(currentUser) && currentUser.role !== 'admin') {
+        if (!hasAdminPermission(currentUser, 'manage_datasets')) {
+          showToast('🔒 Tài khoản Trợ giúp của bạn chưa được cấp quyền [Quản lý Kho Dữ liệu & Phí tải]!', 'error');
+          renderAdminDashboard();
+          return;
+        }
+      }
       const res = await fetch('/api/admin/dataset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
