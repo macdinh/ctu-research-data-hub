@@ -177,10 +177,35 @@
     "smtp_port": 465,
     "smtp_user": "",
     "smtp_pass": "",
-    "email_webhook_url": "https://script.google.com/macros/s/AKfycbxCrlR-Pecm-GMdvY3vfCwQXIitQ3FlvBM-h8BK-biJEpDmPePULfP80nzCPrGihI9R/exec",
+    "email_webhook_url": "https://script.google.com/macros/s/AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-/exec",
+    "cloud_kv_url": "https://api.restful-api.dev/objects/ff808181a09d98f701a1c8b7346703e4",
     "smtp_from_name": "CTU Research Data Hub (ĐH Cần Thơ)"
   },
   "audit_logs": [
+    {
+      "id": "log-1794369823013-39",
+      "timestamp": "2026-11-11T04:03:43.013Z",
+      "actor": "Quản trị viên (Admin)",
+      "action": "Đồng bộ CSDL lên Google Drive",
+      "detail": "Đã đồng bộ CSDL lên Cloud 24/7 & Google Drive thành công!",
+      "type": "system"
+    },
+    {
+      "id": "log-1794369815566-41",
+      "timestamp": "2026-11-11T04:03:35.566Z",
+      "actor": "Quản trị viên (Admin)",
+      "action": "Đồng bộ CSDL lên Google Drive",
+      "detail": "Đã đồng bộ CSDL lên Cloud 24/7 & Google Drive thành công!",
+      "type": "system"
+    },
+    {
+      "id": "log-1794367123210-41",
+      "timestamp": "2026-11-11T03:18:43.210Z",
+      "actor": "Quản trị viên (Admin)",
+      "action": "Đồng bộ CSDL lên Google Drive",
+      "detail": "Phản hồi (401): <!DOCTYPE html><html lang=\"vi\"><head><script nonce=\"Rs3c_WpnkGIuz4_LO_JXXg\">window['ppConfig'] = {pr",
+      "type": "system"
+    },
     {
       "id": "log-1794363471806-52",
       "timestamp": "2026-11-11T02:17:51.806Z",
@@ -831,5 +856,6 @@
         ]
       }
     }
-  ]
+  ],
+  "last_saved_at": "2026-11-11T04:03:43.013Z"
 }

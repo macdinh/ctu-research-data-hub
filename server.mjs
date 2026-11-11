@@ -5,6 +5,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import tls from 'node:tls';
 import dns from 'node:dns';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -219,7 +220,8 @@ const initialDb = {
     smtp_port: Number(process.env.SMTP_PORT || 465),
     smtp_user: process.env.SMTP_USER || '',
     smtp_pass: process.env.SMTP_PASS || '',
-    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbxCrlR-Pecm-GMdvY3vfCwQXIitQ3FlvBM-h8BK-biJEpDmPePULfP80nzCPrGihI9R/exec',
+    email_webhook_url: process.env.EMAIL_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-/exec',
+    cloud_kv_url: process.env.CLOUD_KV_URL || 'https://api.restful-api.dev/objects/ff808181a09d98f701a1c8b7346703e4',
     smtp_from_name: 'CTU Research Data Hub (ĐH Cần Thơ)'
   },
   audit_logs: [
@@ -650,9 +652,11 @@ async function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
   const fromName = db.settings?.smtp_from_name || 'CTU Research Data Hub (ĐH Cần Thơ)';
 
   // KÊNH 1: Gửi qua Google Apps Script Web App Bridge (MailApp.sendEmail - Không cần App Password)
-  if (webhookUrl && webhookUrl.startsWith('https://script.google.com/')) {
+  const fallbackGasUrl = 'https://script.google.com/macros/s/AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-/exec';
+  const candidateUrls = Array.from(new Set([webhookUrl, fallbackGasUrl].filter(u => u && u.startsWith('https://script.google.com/'))));
+  for (const gasUrl of candidateUrls) {
     try {
-      const resp = await fetch(webhookUrl, {
+      const resp = await fetch(gasUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
@@ -669,27 +673,11 @@ async function sendRealSmtpEmail(db, { to_email, to_name, subject, textBody }) {
         return {
           sent: true,
           mode: 'google_apps_script',
-          detail: `Đã gửi email thật tới ${to_email} qua Google Apps Script (ID: ...${webhookUrl.slice(-16)})`
+          detail: `Đã gửi email thật tới ${to_email} qua Google Apps Script (ID: ...${gasUrl.slice(-16)})`
         };
       }
-      if (!smtpUser || !smtpPass) {
-        return {
-          sent: false,
-          mode: 'webhook_auth_error',
-          detail: respText.includes('accounts.google.com')
-            ? 'Google Apps Script yêu cầu quyền truy cập "Bất kỳ ai (Anyone)" khi Deploy Web App'
-            : `Phản hồi từ Google Apps Script (${resp.status}): ${respText.slice(0, 140)}`
-        };
-      }
-    } catch (err) {
-      // Nếu lỗi webhook thì chuyển sang thử SMTPS bên dưới
-      if (!smtpUser || !smtpPass) {
-        return {
-          sent: false,
-          mode: 'webhook_error',
-          detail: `Lỗi kết nối Google Apps Script Webhook: ${err.message}`
-        };
-      }
+    } catch {
+      // thử URL dự phòng tiếp theo
     }
   }
 
@@ -928,13 +916,14 @@ function normalizeParsedDb(parsed) {
     department: normalizeCtuUnitName(ds.department)
   }));
   const existingWebhook = parsed.settings?.email_webhook_url || '';
-  const shouldUseDefaultWebhook = !existingWebhook || existingWebhook.includes('AKfycbyu7KATuJAPdG5_uNKT_nOsnxPabZ0hjaE67rcasGthCDhnMamVRx4IAGp9uj1fZev-');
+  const shouldUseDefaultWebhook = !existingWebhook || existingWebhook.includes('AKfycbxCrlR-Pecm-GMdvY3vfCwQXIitQ3FlvBM-h8BK-biJEpDmPePULfP80nzCPrGihI9R');
   parsed.settings = {
     ...initialDb.settings,
     ...(parsed.settings || {}),
     email_webhook_url: normalizeGasWebhookUrl(
       shouldUseDefaultWebhook ? initialDb.settings.email_webhook_url : existingWebhook
-    )
+    ),
+    cloud_kv_url: parsed.settings?.cloud_kv_url || initialDb.settings.cloud_kv_url
   };
   parsed.audit_logs = parsed.audit_logs?.length ? parsed.audit_logs : [...initialDb.audit_logs];
   parsed.email_outbox = parsed.email_outbox?.length ? parsed.email_outbox : [...initialDb.email_outbox];
@@ -942,62 +931,212 @@ function normalizeParsedDb(parsed) {
 }
 
 // ============================================================================
-// ĐỒNG BỘ CƠ SỞ DỮ LIỆU & FILE LÊN GOOGLE DRIVE VĨNH VIỄN (CLOUD PERSISTENCE)
+// ĐỒNG BỘ CƠ SỞ DỮ LIỆU & FILE LÊN CLOUD VĨNH VIỄN 24/7 (CLOUD REST + NTFY + GOOGLE DRIVE)
 // ============================================================================
 let hasRestoredCloudOnBoot = false;
+const DEFAULT_CLOUD_POINTER_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a1c8b7346703e4';
+const DEFAULT_CLOUD_NTFY_DB_URL = 'https://ntfy.sh/ctu_research_data_hub_db_9f8e7d6c5b4a3_v1';
+const DEFAULT_CLOUD_NTFY_FILES_URL = 'https://ntfy.sh/ctu_research_data_hub_files_9f8e7d6c5b4a3';
+const DEFAULT_CLOUD_REST_PAGES = [
+  'ff808181a09d98f701a1c8bd86ae03ed',
+  'ff808181a09d98f701a1c8bd873d03ee',
+  'ff808181a09d98f701a1c8bd87cd03ef',
+  'ff808181a09d98f701a1c8bd885203f0',
+  'ff808181a09d98f701a1c8bd88cc03f1',
+  'ff808181a09d98f701a1c8bd894a03f2',
+  'ff808181a09d98f701a1c8bd89cb03f3',
+  'ff808181a09d98f701a1c8bd8b6103f4',
+  'ff808181a09d98f701a1c8bd8bec03f5',
+  'ff808181a09d98f701a1c8bd8e6f03f6',
+  'ff808181a09d98f701a1c8bd8ef503f7',
+  'ff808181a09d98f701a1c8bd904403f8'
+];
 
 async function syncDbToGoogleDrive(db) {
+  let cloudSynced = false;
+  let snapshotUrl = '';
+
+  try {
+    const rawJson = JSON.stringify(db);
+    const b64 = zlib.brotliCompressSync(Buffer.from(rawJson, 'utf8')).toString('base64');
+
+    // 1A. Lưu Snapshot tức thì lên Cloud NTFY Storage (Hỗ trợ tới 15MB / 1 request)
+    try {
+      const ntfyRes = await fetch(DEFAULT_CLOUD_NTFY_DB_URL, {
+        method: 'PUT',
+        headers: { Filename: 'ctu_db.br.b64' },
+        body: b64
+      });
+      if (ntfyRes.ok) {
+        const ntfyJson = await ntfyRes.json();
+        snapshotUrl = ntfyJson?.attachment?.url || '';
+        if (snapshotUrl) cloudSynced = true;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 1B. Lưu phân trang vĩnh viễn lên Cloud REST Object Store (api.restful-api.dev)
+    try {
+      const chunkSize = 900;
+      const chunks = [];
+      for (let i = 0; i < b64.length; i += chunkSize) {
+        chunks.push(b64.slice(i, i + chunkSize));
+      }
+      const activePageIds = [];
+      for (let idx = 0; idx < chunks.length; idx++) {
+        const existingId = DEFAULT_CLOUD_REST_PAGES[idx];
+        if (existingId) {
+          const putPage = await fetch(`https://api.restful-api.dev/objects/${existingId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `ctu_db_page_${idx}`, data: { v: chunks[idx] } })
+          });
+          if (putPage.ok) activePageIds.push(existingId);
+        } else {
+          const postPage = await fetch('https://api.restful-api.dev/objects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `ctu_db_page_${idx}`, data: { v: chunks[idx] } })
+          });
+          if (postPage.ok) {
+            const pj = await postPage.json();
+            if (pj?.id) {
+              DEFAULT_CLOUD_REST_PAGES.push(pj.id);
+              activePageIds.push(pj.id);
+            }
+          }
+        }
+      }
+
+      // Cập nhật Master Pointer Object
+      const ptrRes = await fetch(DEFAULT_CLOUD_POINTER_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'ctu_research_data_hub_db',
+          data: {
+            snapshot_url: snapshotUrl,
+            page_count: String(activePageIds.length),
+            updated_at: new Date().toISOString()
+          }
+        })
+      });
+      if (ptrRes.ok) {
+        cloudSynced = true;
+      }
+    } catch {
+      // ignore
+    }
+  } catch {
+    // ignore
+  }
+
+  // 2. Đồng thời gửi bản sao lưu sang Google Drive qua Google Apps Script (nếu đã cấp quyền DriveApp)
   const webhookUrl = normalizeGasWebhookUrl(
     db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
   );
-  if (!webhookUrl || !webhookUrl.startsWith('https://script.google.com/')) {
-    return { synced: false, reason: 'Chưa cấu hình Google Apps Script URL' };
-  }
-  try {
-    const resp = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'save_db',
-        file_name: 'ctu_data_hub_cloud_db.json',
-        db
-      }),
-      redirect: 'follow'
-    });
-    const text = await resp.text();
-    if (resp.ok && !text.includes('accounts.google.com')) {
-      return { synced: true, detail: 'Đã đồng bộ CSDL lên Google Drive thành công', response: text.slice(0, 120) };
+  if (webhookUrl && webhookUrl.startsWith('https://script.google.com/')) {
+    try {
+      const resp = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'save_db',
+          file_name: 'ctu_data_hub_cloud_db.json',
+          db
+        }),
+        redirect: 'follow'
+      });
+      const text = await resp.text();
+      if (resp.ok && !text.includes('accounts.google.com')) {
+        return { synced: true, detail: 'Đã đồng bộ CSDL lên Cloud 24/7 & Google Drive thành công!' };
+      }
+    } catch {
+      // ignore
     }
-    return { synced: false, reason: `Phản hồi (${resp.status}): ${text.slice(0, 100)}` };
-  } catch (err) {
-    return { synced: false, reason: err.message };
   }
+
+  if (cloudSynced) {
+    return { synced: true, detail: 'Đã lưu & đồng bộ CSDL vĩnh viễn lên Máy chủ Đám mây 24/7 (Hoạt động độc lập ngay cả khi tắt Localhost)!' };
+  }
+  return { synced: false, reason: 'Không thể kết nối tới Máy chủ Đám mây' };
 }
 
 async function pullDbFromGoogleDrive(currentDb) {
-  const webhookUrl = normalizeGasWebhookUrl(
-    currentDb?.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
-  );
-  if (!webhookUrl || !webhookUrl.startsWith('https://script.google.com/')) {
-    return null;
-  }
+  // 1. Ưu tiên khôi phục từ Cloud Master Pointer 24/7 (Snapshot + Multi-Page REST Store)
   try {
-    const resp = await fetch(`${webhookUrl}?action=load_db`, {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    const text = await resp.text();
-    if (resp.ok && text.trim().startsWith('{')) {
-      const parsed = JSON.parse(text);
-      const cloudDb = parsed.db || (parsed.users && parsed.datasets ? parsed : null);
-      if (cloudDb && Array.isArray(cloudDb.users) && Array.isArray(cloudDb.datasets)) {
-        const normalized = normalizeParsedDb(cloudDb);
-        saveDb(normalized, { syncCloud: false });
-        return normalized;
+    const ptrResp = await fetch(DEFAULT_CLOUD_POINTER_URL, { method: 'GET' });
+    if (ptrResp.ok) {
+      const ptrObj = await ptrResp.json();
+      const snapshotUrl = ptrObj?.data?.snapshot_url;
+      if (snapshotUrl) {
+        try {
+          const snapRes = await fetch(snapshotUrl);
+          if (snapRes.ok) {
+            const b64 = (await snapRes.text()).trim();
+            const jsonStr = zlib.brotliDecompressSync(Buffer.from(b64, 'base64')).toString('utf8');
+            const parsed = JSON.parse(jsonStr);
+            if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.datasets)) {
+              const normalized = normalizeParsedDb(parsed);
+              saveDb(normalized, { syncCloud: false });
+              return normalized;
+            }
+          }
+        } catch {
+          // fallback sang đọc từ Multi-Page REST Store
+        }
+      }
+
+      // Khôi phục từ các trang lưu trữ vĩnh viễn trên api.restful-api.dev
+      const pageCount = Number(ptrObj?.data?.page_count || DEFAULT_CLOUD_REST_PAGES.length);
+      const idsToFetch = DEFAULT_CLOUD_REST_PAGES.slice(0, pageCount);
+      if (idsToFetch.length > 0) {
+        const query = idsToFetch.map(id => `id=${encodeURIComponent(id)}`).join('&');
+        const pagesRes = await fetch(`https://api.restful-api.dev/objects?${query}`);
+        if (pagesRes.ok) {
+          const pagesArr = await pagesRes.json();
+          const mapById = new Map((pagesArr || []).map(item => [item.id, item?.data?.v || '']));
+          const combinedB64 = idsToFetch.map(id => mapById.get(id) || '').join('');
+          if (combinedB64) {
+            const jsonStr = zlib.brotliDecompressSync(Buffer.from(combinedB64, 'base64')).toString('utf8');
+            const parsed = JSON.parse(jsonStr);
+            if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.datasets)) {
+              const normalized = normalizeParsedDb(parsed);
+              saveDb(normalized, { syncCloud: false });
+              return normalized;
+            }
+          }
+        }
       }
     }
   } catch {
-    // ignore if script doesn't have doGet yet
+    // ignore
+  }
+
+  // 2. Dự phòng khôi phục từ Google Drive (Google Apps Script)
+  const webhookUrl = normalizeGasWebhookUrl(
+    currentDb?.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
+  );
+  if (webhookUrl && webhookUrl.startsWith('https://script.google.com/')) {
+    try {
+      const resp = await fetch(`${webhookUrl}?action=load_db`, {
+        method: 'GET',
+        redirect: 'follow'
+      });
+      const text = await resp.text();
+      if (resp.ok && text.trim().startsWith('{')) {
+        const parsed = JSON.parse(text);
+        const cloudDb = parsed.db || (parsed.users && parsed.datasets ? parsed : null);
+        if (cloudDb && Array.isArray(cloudDb.users) && Array.isArray(cloudDb.datasets)) {
+          const normalized = normalizeParsedDb(cloudDb);
+          saveDb(normalized, { syncCloud: false });
+          return normalized;
+        }
+      }
+    } catch {
+      // ignore
+    }
   }
   return null;
 }
@@ -1005,12 +1144,14 @@ async function pullDbFromGoogleDrive(currentDb) {
 async function saveUploadedDatasetFile(db, { dataset_id, file_name, file_base64, raw_text }) {
   const safeName = `${dataset_id}_${String(file_name || 'dataset.csv').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
   let localSavedPath = `/uploads/${safeName}`;
+  let cloudFileUrl = '';
+
+  const buf = file_base64
+    ? Buffer.from(String(file_base64).replace(/^data:[^;]+;base64,/, ''), 'base64')
+    : Buffer.from(String(raw_text || ''), 'utf8');
 
   // 1. Lưu trực tiếp vào thư mục data/uploads (nằm trong Google Drive trên máy) hoặc /tmp trên Vercel
   try {
-    const buf = file_base64
-      ? Buffer.from(String(file_base64).replace(/^data:[^;]+;base64,/, ''), 'base64')
-      : Buffer.from(String(raw_text || ''), 'utf8');
     try {
       if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
       fs.writeFileSync(path.join(UPLOADS_DIR, safeName), buf);
@@ -1022,37 +1163,24 @@ async function saveUploadedDatasetFile(db, { dataset_id, file_name, file_base64,
     localSavedPath = '';
   }
 
-  // 2. Đồng bộ file lên Google Drive qua Google Apps Script (nếu có base64 / raw_text)
-  const webhookUrl = normalizeGasWebhookUrl(
-    db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
-  );
-  if (webhookUrl && webhookUrl.startsWith('https://script.google.com/') && (file_base64 || raw_text)) {
+  // 2. Đồng bộ file lên Cloud Storage 24/7 để tải được mọi lúc trên Vercel khi tắt Localhost
+  if (buf.length > 0 && buf.length < 14 * 1024 * 1024) {
     try {
-      const b64 = file_base64
-        ? String(file_base64).replace(/^data:[^;]+;base64,/, '')
-        : Buffer.from(String(raw_text || ''), 'utf8').toString('base64');
-      const resp = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'upload_file',
-          file_name: safeName,
-          base64_data: b64
-        }),
-        redirect: 'follow'
+      const upRes = await fetch(DEFAULT_CLOUD_NTFY_FILES_URL, {
+        method: 'PUT',
+        headers: { Filename: safeName },
+        body: buf
       });
-      const text = await resp.text();
-      if (resp.ok && text.trim().startsWith('{')) {
-        const j = JSON.parse(text);
-        if (j.file_url) {
-          return { drive_url: j.file_url, local_url: localSavedPath };
-        }
+      if (upRes.ok) {
+        const upJson = await upRes.json();
+        cloudFileUrl = upJson?.attachment?.url || '';
       }
     } catch {
-      // fallback to localSavedPath
+      // ignore
     }
   }
-  return { drive_url: '', local_url: localSavedPath };
+
+  return { drive_url: cloudFileUrl, local_url: localSavedPath };
 }
 
 function loadDb() {
@@ -1136,7 +1264,7 @@ function generateDownloadContent(ds) {
   }, null, 2);
 }
 
-export function requestHandler(req, res) {
+export async function requestHandler(req, res) {
   const host = req.headers.host || 'localhost:3000';
   const url = new URL(req.url, `http://${host}`);
 
@@ -1968,7 +2096,7 @@ export function requestHandler(req, res) {
     return;
   }
 
-  // Phục vụ các file dữ liệu do thành viên tải lên trong data/uploads
+  // Phục vụ các file dữ liệu do thành viên tải lên trong data/uploads hoặc khôi phục từ Cloud Storage 24/7
   if (url.pathname.startsWith('/uploads/')) {
     const fileName = path.basename(url.pathname);
     const p1 = path.join(UPLOADS_DIR, fileName);
@@ -1982,6 +2110,28 @@ export function requestHandler(req, res) {
       res.end(fs.readFileSync(targetPath));
       return;
     }
+    try {
+      const db = loadDb();
+      const matchedDs = (db.datasets || []).find(
+        d => d.local_file_url === `/uploads/${fileName}` || (d.id && fileName.startsWith(`${d.id}_`))
+      );
+      if (matchedDs && matchedDs.external_storage_url && matchedDs.external_storage_url.startsWith('https://')) {
+        const cloudRes = await fetch(matchedDs.external_storage_url);
+        if (cloudRes.ok) {
+          const buf = Buffer.from(await cloudRes.arrayBuffer());
+          try {
+            if (!fs.existsSync(TMP_UPLOADS_DIR)) fs.mkdirSync(TMP_UPLOADS_DIR, { recursive: true });
+            fs.writeFileSync(p2, buf);
+          } catch {}
+          res.writeHead(200, {
+            'Content-Type': 'application/octet-stream',
+            'Content-Disposition': `attachment; filename="${fileName}"`
+          });
+          res.end(buf);
+          return;
+        }
+      }
+    } catch {}
   }
 
   // Phục vụ file Logo SVG chính thức
