@@ -12,8 +12,10 @@ const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const TMP_DB_FILE = path.join(os.tmpdir(), 'ctu_data_hub_db.json');
+const TMP_UPLOADS_DIR = path.join(os.tmpdir(), 'ctu_data_hub_uploads');
 
 // ============================================================================
 // MÃ HÓA MẬT KHẨU MỘT CHIỀU CHUẨN PBKDF2-HMAC-SHA256 (KHÔNG LƯU MẬT KHẨU RÕ)
@@ -939,6 +941,120 @@ function normalizeParsedDb(parsed) {
   return parsed;
 }
 
+// ============================================================================
+// ĐỒNG BỘ CƠ SỞ DỮ LIỆU & FILE LÊN GOOGLE DRIVE VĨNH VIỄN (CLOUD PERSISTENCE)
+// ============================================================================
+let hasRestoredCloudOnBoot = false;
+
+async function syncDbToGoogleDrive(db) {
+  const webhookUrl = normalizeGasWebhookUrl(
+    db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
+  );
+  if (!webhookUrl || !webhookUrl.startsWith('https://script.google.com/')) {
+    return { synced: false, reason: 'Chưa cấu hình Google Apps Script URL' };
+  }
+  try {
+    const resp = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'save_db',
+        file_name: 'ctu_data_hub_cloud_db.json',
+        db
+      }),
+      redirect: 'follow'
+    });
+    const text = await resp.text();
+    if (resp.ok && !text.includes('accounts.google.com')) {
+      return { synced: true, detail: 'Đã đồng bộ CSDL lên Google Drive thành công', response: text.slice(0, 120) };
+    }
+    return { synced: false, reason: `Phản hồi (${resp.status}): ${text.slice(0, 100)}` };
+  } catch (err) {
+    return { synced: false, reason: err.message };
+  }
+}
+
+async function pullDbFromGoogleDrive(currentDb) {
+  const webhookUrl = normalizeGasWebhookUrl(
+    currentDb?.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
+  );
+  if (!webhookUrl || !webhookUrl.startsWith('https://script.google.com/')) {
+    return null;
+  }
+  try {
+    const resp = await fetch(`${webhookUrl}?action=load_db`, {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    const text = await resp.text();
+    if (resp.ok && text.trim().startsWith('{')) {
+      const parsed = JSON.parse(text);
+      const cloudDb = parsed.db || (parsed.users && parsed.datasets ? parsed : null);
+      if (cloudDb && Array.isArray(cloudDb.users) && Array.isArray(cloudDb.datasets)) {
+        const normalized = normalizeParsedDb(cloudDb);
+        saveDb(normalized, { syncCloud: false });
+        return normalized;
+      }
+    }
+  } catch {
+    // ignore if script doesn't have doGet yet
+  }
+  return null;
+}
+
+async function saveUploadedDatasetFile(db, { dataset_id, file_name, file_base64, raw_text }) {
+  const safeName = `${dataset_id}_${String(file_name || 'dataset.csv').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+  let localSavedPath = `/uploads/${safeName}`;
+
+  // 1. Lưu trực tiếp vào thư mục data/uploads (nằm trong Google Drive trên máy) hoặc /tmp trên Vercel
+  try {
+    const buf = file_base64
+      ? Buffer.from(String(file_base64).replace(/^data:[^;]+;base64,/, ''), 'base64')
+      : Buffer.from(String(raw_text || ''), 'utf8');
+    try {
+      if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      fs.writeFileSync(path.join(UPLOADS_DIR, safeName), buf);
+    } catch {
+      if (!fs.existsSync(TMP_UPLOADS_DIR)) fs.mkdirSync(TMP_UPLOADS_DIR, { recursive: true });
+      fs.writeFileSync(path.join(TMP_UPLOADS_DIR, safeName), buf);
+    }
+  } catch {
+    localSavedPath = '';
+  }
+
+  // 2. Đồng bộ file lên Google Drive qua Google Apps Script (nếu có base64 / raw_text)
+  const webhookUrl = normalizeGasWebhookUrl(
+    db.settings?.email_webhook_url || process.env.EMAIL_WEBHOOK_URL || initialDb.settings.email_webhook_url
+  );
+  if (webhookUrl && webhookUrl.startsWith('https://script.google.com/') && (file_base64 || raw_text)) {
+    try {
+      const b64 = file_base64
+        ? String(file_base64).replace(/^data:[^;]+;base64,/, '')
+        : Buffer.from(String(raw_text || ''), 'utf8').toString('base64');
+      const resp = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'upload_file',
+          file_name: safeName,
+          base64_data: b64
+        }),
+        redirect: 'follow'
+      });
+      const text = await resp.text();
+      if (resp.ok && text.trim().startsWith('{')) {
+        const j = JSON.parse(text);
+        if (j.file_url) {
+          return { drive_url: j.file_url, local_url: localSavedPath };
+        }
+      }
+    } catch {
+      // fallback to localSavedPath
+    }
+  }
+  return { drive_url: '', local_url: localSavedPath };
+}
+
 function loadDb() {
   if (fs.existsSync(TMP_DB_FILE)) {
     try {
@@ -955,11 +1071,12 @@ function loadDb() {
     }
   }
   const fresh = JSON.parse(JSON.stringify(initialDb));
-  saveDb(fresh);
+  saveDb(fresh, { syncCloud: false });
   return fresh;
 }
 
-function saveDb(db) {
+function saveDb(db, options = { syncCloud: true }) {
+  db.last_saved_at = new Date().toISOString();
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -971,6 +1088,9 @@ function saveDb(db) {
     } catch {
       // ignore
     }
+  }
+  if (options?.syncCloud !== false) {
+    syncDbToGoogleDrive(db).catch(() => {});
   }
 }
 
@@ -1020,13 +1140,20 @@ export function requestHandler(req, res) {
   const host = req.headers.host || 'localhost:3000';
   const url = new URL(req.url, `http://${host}`);
 
-  // API: Lấy toàn bộ dữ liệu khởi tạo & ghi nhận thêm số lượt truy cập (Đã lọc bỏ mật khẩu & OTP)
+  // API: Lấy toàn bộ dữ liệu khởi tạo & ghi nhận thêm số lượt truy cập (Tự động khôi phục từ Google Drive nếu máy chủ vừa khởi động lại)
   if (url.pathname === '/api/state' && req.method === 'GET') {
-    const db = loadDb();
-    db.site_visits = (Number(db.site_visits) || 1280) + 1;
-    saveDb(db);
-    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(sanitizeDbForClient(db)));
+    (async () => {
+      let db = loadDb();
+      if (!hasRestoredCloudOnBoot) {
+        hasRestoredCloudOnBoot = true;
+        const cloudDb = await pullDbFromGoogleDrive(db);
+        if (cloudDb) db = cloudDb;
+      }
+      db.site_visits = (Number(db.site_visits) || 1280) + 1;
+      saveDb(db, { syncCloud: false });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(sanitizeDbForClient(db)));
+    })();
     return;
   }
 
@@ -1418,11 +1545,11 @@ export function requestHandler(req, res) {
     return;
   }
 
-  // API: Tải lên Bộ dữ liệu khoa học mới (Hỗ trợ Hybrid Storage: Upload File + Link Google Drive/Zenodo)
+  // API: Tải lên Bộ dữ liệu khoa học mới (Hỗ trợ Hybrid Storage: Tự động lưu file vào Google Drive + Link ngoài)
   if (url.pathname === '/api/datasets' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    req.on('end', async () => {
       const payload = JSON.parse(body || '{}');
       const db = loadDb();
       const user = db.users.find(u => u.id === payload.user_id) || db.users[0];
@@ -1433,15 +1560,31 @@ export function requestHandler(req, res) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '') + '-' + Math.floor(100 + Math.random() * 900);
 
-      const externalUrl = (payload.external_storage_url || '').trim();
-      const storageProvider = detectStorageProvider(externalUrl, payload.storage_provider || 'cloudflare_r2');
+      const datasetId = 'ds-' + Date.now();
+      let externalUrl = (payload.external_storage_url || '').trim();
+
+      // Tự động lưu file đính kèm vào thư mục data/uploads (Google Drive) và đồng bộ Cloud
+      const savedFile = await saveUploadedDatasetFile(db, {
+        dataset_id: datasetId,
+        file_name: payload.file_name || 'dataset_upload.csv',
+        file_base64: payload.file_base64 || '',
+        raw_text: payload.raw_text || ''
+      });
+      if (!externalUrl && savedFile.drive_url) {
+        externalUrl = savedFile.drive_url;
+      }
+
+      const storageProvider = detectStorageProvider(
+        externalUrl,
+        savedFile.drive_url ? 'google_drive' : (payload.storage_provider || 'cloudflare_r2')
+      );
       const forceReview = db.settings?.require_review === true;
       const autoPublish = (!forceReview && payload.auto_publish === true) || user.role !== 'student';
       const reward = Number(db.settings?.upload_reward ?? 30);
       const cost = Number(db.settings?.download_cost ?? 5);
 
       const newDataset = {
-        id: 'ds-' + Date.now(),
+        id: datasetId,
         title: payload.title,
         slug,
         summary: payload.summary,
@@ -1459,6 +1602,7 @@ export function requestHandler(req, res) {
         status: autoPublish ? 'published' : 'pending_review',
         storage_provider: storageProvider,
         external_storage_url: externalUrl,
+        local_file_url: savedFile.local_url || '',
         total_size_bytes: Number(payload.total_size_bytes) || 1048576,
         view_count: 1,
         download_count: 0,
@@ -1484,7 +1628,7 @@ export function requestHandler(req, res) {
         db,
         `${user.full_name} (${user.student_or_staff_id || user.email})`,
         autoPublish ? 'Công bố Bộ dữ liệu mới' : 'Gửi Bộ dữ liệu chờ duyệt',
-        `${newDataset.title} (${newDataset.department})`,
+        `${newDataset.title} (${newDataset.department}) — Đã lưu trữ & đồng bộ Google Drive`,
         'upload'
       );
 
@@ -1788,6 +1932,56 @@ export function requestHandler(req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ db: sanitizeDbForClient(fresh) }));
     return;
+  }
+
+  // ==========================================================================
+  // ADMIN API 5: Đồng bộ Thủ công / Khôi phục CSDL với Google Drive (Cloud Sync)
+  // ==========================================================================
+  if (url.pathname === '/api/admin/cloud-sync' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      const { mode } = JSON.parse(body || '{}');
+      let db = loadDb();
+      if (mode === 'pull') {
+        const pulled = await pullDbFromGoogleDrive(db);
+        if (pulled) {
+          db = pulled;
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: true, detail: 'Đã khôi phục CSDL mới nhất từ Google Drive!', db: sanitizeDbForClient(db) }));
+          return;
+        }
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Chưa có bản sao lưu trên Google Drive hoặc Google Apps Script chưa bật hàm doGet(e).' }));
+        return;
+      }
+      const syncRes = await syncDbToGoogleDrive(db);
+      addAuditLog(db, 'Quản trị viên (Admin)', 'Đồng bộ CSDL lên Google Drive', syncRes.detail || syncRes.reason || 'Đồng bộ Cloud', 'system');
+      saveDb(db, { syncCloud: false });
+      res.writeHead(syncRes.synced ? 200 : 400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: syncRes.synced,
+        detail: syncRes.detail || syncRes.reason,
+        db: sanitizeDbForClient(db)
+      }));
+    });
+    return;
+  }
+
+  // Phục vụ các file dữ liệu do thành viên tải lên trong data/uploads
+  if (url.pathname.startsWith('/uploads/')) {
+    const fileName = path.basename(url.pathname);
+    const p1 = path.join(UPLOADS_DIR, fileName);
+    const p2 = path.join(TMP_UPLOADS_DIR, fileName);
+    const targetPath = fs.existsSync(p1) ? p1 : (fs.existsSync(p2) ? p2 : null);
+    if (targetPath) {
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${fileName}"`
+      });
+      res.end(fs.readFileSync(targetPath));
+      return;
+    }
   }
 
   // Phục vụ file Logo SVG chính thức

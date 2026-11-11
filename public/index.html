@@ -593,15 +593,23 @@
                 </div>
               </div>
 
-              <!-- CÁCH 2: Google Apps Script Bridge (Không cần tạo App Password) -->
+              <!-- CÁCH 2: Google Apps Script Bridge (Gửi Email + Đồng bộ CSDL Vĩnh viễn lên Google Drive) -->
               <div class="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1.5">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="font-bold text-slate-800 text-[11px]">Cách 2: Google Apps Script URL (Không cần App Password)</span>
+                  <span class="font-bold text-slate-800 text-[11px]">Cách 2: Google Apps Script URL (Gửi Email + Lưu CSDL lên Google Drive)</span>
                   <button type="button" onclick="copyAppsScriptCode()" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold transition">
-                    📋 Copy mã Script 6 dòng
+                    📋 Copy mã Script Đa năng (Email + Drive)
                   </button>
                 </div>
                 <input id="set-email-webhook" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                  <button type="button" onclick="handleManualCloudSync('push')" class="flex-1 py-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] shadow-sm transition">
+                    ☁️ Đồng bộ CSDL lên Google Drive ngay
+                  </button>
+                  <button type="button" onclick="handleManualCloudSync('pull')" class="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-[11px] transition">
+                    📥 Khôi phục từ Drive
+                  </button>
+                </div>
               </div>
 
               <div class="flex items-center gap-2 pt-1">
@@ -1843,6 +1851,7 @@
             file_name: file.name,
             file_extension: ext,
             total_size_bytes: file.size,
+            raw_text: content,
             metadata_schema: {
               row_count: Math.max(0, lines.length - 1),
               column_count: headers.length,
@@ -1850,17 +1859,18 @@
             },
             preview_data: { headers, rows: sampleRows }
           };
-          infoBox.innerHTML = `✅ Đã phân tích tự động file CSV: <strong>${lines.length - 1} dòng</strong> × <strong>${headers.length} cột</strong> (<code>${headers.slice(0, 5).join(', ')}</code>)`;
+          infoBox.innerHTML = `✅ Đã phân tích tự động file CSV: <strong>${lines.length - 1} dòng</strong> × <strong>${headers.length} cột</strong> (<code>${headers.slice(0, 5).join(', ')}</code>) — Sẵn sàng đồng bộ lên Google Drive.`;
         } else {
           parsedUploadFile = {
             file_name: file.name,
             file_extension: ext,
-            total_size_bytes: file.size
+            total_size_bytes: file.size,
+            raw_text: content
           };
-          infoBox.innerHTML = `✅ Đã đọc file <strong>${file.name}</strong> (${formatBytes(file.size)}) sẵn sàng tải lên kho lưu trữ.`;
+          infoBox.innerHTML = `✅ Đã đọc file <strong>${file.name}</strong> (${formatBytes(file.size)}) sẵn sàng tải lên &amp; lưu trữ vào Google Drive.`;
         }
       };
-      reader.readAsText(file.slice(0, 1024 * 256));
+      reader.readAsText(file.slice(0, 1024 * 512));
     }
 
     function openUploadModal() {
@@ -1912,6 +1922,7 @@
         file_name: parsedUploadFile?.file_name || 'student_dataset_2026.csv',
         file_extension: parsedUploadFile?.file_extension || 'csv',
         total_size_bytes: parsedUploadFile?.total_size_bytes || (external_storage_url ? 256000000 : 1420000),
+        raw_text: parsedUploadFile?.raw_text || '',
         metadata_schema: parsedUploadFile?.metadata_schema || {
           row_count: 150,
           column_count: 4,
@@ -2390,9 +2401,79 @@
     }
 
     function copyAppsScriptCode() {
-      const code = `function doPost(e) {\n  var d = JSON.parse(e.postData.contents);\n  MailApp.sendEmail({ to: d.to, subject: d.subject, body: d.body, name: d.from_name || "CTU Research Data Hub" });\n  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);\n}`;
+      const code = `function getOrCreateFolder(name) {
+  var it = DriveApp.getFoldersByName(name);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(name);
+}
+function doGet(e) {
+  var folder = getOrCreateFolder("CTU_Research_Data_Hub_Cloud");
+  var files = folder.getFilesByName("ctu_data_hub_cloud_db.json");
+  if (files.hasNext()) {
+    return ContentService.createTextOutput(files.next().getBlob().getDataAsString()).setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ ok: false })).setMimeType(ContentService.MimeType.JSON);
+}
+function doPost(e) {
+  var d = JSON.parse(e.postData.contents);
+  if (d.action === "save_db" && d.db) {
+    var folder = getOrCreateFolder("CTU_Research_Data_Hub_Cloud");
+    var files = folder.getFilesByName("ctu_data_hub_cloud_db.json");
+    var content = JSON.stringify(d.db, null, 2);
+    if (files.hasNext()) { files.next().setContent(content); }
+    else { folder.createFile("ctu_data_hub_cloud_db.json", content, MimeType.PLAIN_TEXT); }
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, mode: "saved_db" })).setMimeType(ContentService.MimeType.JSON);
+  }
+  if (d.action === "upload_file" && d.base64_data) {
+    var folder = getOrCreateFolder("CTU_Research_Data_Hub_Cloud");
+    var blob = Utilities.newBlob(Utilities.base64Decode(d.base64_data), "application/octet-stream", d.file_name || "dataset.csv");
+    var f = folder.createFile(blob);
+    f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, file_url: f.getUrl() })).setMimeType(ContentService.MimeType.JSON);
+  }
+  if (d.to) {
+    MailApp.sendEmail({ to: d.to, subject: d.subject, body: d.body, name: d.from_name || "CTU Research Data Hub" });
+  }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}`;
       navigator.clipboard.writeText(code);
-      showToast('📋 Đã sao chép mã Google Apps Script! Hãy dán vào script.google.com -> Deploy -> Web App (Anyone) rồi dán URL vào ô.', 'success');
+      showToast('📋 Đã sao chép mã Google Apps Script Đa năng (Gửi Email + Lưu CSDL & File lên Google Drive)!', 'success');
+    }
+
+    async function handleManualCloudSync(mode = 'push') {
+      const box = document.getElementById('smtp-test-result-box');
+      if (box) {
+        box.className = 'p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-[11px] font-medium';
+        box.textContent = mode === 'pull'
+          ? '⏳ Đang khôi phục Cơ sở dữ liệu từ Google Drive...'
+          : '⏳ Đang đồng bộ Cơ sở dữ liệu lên Google Drive...';
+        box.classList.remove('hidden');
+      }
+      const res = await fetch('/api/admin/cloud-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode })
+      });
+      const data = await res.json();
+      if (data.db) {
+        appState = data.db;
+        syncHeaderUI();
+        renderDatasets();
+        renderReviewQueue();
+        renderAdminDashboard();
+      }
+      if (res.ok && data.ok) {
+        if (box) {
+          box.className = 'p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-[11px] font-semibold';
+          box.textContent = `✅ ${data.detail}`;
+        }
+        showToast(`☁️ ${data.detail}`);
+      } else {
+        if (box) {
+          box.className = 'p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[11px] font-semibold';
+          box.textContent = `⚠️ ${data.error || data.detail}`;
+        }
+        showToast(`⚠️ ${data.error || data.detail}`, 'error');
+      }
     }
 
     async function handleTestEmailDelivery() {
